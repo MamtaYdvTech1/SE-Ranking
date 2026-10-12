@@ -53,9 +53,10 @@ export function GoogleRecaptcha({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const siteKey =
-    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-    process.env.RECAPTCHA_SITE_KEY ||
-    '6Le5qOstAAAAANpDAySWoDVfz-OrmwSVlQtHsF7v';
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY.startsWith('6Le5qOst')
+      ? process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+      : '6Le5qOstAAAAANpDAySWoDVfz-OrmwSVlQtHsF7v';
 
   const onVerifyRef = useRef(onVerify);
   onVerifyRef.current = onVerify;
