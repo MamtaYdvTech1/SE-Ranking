@@ -106,4 +106,46 @@ describe("AddedCompetitorsView Component", () => {
     fireEvent.click(addButtons[0]);
     expect(defaultProps.onAddCompetitor).toHaveBeenCalled();
   });
+
+  it("renders real myjio.com dataset with real keywords and competitor columns", () => {
+    render(<AddedCompetitorsView projectId="proj-jio" projectDomain="myjio.com" competitors={[]} />);
+
+    // Header limits, notes, and domain
+    expect(screen.getAllByText("myjio.com")[0]).toBeInTheDocument();
+    expect(screen.getByText("Notes (49)")).toBeInTheDocument();
+    expect(screen.getByText("5 / 5")).toBeInTheDocument();
+    expect(screen.getByText("Keywords 10")).toBeInTheDocument();
+
+    // Competitor column headers and chart legend
+    expect(screen.getAllByText("Paytm.com")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("airtel.in")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("bsnl.co.in")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("mobikwik.com")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("phonepe.com")[0]).toBeInTheDocument();
+
+    // Real keywords and volumes
+    expect(screen.getByText("myjio")).toBeInTheDocument();
+    expect(screen.getByText("246K")).toBeInTheDocument();
+    expect(screen.getByText("jio recharge")).toBeInTheDocument();
+    expect(screen.getByText("1.22M")).toBeInTheDocument();
+    expect(screen.getByText("jio prepaid recharge")).toBeInTheDocument();
+    expect(screen.getByText("40.5K")).toBeInTheDocument();
+  });
+
+  it("filters myjio keywords by position tier TOP 10", () => {
+    render(<AddedCompetitorsView projectId="proj-jio" projectDomain="myjio.com" competitors={[]} />);
+
+    const top10Button = screen.getByRole("button", { name: "TOP 10" });
+    fireEvent.click(top10Button);
+
+    // Keywords with rank <= 10 should be visible
+    expect(screen.getByText("jio recharge")).toBeInTheDocument();
+    expect(screen.getByText("jio recharge online")).toBeInTheDocument();
+    expect(screen.getByText("jio mobile recharge")).toBeInTheDocument();
+    expect(screen.getByText("jio prepaid recharge")).toBeInTheDocument();
+
+    // Keywords without rank <= 10 should not be visible
+    expect(screen.queryByText("myjio login")).not.toBeInTheDocument();
+    expect(screen.queryByText("myjio account")).not.toBeInTheDocument();
+  });
 });

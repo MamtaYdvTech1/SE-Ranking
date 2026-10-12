@@ -29,7 +29,7 @@ export function CompetitorWorkspace({ projectId, initialTab = "added" }: Competi
   const { user } = useAuth();
 
   const [competitors, setCompetitors] = useState<CompetitorDto[]>([]);
-  const [projectDomain, setProjectDomain] = useState<string>("www.jio.com");
+  const [projectDomain, setProjectDomain] = useState<string>("myjio.com");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,7 +87,7 @@ export function CompetitorWorkspace({ projectId, initialTab = "added" }: Competi
       if (api.projects?.get) {
         const res = await api.projects.get(projectId);
         if (res?.success && res.data) {
-          setProjectDomain(res.data.primaryDomain || (res.data as any).domain || res.data.name || "www.jio.com");
+          setProjectDomain(res.data.primaryDomain || (res.data as any).domain || res.data.name || "myjio.com");
         }
       }
     } catch {

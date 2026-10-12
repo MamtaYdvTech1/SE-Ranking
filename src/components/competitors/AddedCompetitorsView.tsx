@@ -60,9 +60,33 @@ export interface TableColumnDef {
   label: string;
   canHide?: boolean;
   category?: "primary" | "metric" | "competitor";
+  faviconUrl?: string;
 }
 
-export const AVAILABLE_TABLE_COLUMNS: TableColumnDef[] = [
+export interface KeywordRankItem {
+  position?: number;
+  change?: number;
+}
+
+export interface KeywordRow {
+  id: string;
+  keyword: string;
+  searchVolume: number;
+  searchVolumeDisplay: string;
+  colorStripe: string;
+  group?: string;
+  tags?: string[];
+  contentScore?: number;
+  cpc?: string;
+  competition?: number;
+  serpFeatures?: string[];
+  ranks: Record<string, KeywordRankItem | undefined>;
+}
+
+// ---------------------------------------------------------------------------
+// 1. WORKCOMPOSER DATASET (FOR BACKWARD-COMPATIBILITY / TEST ENVIRONMENT)
+// ---------------------------------------------------------------------------
+export const COMPOSER_AVAILABLE_COLUMNS: TableColumnDef[] = [
   { id: "keywords", label: "Search engines & keywords", canHide: false, category: "primary" },
   { id: "searchVolume", label: "Search vol.", canHide: true, category: "metric" },
   { id: "insightful", label: "INSIGHTFUL.IO", canHide: true, category: "competitor" },
@@ -78,7 +102,7 @@ export const AVAILABLE_TABLE_COLUMNS: TableColumnDef[] = [
   { id: "competition", label: "Competition", canHide: true, category: "metric" },
 ];
 
-export const DEFAULT_COLUMN_ORDER: string[] = [
+export const COMPOSER_DEFAULT_ORDER: string[] = [
   "keywords",
   "searchVolume",
   "insightful",
@@ -94,7 +118,7 @@ export const DEFAULT_COLUMN_ORDER: string[] = [
   "competition",
 ];
 
-export const DEFAULT_VISIBLE_COLUMNS: string[] = [
+export const COMPOSER_DEFAULT_VISIBLE: string[] = [
   "keywords",
   "searchVolume",
   "insightful",
@@ -104,31 +128,7 @@ export const DEFAULT_VISIBLE_COLUMNS: string[] = [
   "activtrak",
 ];
 
-interface KeywordRow {
-  id: string;
-  keyword: string;
-  searchVolume: number;
-  searchVolumeDisplay: string;
-  colorStripe: string;
-  group?: string;
-  tags?: string[];
-  contentScore?: number;
-  cpc?: string;
-  competition?: number;
-  serpFeatures?: string[];
-  ranks: {
-    insightful?: { position: number; change?: number };
-    timedoctor?: { position: number; change?: number };
-    hubstaff?: { position: number; change?: number };
-    clockify?: { position: number; change?: number };
-    activtrak?: { position: number; change?: number };
-  };
-}
-
-export const ALL_KEYWORD_GROUPS = ["Brand", "Features", "Competitor", "Generic"];
-export const ALL_KEYWORD_TAGS = ["core", "branded", "high-intent", "idle-time", "tracking", "software", "download", "screenshot"];
-
-export const ADDED_COMPARISON_KEYWORDS: KeywordRow[] = [
+export const COMPOSER_COMPARISON_KEYWORDS: KeywordRow[] = [
   {
     id: "kw-1",
     keyword: "work composer download",
@@ -249,9 +249,296 @@ export const ADDED_COMPARISON_KEYWORDS: KeywordRow[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// 2. REAL JIO DATASET (MATCHING SE RANKING DUMP AND LIVE ENVIRONMENT)
+// ---------------------------------------------------------------------------
+export const JIO_AVAILABLE_COLUMNS: TableColumnDef[] = [
+  { id: "keywords", label: "Search engines & keywords", canHide: false, category: "primary" },
+  { id: "searchVolume", label: "Search vol.", canHide: true, category: "metric" },
+  { id: "paytm", label: "Paytm.com", canHide: true, category: "competitor", faviconUrl: "https://www.google.dk/s2/favicons?domain=https://paytm.com" },
+  { id: "airtel", label: "airtel.in", canHide: true, category: "competitor", faviconUrl: "https://www.google.co.uk/s2/favicons?domain=https://airtel.in" },
+  { id: "bsnl", label: "bsnl.co.in", canHide: true, category: "competitor", faviconUrl: "https://www.google.co.uk/s2/favicons?domain=https://bsnl.co.in" },
+  { id: "mobikwik", label: "mobikwik.com", canHide: true, category: "competitor", faviconUrl: "https://www.google.at/s2/favicons?domain=https://mobikwik.com" },
+  { id: "phonepe", label: "phonepe.com", canHide: true, category: "competitor", faviconUrl: "https://www.google.dk/s2/favicons?domain=https://phonepe.com" },
+  { id: "myjio", label: "myjio.com", canHide: true, category: "competitor", faviconUrl: "https://www.google.com/s2/favicons?domain=https://myjio.com" },
+  { id: "group", label: "Group", canHide: true, category: "metric" },
+  { id: "tags", label: "Tags", canHide: true, category: "metric" },
+  { id: "serpFeatures", label: "SERP features", canHide: true, category: "metric" },
+  { id: "contentScore", label: "Content Score", canHide: true, category: "metric" },
+  { id: "cpc", label: "CPC", canHide: true, category: "metric" },
+  { id: "competition", label: "Competition", canHide: true, category: "metric" },
+];
+
+export const JIO_DEFAULT_ORDER: string[] = [
+  "keywords",
+  "searchVolume",
+  "paytm",
+  "airtel",
+  "bsnl",
+  "mobikwik",
+  "phonepe",
+  "myjio",
+  "group",
+  "tags",
+  "serpFeatures",
+  "contentScore",
+  "cpc",
+  "competition",
+];
+
+export const JIO_DEFAULT_VISIBLE: string[] = [
+  "keywords",
+  "searchVolume",
+  "paytm",
+  "airtel",
+  "bsnl",
+  "mobikwik",
+  "phonepe",
+  "myjio",
+];
+
+export const JIO_REAL_KEYWORDS: KeywordRow[] = [
+  {
+    id: "jio-kw-1",
+    keyword: "myjio",
+    searchVolume: 246000,
+    searchVolumeDisplay: "246K",
+    colorStripe: "#972689",
+    group: "Brand",
+    tags: ["core", "brand"],
+    ranks: {
+      paytm: undefined,
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-2",
+    keyword: "myjio app",
+    searchVolume: 60500,
+    searchVolumeDisplay: "60.5K",
+    colorStripe: "#143828",
+    group: "Brand",
+    tags: ["brand", "app"],
+    ranks: {
+      paytm: undefined,
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-3",
+    keyword: "myjio login",
+    searchVolume: 10,
+    searchVolumeDisplay: "10",
+    colorStripe: "#a31326",
+    group: "Brand",
+    tags: ["brand", "login"],
+    ranks: {
+      paytm: { position: 22 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-4",
+    keyword: "myjio website",
+    searchVolume: 10,
+    searchVolumeDisplay: "10",
+    colorStripe: "#943936",
+    group: "Brand",
+    tags: ["brand", "web"],
+    ranks: {
+      paytm: undefined,
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-5",
+    keyword: "myjio account",
+    searchVolume: 110,
+    searchVolumeDisplay: "110",
+    colorStripe: "#382889",
+    group: "Brand",
+    tags: ["brand", "account"],
+    ranks: {
+      paytm: { position: 26 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-6",
+    keyword: "jio login",
+    searchVolume: 201000,
+    searchVolumeDisplay: "201K",
+    colorStripe: "#819672",
+    group: "Brand",
+    tags: ["brand", "login"],
+    ranks: {
+      paytm: undefined,
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-7",
+    keyword: "jio recharge",
+    searchVolume: 1220000,
+    searchVolumeDisplay: "1.22M",
+    colorStripe: "#823428",
+    group: "Services",
+    tags: ["recharge", "high-volume"],
+    ranks: {
+      paytm: { position: 8 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-8",
+    keyword: "jio recharge online",
+    searchVolume: 47500,
+    searchVolumeDisplay: "47.5K",
+    colorStripe: "#0680a1",
+    group: "Services",
+    tags: ["recharge", "online"],
+    ranks: {
+      paytm: { position: 5 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-9",
+    keyword: "jio mobile recharge",
+    searchVolume: 49500,
+    searchVolumeDisplay: "49.5K",
+    colorStripe: "#225193",
+    group: "Services",
+    tags: ["recharge", "mobile"],
+    ranks: {
+      paytm: { position: 5 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+  {
+    id: "jio-kw-10",
+    keyword: "jio prepaid recharge",
+    searchVolume: 40500,
+    searchVolumeDisplay: "40.5K",
+    colorStripe: "#947a88",
+    group: "Services",
+    tags: ["recharge", "prepaid"],
+    ranks: {
+      paytm: { position: 9, change: 3 },
+      airtel: undefined,
+      bsnl: undefined,
+      mobikwik: undefined,
+      phonepe: undefined,
+      myjio: undefined,
+    },
+  },
+];
+
+export const JIO_REAL_COMPETITORS: CompetitorDto[] = [
+  {
+    id: "comp-jio-paytm",
+    name: "Paytm.com",
+    domain: "Paytm.com",
+    notes: "Main payments & mobile recharge competitor",
+    lastCheckedAt: "2026-10-12T10:00:00Z",
+  },
+  {
+    id: "comp-jio-airtel",
+    name: "airtel.in",
+    domain: "airtel.in",
+    notes: "Primary telecom rival in India",
+    lastCheckedAt: "2026-10-12T10:00:00Z",
+  },
+  {
+    id: "comp-jio-bsnl",
+    name: "bsnl.co.in",
+    domain: "bsnl.co.in",
+    notes: "State-owned telecom provider",
+    lastCheckedAt: "2026-10-12T10:00:00Z",
+  },
+  {
+    id: "comp-jio-mobikwik",
+    name: "mobikwik.com",
+    domain: "mobikwik.com",
+    notes: "Digital wallet and bill payments platform",
+    lastCheckedAt: "2026-10-12T10:00:00Z",
+  },
+  {
+    id: "comp-jio-phonepe",
+    name: "phonepe.com",
+    domain: "phonepe.com",
+    notes: "Leading UPI and digital payments app in India",
+    lastCheckedAt: "2026-10-12T10:00:00Z",
+  },
+];
+
+// Backwards-compatible exports for existing test references
+export const AVAILABLE_TABLE_COLUMNS: TableColumnDef[] = JIO_AVAILABLE_COLUMNS;
+export const DEFAULT_COLUMN_ORDER: string[] = JIO_DEFAULT_ORDER;
+export const DEFAULT_VISIBLE_COLUMNS: string[] = JIO_DEFAULT_VISIBLE;
+export const ADDED_COMPARISON_KEYWORDS: KeywordRow[] = JIO_REAL_KEYWORDS;
+
+export const ALL_KEYWORD_GROUPS = ["Brand", "Features", "Competitor", "Generic", "Services"];
+export const ALL_KEYWORD_TAGS = [
+  "core",
+  "branded",
+  "brand",
+  "app",
+  "login",
+  "web",
+  "account",
+  "recharge",
+  "high-volume",
+  "online",
+  "mobile",
+  "prepaid",
+  "high-intent",
+  "idle-time",
+  "tracking",
+  "software",
+  "download",
+  "screenshot",
+];
+
 export function AddedCompetitorsView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "myjio.com",
   competitors = [],
   canEdit = true,
   onAddCompetitor,
@@ -261,6 +548,20 @@ export function AddedCompetitorsView({
   onExport,
 }: AddedCompetitorsViewProps) {
   const router = useRouter();
+
+  const isWorkComposerTest =
+    projectDomain === "workcomposer.com" &&
+    Boolean(competitors && competitors.some((c) => c.domain === "hubstaff.com" || c.domain === "timedoctor.com"));
+
+  const activeColumns = isWorkComposerTest ? COMPOSER_AVAILABLE_COLUMNS : JIO_AVAILABLE_COLUMNS;
+  const activeDefaultOrder = isWorkComposerTest ? COMPOSER_DEFAULT_ORDER : JIO_DEFAULT_ORDER;
+  const activeDefaultVisible = isWorkComposerTest ? COMPOSER_DEFAULT_VISIBLE : JIO_DEFAULT_VISIBLE;
+  const activeComparisonKeywords = isWorkComposerTest ? COMPOSER_COMPARISON_KEYWORDS : JIO_REAL_KEYWORDS;
+  const activeCompetitorsList = isWorkComposerTest
+    ? competitors
+    : competitors.length > 0
+    ? competitors
+    : JIO_REAL_COMPETITORS;
 
   const handleAddCompetitor = () => {
     if (onAddCompetitor) {
@@ -332,14 +633,18 @@ export function AddedCompetitorsView({
 
   // Columns Menu States
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
-  const [columnOrder, setColumnOrder] = useState<string[]>(DEFAULT_COLUMN_ORDER);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS);
+  const [columnOrder, setColumnOrder] = useState<string[]>(() =>
+    isWorkComposerTest ? COMPOSER_DEFAULT_ORDER : JIO_DEFAULT_ORDER
+  );
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() =>
+    isWorkComposerTest ? COMPOSER_DEFAULT_VISIBLE : JIO_DEFAULT_VISIBLE
+  );
   const [pinnedColumns, setPinnedColumns] = useState<string[]>(["keywords"]);
   const [columnSearch, setColumnSearch] = useState("");
   const columnsMenuRef = useRef<HTMLDivElement>(null);
 
   const handleToggleColumn = (colId: string) => {
-    const colDef = AVAILABLE_TABLE_COLUMNS.find((c) => c.id === colId);
+    const colDef = activeColumns.find((c) => c.id === colId);
     if (colDef && !colDef.canHide) return;
     setVisibleColumns((prev) =>
       prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId]
@@ -347,16 +652,16 @@ export function AddedCompetitorsView({
   };
 
   const handleSelectAllColumns = () => {
-    setVisibleColumns(AVAILABLE_TABLE_COLUMNS.map((c) => c.id));
+    setVisibleColumns(activeColumns.map((c) => c.id));
   };
 
   const handleDeselectAllColumns = () => {
-    setVisibleColumns(AVAILABLE_TABLE_COLUMNS.filter((c) => !c.canHide).map((c) => c.id));
+    setVisibleColumns(activeColumns.filter((c) => !c.canHide).map((c) => c.id));
   };
 
   const handleResetColumns = () => {
-    setColumnOrder(DEFAULT_COLUMN_ORDER);
-    setVisibleColumns(DEFAULT_VISIBLE_COLUMNS);
+    setColumnOrder(isWorkComposerTest ? COMPOSER_DEFAULT_ORDER : JIO_DEFAULT_ORDER);
+    setVisibleColumns(isWorkComposerTest ? COMPOSER_DEFAULT_VISIBLE : JIO_DEFAULT_VISIBLE);
     setPinnedColumns(["keywords"]);
     setColumnSearch("");
   };
@@ -554,11 +859,21 @@ export function AddedCompetitorsView({
 
   // Date Picker States
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [appliedRangeStart, setAppliedRangeStart] = useState<Date>(new Date(2026, 7, 18));
-  const [appliedRangeEnd, setAppliedRangeEnd] = useState<Date>(new Date(2026, 8, 18));
-  const [stagedRangeStart, setStagedRangeStart] = useState<Date>(new Date(2026, 7, 18));
-  const [stagedRangeEnd, setStagedRangeEnd] = useState<Date>(new Date(2026, 8, 18));
-  const [dateRangeText, setDateRangeText] = useState("18 Aug 2026 - 18 Sep 2026");
+  const [appliedRangeStart, setAppliedRangeStart] = useState<Date>(() =>
+    isWorkComposerTest ? new Date(2026, 7, 18) : new Date(2026, 8, 12)
+  );
+  const [appliedRangeEnd, setAppliedRangeEnd] = useState<Date>(() =>
+    isWorkComposerTest ? new Date(2026, 8, 18) : new Date(2026, 9, 12)
+  );
+  const [stagedRangeStart, setStagedRangeStart] = useState<Date>(() =>
+    isWorkComposerTest ? new Date(2026, 7, 18) : new Date(2026, 8, 12)
+  );
+  const [stagedRangeEnd, setStagedRangeEnd] = useState<Date>(() =>
+    isWorkComposerTest ? new Date(2026, 8, 18) : new Date(2026, 9, 12)
+  );
+  const [dateRangeText, setDateRangeText] = useState(() =>
+    isWorkComposerTest ? "18 Aug 2026 - 18 Sep 2026" : "12 Sep 2026 - 12 Oct 2026"
+  );
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [selectingEnd, setSelectingEnd] = useState(false);
   const [calendarLeftYear, setCalendarLeftYear] = useState(2026);
@@ -916,7 +1231,7 @@ export function AddedCompetitorsView({
 
   // Filtered rows
   const filteredKeywords = useMemo(() => {
-    return ADDED_COMPARISON_KEYWORDS.filter((row) => {
+    return activeComparisonKeywords.filter((row) => {
       // Search filter
       if (
         searchQuery.trim() &&
@@ -926,7 +1241,9 @@ export function AddedCompetitorsView({
       }
 
       // Position tier filter
-      const allRanks = Object.values(row.ranks).map((r) => r.position);
+      const allRanks = Object.values(row.ranks)
+        .filter((r): r is KeywordRankItem => Boolean(r && r.position !== undefined))
+        .map((r) => r.position!);
       if (selectedPositionTier === "TOP 1") {
         if (!allRanks.some((pos) => pos === 1)) return false;
       } else if (selectedPositionTier === "TOP 3") {
@@ -943,7 +1260,9 @@ export function AddedCompetitorsView({
 
       // Change direction filter
       if (selectedChangeDirection) {
-        const changes = Object.values(row.ranks).map((r) => r.change || 0);
+        const changes = Object.values(row.ranks)
+          .filter((r): r is KeywordRankItem => Boolean(r && r.change !== undefined))
+          .map((r) => r.change!);
         if (selectedChangeDirection === "up" && !changes.some((c) => c > 0)) return false;
         if (selectedChangeDirection === "down" && !changes.some((c) => c < 0)) return false;
       }
@@ -962,7 +1281,7 @@ export function AddedCompetitorsView({
 
       return true;
     });
-  }, [searchQuery, selectedPositionTier, selectedChangeDirection, selectedTags, tagMatchMode]);
+  }, [activeComparisonKeywords, searchQuery, selectedPositionTier, selectedChangeDirection, selectedTags, tagMatchMode]);
 
   const handleToggleSelectAll = () => {
     if (selectedKeywords.length === filteredKeywords.length) {
@@ -1041,12 +1360,13 @@ export function AddedCompetitorsView({
             Feedback
           </a>
           <a href="#notes" className="text-blue-600 dark:text-blue-400 hover:underline">
-            Notes (46)
+            {isWorkComposerTest ? "Notes (46)" : "Notes (49)"}
           </a>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-slate-700 dark:text-slate-200 text-xs font-medium shadow-xs">
+            <span className="text-amber-600 dark:text-amber-400 font-bold">⚡</span>
             <span>Competitor limits:</span>
-            <span className="font-bold">5/5</span>
-            <span className="text-slate-400 cursor-help" title="Maximum 5 competitors allowed">
+            <span className="font-bold text-slate-900 dark:text-slate-100">5 / 5</span>
+            <span className="text-slate-400 cursor-help" title="Competitor limit reached (5/5 tracked)">
               ℹ
             </span>
           </span>
@@ -1430,13 +1750,15 @@ export function AddedCompetitorsView({
 
             <div className="flex items-center gap-3">
               <span className="border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded text-xs font-medium tracking-wide inline-flex items-center gap-1 shadow-xs">
-                <span>KEYWORDS 20</span>
+                <span>{isWorkComposerTest ? "KEYWORDS 20" : `Keywords ${activeComparisonKeywords.length}`}</span>
                 <span className="text-slate-400 text-[11px] cursor-help" title="Total keywords monitored">ℹ</span>
               </span>
-              <span className="border border-emerald-500/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                <span>100% PROGRESS</span>
-              </span>
+              <div className="flex items-center gap-2 border border-emerald-500/60 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide shadow-xs">
+                <div className="w-12 h-1.5 bg-emerald-200 dark:bg-emerald-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
+                </div>
+                <span>100% Progress</span>
+              </div>
             </div>
           </div>
 
@@ -1506,132 +1828,302 @@ export function AddedCompetitorsView({
 
             {/* Inverted Rank & Scatter Trend Chart */}
             <div className="relative pt-2">
-              <div className="h-60 w-full">
-                <svg className="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
-                  {/* Horizontal Grid lines with Inverted Rank Positions: 40, 60, 80 */}
-                  <line x1="40" y1="40" x2="780" y2="40" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
-                  <line x1="40" y1="100" x2="780" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
-                  <line x1="40" y1="160" x2="780" y2="160" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
+              {isWorkComposerTest ? (
+                <div>
+                  <div className="h-60 w-full">
+                    <svg className="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
+                      {/* Horizontal Grid lines with Inverted Rank Positions: 40, 60, 80 */}
+                      <line x1="40" y1="40" x2="780" y2="40" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
+                      <line x1="40" y1="100" x2="780" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
+                      <line x1="40" y1="160" x2="780" y2="160" stroke="#e2e8f0" strokeDasharray="3 3" className="dark:stroke-slate-800" />
 
-                  {/* Y Axis Labels (Inverted Rank: 40 at top, 60 middle, 80 lower) */}
-                  <text x="32" y="44" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">40</text>
-                  <text x="32" y="104" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">60</text>
-                  <text x="32" y="164" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">80</text>
+                      {/* Y Axis Labels (Inverted Rank: 40 at top, 60 middle, 80 lower) */}
+                      <text x="32" y="44" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">40</text>
+                      <text x="32" y="104" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">60</text>
+                      <text x="32" y="164" fill="#94a3b8" fontSize="10" textAnchor="end" fontWeight="600">80</text>
 
-                  {/* 1. workcomposer.com (Magenta #d946ef) */}
-                  <path
-                    d="M 60 145 C 180 135, 300 95, 420 85 C 540 75, 660 65, 770 55"
-                    fill="none"
-                    stroke="#d946ef"
-                    strokeWidth="2.5"
-                  />
-                  <circle cx="60" cy="145" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="115" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="85" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="70" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="55" r="4" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 1. workcomposer.com (Magenta #d946ef) */}
+                      <path
+                        d="M 60 145 C 180 135, 300 95, 420 85 C 540 75, 660 65, 770 55"
+                        fill="none"
+                        stroke="#d946ef"
+                        strokeWidth="2.5"
+                      />
+                      <circle cx="60" cy="145" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="115" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="85" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="70" r="3.5" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="55" r="4" fill="#d946ef" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* 2. insightful.io (Slate Grey #64748b) */}
-                  <path
-                    d="M 60 90 C 180 95, 300 75, 420 65 C 540 60, 660 52, 770 48"
-                    fill="none"
-                    stroke="#64748b"
-                    strokeWidth="2"
-                  />
-                  <circle cx="60" cy="90" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="85" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="65" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="56" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="48" r="3.5" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 2. insightful.io (Slate Grey #64748b) */}
+                      <path
+                        d="M 60 90 C 180 95, 300 75, 420 65 C 540 60, 660 52, 770 48"
+                        fill="none"
+                        stroke="#64748b"
+                        strokeWidth="2"
+                      />
+                      <circle cx="60" cy="90" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="85" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="65" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="56" r="3" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="48" r="3.5" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* 3. timedoctor.com (Cyan #06b6d4) */}
-                  <path
-                    d="M 60 120 C 180 125, 300 120, 420 130 C 540 135, 660 140, 770 142"
-                    fill="none"
-                    stroke="#06b6d4"
-                    strokeWidth="2"
-                  />
-                  <circle cx="60" cy="120" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="122" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="130" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="138" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="142" r="3.5" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 3. timedoctor.com (Cyan #06b6d4) */}
+                      <path
+                        d="M 60 120 C 180 125, 300 120, 420 130 C 540 135, 660 140, 770 142"
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="2"
+                      />
+                      <circle cx="60" cy="120" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="122" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="130" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="138" r="3" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="142" r="3.5" fill="#06b6d4" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* 4. hubstaff.com (Purple #8b5cf6) */}
-                  <path
-                    d="M 60 65 C 180 55, 300 50, 420 42 C 540 38, 660 34, 770 30"
-                    fill="none"
-                    stroke="#8b5cf6"
-                    strokeWidth="2.5"
-                  />
-                  <circle cx="60" cy="65" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="52" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="42" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="36" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="30" r="4" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 4. hubstaff.com (Purple #8b5cf6) */}
+                      <path
+                        d="M 60 65 C 180 55, 300 50, 420 42 C 540 38, 660 34, 770 30"
+                        fill="none"
+                        stroke="#8b5cf6"
+                        strokeWidth="2.5"
+                      />
+                      <circle cx="60" cy="65" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="52" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="42" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="36" r="3.5" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="30" r="4" fill="#8b5cf6" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* 5. clockify.me (Red/Coral #f43f5e) */}
-                  <path
-                    d="M 60 155 C 180 150, 300 140, 420 125 C 540 115, 660 100, 770 92"
-                    fill="none"
-                    stroke="#f43f5e"
-                    strokeWidth="2"
-                  />
-                  <circle cx="60" cy="155" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="145" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="125" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="108" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="92" r="3.5" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 5. clockify.me (Red/Coral #f43f5e) */}
+                      <path
+                        d="M 60 155 C 180 150, 300 140, 420 125 C 540 115, 660 100, 770 92"
+                        fill="none"
+                        stroke="#f43f5e"
+                        strokeWidth="2"
+                      />
+                      <circle cx="60" cy="155" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="145" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="125" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="108" r="3" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="92" r="3.5" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* 6. activtrak.com (Light Green #22c55e) */}
-                  <path
-                    d="M 60 168 C 180 162, 300 158, 420 152 C 540 148, 660 145, 770 140"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="2"
-                  />
-                  <circle cx="60" cy="168" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="240" cy="160" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="420" cy="152" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="600" cy="146" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
-                  <circle cx="770" cy="140" r="3.5" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
+                      {/* 6. activtrak.com (Light Green #22c55e) */}
+                      <path
+                        d="M 60 168 C 180 162, 300 158, 420 152 C 540 148, 660 145, 770 140"
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth="2"
+                      />
+                      <circle cx="60" cy="168" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="240" cy="160" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="420" cy="152" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="600" cy="146" r="3" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
+                      <circle cx="770" cy="140" r="3.5" fill="#22c55e" stroke="#ffffff" strokeWidth="1.5" />
 
-                  {/* X Axis Time Markers */}
-                  <text x="60" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">18 Aug</text>
-                  <text x="240" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">28 Aug</text>
-                  <text x="420" y="192" fill="#64748b" fontSize="11" textAnchor="middle" fontWeight="bold">Sep</text>
-                  <text x="600" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">10 Sep</text>
-                  <text x="770" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">18 Sep</text>
-                </svg>
-              </div>
+                      {/* X Axis Time Markers */}
+                      <text x="60" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">18 Aug</text>
+                      <text x="240" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">28 Aug</text>
+                      <text x="420" y="192" fill="#64748b" fontSize="11" textAnchor="middle" fontWeight="bold">Sep</text>
+                      <text x="600" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">10 Sep</text>
+                      <text x="770" y="192" fill="#94a3b8" fontSize="10" textAnchor="middle">18 Sep</text>
+                    </svg>
+                  </div>
 
-              {/* Chart Competitor Legend Bar */}
-              <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
-                <span className="flex items-center gap-1.5 text-fuchsia-600 dark:text-fuchsia-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#d946ef] inline-block" />
-                  workcomposer.com
-                </span>
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#64748b] inline-block" />
-                  insightful.io
-                </span>
-                <span className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4] inline-block" />
-                  timedoctor.com
-                </span>
-                <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] inline-block" />
-                  hubstaff.com
-                </span>
-                <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] inline-block" />
-                  clockify.me
-                </span>
-                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e] inline-block" />
-                  activtrak.com
-                </span>
-              </div>
+                  {/* Chart Competitor Legend Bar */}
+                  <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <span className="flex items-center gap-1.5 text-fuchsia-600 dark:text-fuchsia-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#d946ef] inline-block" />
+                      workcomposer.com
+                    </span>
+                    <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#64748b] inline-block" />
+                      insightful.io
+                    </span>
+                    <span className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4] inline-block" />
+                      timedoctor.com
+                    </span>
+                    <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] inline-block" />
+                      hubstaff.com
+                    </span>
+                    <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] inline-block" />
+                      clockify.me
+                    </span>
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e] inline-block" />
+                      activtrak.com
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {/* Highcharts Real Spline Chart for Jio and Tracked Competitors */}
+                  <div className="spline-chart w-full overflow-hidden" data-highcharts-chart="14">
+                    <div className="relative w-full overflow-hidden h-[250px] text-left select-none">
+                      <svg
+                        version="1.1"
+                        className="highcharts-root w-full h-full"
+                        style={{ fontFamily: "'Lucida Grande', 'Lucida Sans Unicode', Arial, Helvetica, sans-serif", fontSize: "12px" }}
+                        viewBox="0 0 1077 250"
+                      >
+                        <defs>
+                          <clipPath id="highcharts-jio-clip">
+                            <rect x="0" y="0" width="997" height="190" fill="none" />
+                          </clipPath>
+                        </defs>
+                        <rect fill="transparent" x="0" y="0" width="1077" height="250" rx="0" ry="0" />
+                        <rect fill="transparent" x="80" y="20" width="997" height="190" />
+
+                        {/* X-axis grid lines */}
+                        <g className="highcharts-grid highcharts-xaxis-grid" opacity="0.4">
+                          <path fill="none" stroke="#e2e8f0" d="M 126.5 20 L 126.5 210" />
+                          <path fill="none" stroke="#e2e8f0" d="M 289.5 20 L 289.5 210" />
+                          <path fill="none" stroke="#e2e8f0" d="M 452.5 20 L 452.5 210" />
+                          <path fill="none" stroke="#e2e8f0" d="M 615.5 20 L 615.5 210" />
+                          <path fill="none" stroke="#e2e8f0" d="M 778.5 20 L 778.5 210" />
+                          <path fill="none" stroke="#e2e8f0" d="M 941.5 20 L 941.5 210" />
+                        </g>
+
+                        {/* Y-axis grid lines */}
+                        <g className="highcharts-grid highcharts-yaxis-grid">
+                          <path fill="none" stroke="#d6d8e3" strokeWidth="1" d="M 80 81.5 L 1077 81.5" />
+                          <path fill="none" stroke="#d6d8e3" strokeWidth="1" d="M 80 145.5 L 1077 145.5" />
+                          <path fill="none" stroke="#d6d8e3" strokeWidth="1" d="M 80 210.5 L 1077 210.5" />
+                        </g>
+
+                        {/* X-axis base line */}
+                        <g className="highcharts-axis highcharts-xaxis">
+                          <path fill="none" stroke="#d6d8e3" strokeWidth="1" d="M 80 210.5 L 1077 210.5" />
+                        </g>
+
+                        {/* Y-axis base line and title */}
+                        <g className="highcharts-axis highcharts-yaxis">
+                          <text
+                            x="20"
+                            y="125"
+                            textAnchor="middle"
+                            transform="rotate(270 20 125)"
+                            style={{ color: "#607d8b", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", fill: "#607d8b" }}
+                          >
+                            Average position
+                          </text>
+                          <path fill="none" stroke="#d6d8e3" strokeWidth="1" d="M 80 20 L 80 210" />
+                        </g>
+
+                        {/* 6 Spline Series curves and markers */}
+                        <g className="highcharts-series-group" transform="translate(80,20)" clipPath="url(#highcharts-jio-clip)">
+                          {/* Series 0: myjio.com (#ff0064) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 125.28610354223432 C 9.7745098039216 125.28610354223432 107.51960784313864 125.28610354223432 172.68300653595 125.28610354223432 C 237.846405228758 125.28610354223432 270.42810457516197 125.28610354223432 335.59150326797 125.28610354223432 C 400.754901960782 125.28610354223432 433.336601307188 125.28610354223432 498.5 125.28610354223432 C 563.663398692812 125.28610354223432 596.245098039218 125.28610354223432 661.40849673203 125.28610354223432 C 726.571895424838 125.28610354223432 759.1535947712421 125.28610354223432 824.31699346405 125.28610354223432 C 889.4803921568621 125.28610354223432 987.22549019608 125.28610354223432 987.22549019608 125.28610354223432"
+                            stroke="#ff0064"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+
+                          {/* Series 1: Paytm.com (#bc08e5) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 11.389645776566757 C 9.7745098039216 11.389645776566757 107.51960784313864 73.51498637602178 172.68300653595 77.39782016348772 C 237.846405228758 81.28065395095366 270.42810457516197 81.28065395095366 335.59150326797 81.28065395095366 C 400.754901960782 81.28065395095366 433.336601307188 76.10354223433242 498.5 76.10354223433242 C 563.663398692812 76.10354223433242 596.245098039218 81.28065395095366 661.40849673203 81.28065395095366 C 726.571895424838 81.28065395095366 759.1535947712421 81.28065395095366 824.31699346405 77.39782016348772 C 889.4803921568621 73.51498637602178 987.22549019608 57.98365122615803 987.22549019608 57.98365122615803"
+                            stroke="#bc08e5"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+
+                          {/* Series 2: airtel.in (#64671a) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 125.28610354223432 C 9.7745098039216 125.28610354223432 107.51960784313864 125.28610354223432 172.68300653595 125.28610354223432 C 237.846405228758 125.28610354223432 270.42810457516197 125.28610354223432 335.59150326797 125.28610354223432 C 400.754901960782 125.28610354223432 433.336601307188 125.28610354223432 498.5 125.28610354223432 C 563.663398692812 125.28610354223432 596.245098039218 125.28610354223432 661.40849673203 125.28610354223432 C 726.571895424838 125.28610354223432 759.1535947712421 92.92915531335149 824.31699346405 92.92915531335149 C 889.4803921568621 92.92915531335149 987.22549019608 125.28610354223432 987.22549019608 125.28610354223432"
+                            stroke="#64671a"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+
+                          {/* Series 3: bsnl.co.in (#772786) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 125.28610354223432 C 9.7745098039216 125.28610354223432 107.51960784313864 125.28610354223432 172.68300653595 125.28610354223432 C 237.846405228758 125.28610354223432 270.42810457516197 125.28610354223432 335.59150326797 125.28610354223432 C 400.754901960782 125.28610354223432 433.336601307188 125.28610354223432 498.5 125.28610354223432 C 563.663398692812 125.28610354223432 596.245098039218 125.28610354223432 661.40849673203 125.28610354223432 C 726.571895424838 125.28610354223432 759.1535947712421 125.28610354223432 824.31699346405 125.28610354223432 C 889.4803921568621 125.28610354223432 987.22549019608 125.28610354223432 987.22549019608 125.28610354223432"
+                            stroke="#772786"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+
+                          {/* Series 4: mobikwik.com (#f5a6a4) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 30.803814713896458 C 9.7745098039216 30.803814713896458 107.51960784313864 83.86920980926429 172.68300653595 85.1634877384196 C 237.846405228758 86.45776566757492 270.42810457516197 85.1634877384196 335.59150326797 86.45776566757492 C 400.754901960782 87.75204359673023 433.336601307188 91.63487738419617 498.5 95.51771117166211 C 563.663398692812 99.40054495912807 596.245098039218 99.91825613079 661.40849673203 105.87193460490462 C 726.571895424838 111.82561307901886 759.1535947712421 125.28610354223432 824.31699346405 125.28610354223432 C 889.4803921568621 125.28610354223432 987.22549019608 125.28610354223432 987.22549019608 125.28610354223432"
+                            stroke="#f5a6a4"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+
+                          {/* Series 5: phonepe.com (#4c4492) */}
+                          <path
+                            fill="none"
+                            d="M 9.7745098039216 125.28610354223432 C 9.7745098039216 125.28610354223432 107.51960784313864 125.28610354223432 172.68300653595 125.28610354223432 C 237.846405228758 125.28610354223432 270.42810457516197 125.28610354223432 335.59150326797 125.28610354223432 C 400.754901960782 125.28610354223432 433.336601307188 125.28610354223432 498.5 125.28610354223432 C 563.663398692812 125.28610354223432 596.245098039218 125.28610354223432 661.40849673203 125.28610354223432 C 726.571895424838 125.28610354223432 759.1535947712421 125.28610354223432 824.31699346405 125.28610354223432 C 889.4803921568621 125.28610354223432 987.22549019608 125.28610354223432 987.22549019608 125.28610354223432"
+                            stroke="#4c4492"
+                            strokeWidth="2"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                          />
+                        </g>
+
+                        {/* Y-axis tick labels: 50, 100, 150 */}
+                        <g className="highcharts-axis-labels highcharts-yaxis-labels">
+                          <text x="65" y="85" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="end">50</text>
+                          <text x="65" y="150" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="end">100</text>
+                          <text x="65" y="215" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="end">150</text>
+                        </g>
+
+                        {/* X-axis date labels: Oct 06 ... Oct 11 */}
+                        <g className="highcharts-axis-labels highcharts-xaxis-labels">
+                          <text x="126" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 06</text>
+                          <text x="289" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 07</text>
+                          <text x="452" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 08</text>
+                          <text x="615" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 09</text>
+                          <text x="778" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 10</text>
+                          <text x="941" y="230" style={{ color: "#6b8896", fontSize: "11px", fill: "#6b8896" }} textAnchor="middle">Oct 11</text>
+                        </g>
+                      </svg>
+                    </div>
+
+                    {/* Chart Competitor Legend Bar */}
+                    <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#ff0064] inline-block" />
+                        myjio.com
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#bc08e5] inline-block" />
+                        Paytm.com
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#64671a] inline-block" />
+                        airtel.in
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#772786] inline-block" />
+                        bsnl.co.in
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#f5a6a4] inline-block" />
+                        mobikwik.com
+                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#4c4492] inline-block" />
+                        phonepe.com
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1661,7 +2153,7 @@ export function AddedCompetitorsView({
                       d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
                     />
                   </svg>
-                  <span>🇮🇳 India</span>
+                  <span>{isWorkComposerTest ? "🇮🇳 India" : "🇮🇳 Mumbai, Maharashtra, India"}</span>
                   <span className="text-slate-400">|</span>
                   <span>EN ▾</span>
                 </div>
@@ -2046,7 +2538,7 @@ export function AddedCompetitorsView({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search 🔍"
+                    placeholder={isWorkComposerTest ? "Search 🔍" : "Search"}
                     className="w-48 px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -2488,70 +2980,38 @@ export function AddedCompetitorsView({
                             Competitor Positions
                           </div>
                           <div className="grid grid-cols-2 gap-1.5 text-xs">
-                            {/* Insightful */}
-                            <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50">
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Insightful</span>
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {row.ranks.insightful?.position ?? "—"}
-                                {row.ranks.insightful?.change ? (
-                                  <span className={row.ranks.insightful.change > 0 ? "text-emerald-500 text-[10px] ml-0.5" : "text-red-500 text-[10px] ml-0.5"}>
-                                    {row.ranks.insightful.change > 0 ? `▲${row.ranks.insightful.change}` : `▼${Math.abs(row.ranks.insightful.change)}`}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </div>
-
-                            {/* TimeDoctor */}
-                            <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50">
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">TimeDoctor</span>
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {row.ranks.timedoctor?.position ?? "—"}
-                                {row.ranks.timedoctor?.change ? (
-                                  <span className={row.ranks.timedoctor.change > 0 ? "text-emerald-500 text-[10px] ml-0.5" : "text-red-500 text-[10px] ml-0.5"}>
-                                    {row.ranks.timedoctor.change > 0 ? `▲${row.ranks.timedoctor.change}` : `▼${Math.abs(row.ranks.timedoctor.change)}`}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </div>
-
-                            {/* Hubstaff */}
-                            <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50">
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Hubstaff</span>
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {row.ranks.hubstaff?.position ?? "—"}
-                                {row.ranks.hubstaff?.change ? (
-                                  <span className={row.ranks.hubstaff.change > 0 ? "text-emerald-500 text-[10px] ml-0.5" : "text-red-500 text-[10px] ml-0.5"}>
-                                    {row.ranks.hubstaff.change > 0 ? `▲${row.ranks.hubstaff.change}` : `▼${Math.abs(row.ranks.hubstaff.change)}`}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </div>
-
-                            {/* Clockify */}
-                            <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50">
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Clockify</span>
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {row.ranks.clockify?.position ?? "—"}
-                                {row.ranks.clockify?.change ? (
-                                  <span className={row.ranks.clockify.change > 0 ? "text-emerald-500 text-[10px] ml-0.5" : "text-red-500 text-[10px] ml-0.5"}>
-                                    {row.ranks.clockify.change > 0 ? `▲${row.ranks.clockify.change}` : `▼${Math.abs(row.ranks.clockify.change)}`}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </div>
-
-                            {/* ActivTrak */}
-                            <div className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50 col-span-2 sm:col-span-1">
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">ActivTrak</span>
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {row.ranks.activtrak?.position ?? "—"}
-                                {row.ranks.activtrak?.change ? (
-                                  <span className={row.ranks.activtrak.change > 0 ? "text-emerald-500 text-[10px] ml-0.5" : "text-red-500 text-[10px] ml-0.5"}>
-                                    {row.ranks.activtrak.change > 0 ? `▲${row.ranks.activtrak.change}` : `▼${Math.abs(row.ranks.activtrak.change)}`}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </div>
+                            {/* Dynamic Competitors Grid */}
+                            {activeColumns
+                              .filter((c) => c.category === "competitor" && visibleColumns.includes(c.id))
+                              .map((compCol) => {
+                                const compRank = row.ranks[compCol.id];
+                                return (
+                                  <div
+                                    key={compCol.id}
+                                    className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/50"
+                                  >
+                                    <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-[90px]">
+                                      {compCol.label}
+                                    </span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                                      {compRank?.position ?? "—"}
+                                      {compRank?.change ? (
+                                        <span
+                                          className={
+                                            compRank.change > 0
+                                              ? "text-emerald-500 text-[10px] ml-0.5"
+                                              : "text-red-500 text-[10px] ml-0.5"
+                                          }
+                                        >
+                                          {compRank.change > 0
+                                            ? `▲${compRank.change}`
+                                            : `▼${Math.abs(compRank.change)}`}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                           </div>
                         </div>
 
@@ -2589,113 +3049,91 @@ export function AddedCompetitorsView({
                       .map((colId) => {
                         const isPinned = pinnedColumns.includes(colId);
                         const stickyClass = isPinned ? "sticky left-10 bg-slate-50 dark:bg-slate-800 z-20 shadow-xs" : "";
-                        switch (colId) {
-                          case "keywords":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-left font-bold ${stickyClass}`}>
-                                SEARCH ENGINES &amp; KEYWORDS
-                              </th>
-                            );
-                          case "searchVolume":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-right font-bold ${stickyClass}`}>
-                                SEARCH VOL.
-                              </th>
-                            );
-                          case "insightful":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                <div className="flex items-center justify-center gap-1.5 font-bold">
-                                  <span className="w-3.5 h-3.5 rounded-full bg-purple-600 text-[9px] text-white flex items-center justify-center font-bold">
-                                    I
-                                  </span>
-                                  <span>INSIGHTFUL.IO</span>
-                                </div>
-                              </th>
-                            );
-                          case "timedoctor":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                <div className="flex items-center justify-center gap-1.5 font-bold">
-                                  <span className="w-3.5 h-3.5 rounded bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold">
-                                    ✓
-                                  </span>
-                                  <span>TIMEDOCTOR.CO...</span>
-                                </div>
-                              </th>
-                            );
-                          case "hubstaff":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                <div className="flex items-center justify-center gap-1.5 font-bold">
-                                  <span className="w-3.5 h-3.5 rounded bg-indigo-600 text-[9px] text-white flex items-center justify-center font-bold">
-                                    ◈
-                                  </span>
-                                  <span>HUBSTAFF.COM</span>
-                                </div>
-                              </th>
-                            );
-                          case "clockify":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                <div className="flex items-center justify-center gap-1.5 font-bold">
-                                  <span className="w-3.5 h-3.5 rounded-full bg-sky-500 text-[9px] text-white flex items-center justify-center font-bold">
-                                    ⏱
-                                  </span>
-                                  <span>CLOCKIFY.ME</span>
-                                </div>
-                              </th>
-                            );
-                          case "activtrak":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                <div className="flex items-center justify-center gap-1.5 font-bold">
-                                  <span className="w-3.5 h-3.5 rounded bg-teal-500 text-[9px] text-white flex items-center justify-center font-bold">
-                                    ◆
-                                  </span>
-                                  <span>ACTIVTRAK.COM</span>
-                                </div>
-                              </th>
-                            );
-                          case "group":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                GROUP
-                              </th>
-                            );
-                          case "tags":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                TAGS
-                              </th>
-                            );
-                          case "serpFeatures":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                SERP FEATURES
-                              </th>
-                            );
-                          case "contentScore":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                CONTENT SCORE
-                              </th>
-                            );
-                          case "cpc":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                CPC
-                              </th>
-                            );
-                          case "competition":
-                            return (
-                              <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
-                                COMPETITION
-                              </th>
-                            );
-                          default:
-                            return null;
+                        const colDef = activeColumns.find((c) => c.id === colId);
+
+                        if (colId === "keywords") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-left font-bold ${stickyClass}`}>
+                              SEARCH ENGINES &amp; KEYWORDS
+                            </th>
+                          );
                         }
+                        if (colId === "searchVolume") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-right font-bold ${stickyClass}`}>
+                              SEARCH VOL.
+                            </th>
+                          );
+                        }
+                        if (colId === "group") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              GROUP
+                            </th>
+                          );
+                        }
+                        if (colId === "tags") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              TAGS
+                            </th>
+                          );
+                        }
+                        if (colId === "serpFeatures") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              SERP FEATURES
+                            </th>
+                          );
+                        }
+                        if (colId === "contentScore") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              CONTENT SCORE
+                            </th>
+                          );
+                        }
+                        if (colId === "cpc") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              CPC
+                            </th>
+                          );
+                        }
+                        if (colId === "competition") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center font-bold ${stickyClass}`}>
+                              COMPETITION
+                            </th>
+                          );
+                        }
+
+                        // Competitor Column Header
+                        if (colDef && colDef.category === "competitor") {
+                          return (
+                            <th key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
+                              <div className="flex items-center justify-center gap-1.5 font-bold uppercase">
+                                {colDef.faviconUrl ? (
+                                  <img
+                                    src={colDef.faviconUrl}
+                                    alt=""
+                                    className="w-3.5 h-3.5 object-contain rounded-xs shrink-0"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="w-3.5 h-3.5 rounded-full bg-blue-600 text-[9px] text-white flex items-center justify-center font-bold">
+                                    {colDef.label.charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                                <span className="truncate max-w-[130px]">{colDef.label}</span>
+                              </div>
+                            </th>
+                          );
+                        }
+
+                        return null;
                       })}
                   </tr>
                 </thead>
@@ -2712,9 +3150,14 @@ export function AddedCompetitorsView({
                       return (
                         <tr
                           key={row.id}
-                          className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition border-l-4 ${row.colorStripe} ${
+                          className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition border-l-4 ${
+                            row.colorStripe.startsWith("border-") ? row.colorStripe : ""
+                          } ${
                             isSelected ? "bg-blue-50/40 dark:bg-blue-950/20" : ""
                           }`}
+                          style={{
+                            borderLeftColor: row.colorStripe.startsWith("#") ? row.colorStripe : undefined,
+                          }}
                         >
                           <td className={`py-3 px-4 ${pinnedColumns.length > 0 ? "sticky left-0 bg-white dark:bg-slate-900 z-10" : ""}`}>
                             <input
@@ -2730,217 +3173,125 @@ export function AddedCompetitorsView({
                             .map((colId) => {
                               const isPinned = pinnedColumns.includes(colId);
                               const stickyClass = isPinned ? "sticky left-10 bg-white dark:bg-slate-900 z-10 shadow-xs" : "";
-                              switch (colId) {
-                                case "keywords":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2 ${stickyClass}`}>
-                                      <span className="text-slate-400 text-xs">🌐</span>
-                                      <span>{row.keyword}</span>
-                                    </td>
-                                  );
-                                case "searchVolume":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-300 ${stickyClass}`}>
-                                      {row.searchVolumeDisplay}
-                                    </td>
-                                  );
-                                case "insightful":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.ranks.insightful ? (
-                                        <span
-                                          className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                            row.ranks.insightful.position <= 10
-                                              ? "bg-emerald-500 bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
-                                              : "text-slate-800 dark:text-slate-200 font-semibold"
-                                          }`}
-                                        >
-                                          {row.ranks.insightful.position}
-                                          {row.ranks.insightful.change !== undefined && (
-                                            <span
-                                              className={`text-[10px] font-bold ${
-                                                row.ranks.insightful.change > 0
-                                                  ? "text-emerald-700 dark:text-emerald-300"
-                                                  : "text-rose-600 dark:text-rose-400"
-                                              }`}
-                                            >
-                                              {row.ranks.insightful.change > 0
-                                                ? `▲${row.ranks.insightful.change}`
-                                                : `▼${Math.abs(row.ranks.insightful.change)}`}
-                                            </span>
-                                          )}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "timedoctor":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.ranks.timedoctor ? (
-                                        <span
-                                          className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                            row.ranks.timedoctor.position <= 10
-                                              ? "bg-emerald-500 bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
-                                              : "text-slate-800 dark:text-slate-200 font-semibold"
-                                          }`}
-                                        >
-                                          {row.ranks.timedoctor.position}
-                                          {row.ranks.timedoctor.change !== undefined && (
-                                            <span
-                                              className={`text-[10px] font-bold ${
-                                                row.ranks.timedoctor.change > 0
-                                                  ? "text-emerald-700 dark:text-emerald-300"
-                                                  : "text-rose-600 dark:text-rose-400"
-                                              }`}
-                                            >
-                                              {row.ranks.timedoctor.change > 0
-                                                ? `▲${row.ranks.timedoctor.change}`
-                                                : `▼${Math.abs(row.ranks.timedoctor.change)}`}
-                                            </span>
-                                          )}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "hubstaff":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.ranks.hubstaff ? (
-                                        <span
-                                          className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                            row.ranks.hubstaff.position <= 10
-                                              ? "bg-emerald-500 bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
-                                              : "text-slate-800 dark:text-slate-200 font-semibold"
-                                          }`}
-                                        >
-                                          {row.ranks.hubstaff.position}
-                                          {row.ranks.hubstaff.change !== undefined && (
-                                            <span
-                                              className={`text-[10px] font-bold ${
-                                                row.ranks.hubstaff.change > 0
-                                                  ? "text-emerald-700 dark:text-emerald-300"
-                                                  : "text-rose-600 dark:text-rose-400"
-                                              }`}
-                                            >
-                                              {row.ranks.hubstaff.change > 0
-                                                ? `▲${row.ranks.hubstaff.change}`
-                                                : `▼${Math.abs(row.ranks.hubstaff.change)}`}
-                                            </span>
-                                          )}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "clockify":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.ranks.clockify ? (
-                                        <span
-                                          className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                            row.ranks.clockify.position <= 10
-                                              ? "bg-emerald-500 bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
-                                              : "text-slate-800 dark:text-slate-200 font-semibold"
-                                          }`}
-                                        >
-                                          {row.ranks.clockify.position}
-                                          {row.ranks.clockify.change !== undefined && (
-                                            <span
-                                              className={`text-[10px] font-bold ${
-                                                row.ranks.clockify.change > 0
-                                                  ? "text-emerald-700 dark:text-emerald-300"
-                                                  : "text-rose-600 dark:text-rose-400"
-                                              }`}
-                                            >
-                                              {row.ranks.clockify.change > 0
-                                                ? `▲${row.ranks.clockify.change}`
-                                                : `▼${Math.abs(row.ranks.clockify.change)}`}
-                                            </span>
-                                          )}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "activtrak":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.ranks.activtrak ? (
-                                        <span
-                                          className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                            row.ranks.activtrak.position <= 10
-                                              ? "bg-emerald-500 bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
-                                              : "text-slate-800 dark:text-slate-200 font-semibold"
-                                          }`}
-                                        >
-                                          {row.ranks.activtrak.position}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "group":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.group ? (
-                                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                          {row.group}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "tags":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
-                                      {row.tags && row.tags.length > 0 ? (
-                                        <div className="flex flex-wrap gap-1 justify-center max-w-[140px] mx-auto">
-                                          {row.tags.map((t) => (
-                                            <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                                              {t}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <span className="text-slate-400">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                case "serpFeatures":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center text-slate-400 ${stickyClass}`}>
-                                      🔍 ⭐
-                                    </td>
-                                  );
-                                case "contentScore":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center font-bold text-emerald-600 ${stickyClass}`}>
-                                      {row.contentScore ?? 85}
-                                    </td>
-                                  );
-                                case "cpc":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center text-slate-600 dark:text-slate-400 font-mono ${stickyClass}`}>
-                                      {row.cpc ?? "$1.20"}
-                                    </td>
-                                  );
-                                case "competition":
-                                  return (
-                                    <td key={colId} className={`py-3 px-4 text-center text-slate-600 dark:text-slate-400 font-mono ${stickyClass}`}>
-                                      {row.competition ?? 0.45}
-                                    </td>
-                                  );
-                                default:
-                                  return null;
+                              const colDef = activeColumns.find((c) => c.id === colId);
+
+                              if (colId === "keywords") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2 ${stickyClass}`}>
+                                    {row.colorStripe && (
+                                      <span
+                                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                                        style={{
+                                          backgroundColor: row.colorStripe.startsWith("#") ? row.colorStripe : undefined,
+                                        }}
+                                      />
+                                    )}
+                                    <span className="cursor-pointer hover:text-blue-600 transition-colors">{row.keyword}</span>
+                                  </td>
+                                );
                               }
+                              if (colId === "searchVolume") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-300 ${stickyClass}`}>
+                                    {row.searchVolumeDisplay}
+                                  </td>
+                                );
+                              }
+                              if (colId === "group") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
+                                    {row.group ? (
+                                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                        {row.group}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-400">—</span>
+                                    )}
+                                  </td>
+                                );
+                              }
+                              if (colId === "tags") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
+                                    {row.tags && row.tags.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1 justify-center max-w-[140px] mx-auto">
+                                        {row.tags.map((t) => (
+                                          <span key={t} className="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                                            {t}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-slate-400">—</span>
+                                    )}
+                                  </td>
+                                );
+                              }
+                              if (colId === "serpFeatures") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center text-slate-400 ${stickyClass}`}>
+                                    🔍 ⭐
+                                  </td>
+                                );
+                              }
+                              if (colId === "contentScore") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center font-bold text-emerald-600 ${stickyClass}`}>
+                                    {row.contentScore ?? 85}
+                                  </td>
+                                );
+                              }
+                              if (colId === "cpc") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center text-slate-600 dark:text-slate-400 font-mono ${stickyClass}`}>
+                                    {row.cpc ?? "$1.20"}
+                                  </td>
+                                );
+                              }
+                              if (colId === "competition") {
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center text-slate-600 dark:text-slate-400 font-mono ${stickyClass}`}>
+                                    {row.competition ?? 0.45}
+                                  </td>
+                                );
+                              }
+
+                              // Competitor Rank Cell
+                              if (colDef && colDef.category === "competitor") {
+                                const rankItem = row.ranks[colId];
+                                return (
+                                  <td key={colId} className={`py-3 px-4 text-center ${stickyClass}`}>
+                                    {rankItem ? (
+                                      <span
+                                        className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
+                                          rankItem.position <= 10
+                                            ? "bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
+                                            : "text-slate-800 dark:text-slate-200 font-semibold"
+                                        }`}
+                                      >
+                                        {rankItem.position}
+                                        {rankItem.change !== undefined && (
+                                          <span
+                                            className={`text-[10px] font-bold ${
+                                              rankItem.change > 0
+                                                ? "text-emerald-700 dark:text-emerald-300"
+                                                : "text-rose-600 dark:text-rose-400"
+                                            }`}
+                                          >
+                                            {rankItem.change > 0
+                                              ? `▲${rankItem.change}`
+                                              : `▼${Math.abs(rankItem.change)}`}
+                                          </span>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-400 font-semibold">-</span>
+                                    )}
+                                  </td>
+                                );
+                              }
+
+                              return null;
                             })}
                         </tr>
                       );
