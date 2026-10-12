@@ -39,4 +39,10 @@ describe('Captcha & Visual Vehicle Challenge Suite', () => {
     expect(result.success).toBe(false);
     expect(result['error-codes']).toContain('missing-input-response');
   });
+
+  it('accepts user testing email domains including bitproy.com', async () => {
+    const { validateRealEmail } = await import('../src/lib/validation/email-validator');
+    const result = validateRealEmail('wobos18531@bitproy.com');
+    expect(result.valid).toBe(true);
+  });
 });
