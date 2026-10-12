@@ -990,7 +990,8 @@ export function AnalyticsWorkspace({ projectId, initialTab = "overview" }: Analy
           const matchesQuery = item.keyword.toLowerCase().includes(snippetKeywordSearch.toLowerCase().trim());
           if (!matchesQuery) return false;
           if (snippetGroupFilter === "Brand Terms") {
-            return item.keyword.includes("composer");
+            const brandTerm = (project?.name || project?.primaryDomain || "composer").toLowerCase();
+            return item.keyword.toLowerCase().includes(brandTerm) || item.keyword.toLowerCase().includes("composer");
           }
           if (snippetGroupFilter === "Tracking Tools") {
             return item.keyword.includes("track") || item.keyword.includes("idle");
@@ -1595,13 +1596,13 @@ export function AnalyticsWorkspace({ projectId, initialTab = "overview" }: Analy
                 {/* Favicon & Domain Breadcrumb */}
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2.5 overflow-hidden">
-                    {/* Favicon with blue W WorkComposer logo */}
+                    {/* Favicon with dynamic domain initial logo */}
                     <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[11px] shadow-xs flex-shrink-0">
-                      W
+                      {(project?.name || project?.primaryDomain || "W").charAt(0).toUpperCase()}
                     </div>
                     <div className="truncate text-xs">
                       <span className="font-semibold text-white block truncate leading-tight">
-                        WorkComposer
+                        {project?.name || "Website"}
                       </span>
                       <span className="text-slate-400 text-[11px] block truncate font-mono">
                         {activeSnippetKeyword.url}

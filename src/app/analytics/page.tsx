@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -117,56 +117,36 @@ interface KeywordSnippetItem {
   group: 'General' | 'Brand' | 'Features';
 }
 
-const INITIAL_KEYWORD_SNIPPETS: KeywordSnippetItem[] = [
-  {
-    id: 'k-1',
-    keyword: 'work composer',
-    searchVolume: 1200,
-    currentRank: 1,
-    url: 'https://www.workcomposer.com/',
-    title: 'WorkComposer - Employee Monitoring & Time Tracking Software',
-    snippet: 'WorkComposer helps modern remote and hybrid teams track work hours, monitor productivity, and capture real-time activity metrics effortlessly.',
-    group: 'Brand',
-  },
-  {
-    id: 'k-2',
-    keyword: 'employee tracking software',
-    searchVolume: 8100,
-    currentRank: 4,
-    url: 'https://www.workcomposer.com/employee-monitoring',
-    title: 'Employee Tracking & Monitoring Software for Teams | WorkComposer',
-    snippet: 'Automatic screenshots, keystroke activity, application usage, and stealth time tracking with WorkComposer.',
-    group: 'General',
-  },
-  {
-    id: 'k-3',
-    keyword: 'time tracking software',
-    searchVolume: 14800,
-    currentRank: 7,
-    url: 'https://www.workcomposer.com/time-tracker',
-    title: 'Time Tracking Software with Screenshots | WorkComposer',
-    snippet: 'Track employee billable hours with automated timesheets, GPS tracking, and payroll export capabilities.',
-    group: 'General',
-  },
-  {
-    id: 'k-4',
-    keyword: 'remote team management',
-    searchVolume: 2400,
-    currentRank: 3,
-    url: 'https://www.workcomposer.com/features/remote-teams',
-    title: 'Remote Team Management Tools | WorkComposer',
-    snippet: 'Empower hybrid and remote distributed workforces with automated transparency, productivity analytics and payroll.',
-    group: 'Features',
-  },
-];
-
 function AnalyticsPageContent() {
-  const { activeProject } = useApp();
-  const domain = activeProject?.domain || 'zohosocial.com';
-  const cleanDomain = (activeProject?.domain || activeProject?.name || 'zohosocial.com')
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .replace(/\/$/, '') || 'zohosocial.com';
+  const { activeProject, projects } = useApp();
+
+  const targetProject = useMemo(() => {
+    if (activeProject) return activeProject;
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem('se_ranking_active_project_id');
+      if (savedId && projects.length > 0) {
+        const found = projects.find((p) => p.id === savedId);
+        if (found) return found;
+      }
+    }
+    return projects[0] || null;
+  }, [activeProject, projects]);
+
+  const targetDomain = targetProject?.domain || targetProject?.websiteUrl || targetProject?.name || 'amazon.in';
+  const cleanDomain = useMemo(() => {
+    return (targetDomain || 'amazon.in')
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .replace(/\/.*$/, '')
+      .trim() || 'amazon.in';
+  }, [targetDomain]);
+
+  const domain = targetDomain.startsWith('http') ? targetDomain : `https://${cleanDomain}`;
+  const displayBrand = targetProject?.name && !targetProject.name.includes('.')
+    ? targetProject.name
+    : cleanDomain.split('.')[0] || 'Amazon';
+  const capitalizedBrand = displayBrand.charAt(0).toUpperCase() + displayBrand.slice(1);
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -182,6 +162,7 @@ function AnalyticsPageContent() {
   const [googleChooserService, setGoogleChooserService] = useState('Google Analytics');
   const [connectedAccountEmail, setConnectedAccountEmail] = useState('');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [projectKeywords, setProjectKeywords] = useState<any[]>([]);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [notesCount, setNotesCount] = useState(49);
@@ -203,7 +184,7 @@ function AnalyticsPageContent() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('se_ranking_connected_account', account.email);
       localStorage.setItem('se_ranking_connected_user', account.name);
-      const projId = activeProject?.id || 'default';
+      const projId = targetProject?.id || 'default';
       const raw = localStorage.getItem(`se_ranking_connected_services_${projId}`);
       const existing = raw ? JSON.parse(raw) : {};
       existing['Google Analytics'] = true;
@@ -214,25 +195,37 @@ function AnalyticsPageContent() {
   };
 
   useEffect(() => {
-    async function loadProjectAnalytics() {
-      if (!activeProject?.id) return;
+    async function loadProjectData() {
+      const projId = targetProject?.id;
+      if (!projId) return;
       try {
         setIsLoadingAnalytics(true);
-        const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/analytics`);
-        if (res.ok) {
-          const data = await res.json();
+        const [analyticsRes, overviewRes] = await Promise.all([
+          fetch(`/api/projects/${encodeURIComponent(projId)}/analytics`),
+          fetch(`/api/projects/${encodeURIComponent(projId)}/overview`),
+        ]);
+
+        if (analyticsRes.ok) {
+          const data = await analyticsRes.json();
           setAnalyticsData(data);
           setIsOnboardingCompleted(true);
           setIsGAConnected(true);
         }
+
+        if (overviewRes.ok) {
+          const ovData = await overviewRes.json();
+          if (ovData?.topKeywords && Array.isArray(ovData.topKeywords) && ovData.topKeywords.length > 0) {
+            setProjectKeywords(ovData.topKeywords);
+          }
+        }
       } catch (err) {
-        console.error('Failed to load analytics:', err);
+        console.error('Failed to load analytics or project data:', err);
       } finally {
         setIsLoadingAnalytics(false);
       }
     }
-    loadProjectAnalytics();
-  }, [activeProject?.id]);
+    loadProjectData();
+  }, [targetProject?.id]);
 
   useEffect(() => {
     const checkHash = () => {
@@ -315,11 +308,63 @@ function AnalyticsPageContent() {
   const [hasPotentialKeywords, setHasPotentialKeywords] = useState(true);
 
   // Form states
-  const [gaProperty, setGaProperty] = useState('workcomposer.com (GA4-48291054)');
-  const [gscSite, setGscSite] = useState('sc-domain:workcomposer.com');
-  const [matomoUrl, setMatomoUrl] = useState('https://analytics.workcomposer.com');
+  const [gaProperty, setGaProperty] = useState(`${cleanDomain} (GA4-48291054)`);
+  const [gscSite, setGscSite] = useState(`sc-domain:${cleanDomain}`);
+  const [matomoUrl, setMatomoUrl] = useState(`https://analytics.${cleanDomain}`);
   const [matomoSiteId, setMatomoSiteId] = useState('1');
   const [matomoToken, setMatomoToken] = useState('');
+
+  useEffect(() => {
+    if (cleanDomain) {
+      setGaProperty(`${cleanDomain} (GA4-${Math.abs(cleanDomain.split('').reduce((acc, c) => acc + c.charCodeAt(0), 10000000))})`);
+      setGscSite(`sc-domain:${cleanDomain}`);
+      setMatomoUrl(`https://analytics.${cleanDomain}`);
+    }
+  }, [cleanDomain]);
+
+  // Dynamic Google Search Console Queries based on active project
+  const topGoogleQueries = useMemo(() => {
+    if (projectKeywords.length > 0) {
+      return projectKeywords.slice(0, 6).map((k: any, idx: number) => {
+        const kwText = k.keyword || k.keywordText || `${capitalizedBrand} keyword ${idx + 1}`;
+        const vol = k.searchVolume || Math.max(800, 15000 - idx * 2400);
+        const rank = k.currentPosition || (idx + 1.2);
+        const clicks = Math.round(vol * (Math.max(1, 12 - Number(rank)) * 0.035 + 0.08));
+        const imp = Math.round(vol * 2.2);
+        const ctr = imp > 0 ? ((clicks / imp) * 100).toFixed(1) + '%' : '6.4%';
+        return {
+          query: kwText,
+          clicks: clicks.toLocaleString(),
+          imp: imp.toLocaleString(),
+          ctr,
+          pos: Number(rank).toFixed(1),
+        };
+      });
+    }
+
+    const isEcom = /amazon|flipkart|myntra|shop|store|mart|ebay|walmart|retail|mall|cart/i.test(cleanDomain);
+    const brandLower = displayBrand.toLowerCase();
+
+    if (isEcom) {
+      return [
+        { query: `${brandLower} online shopping`, clicks: '4,892', imp: '38,400', ctr: '12.7%', pos: '1.2' },
+        { query: `${brandLower} deals of the day`, clicks: '3,120', imp: '26,800', ctr: '11.6%', pos: '1.8' },
+        { query: 'best price online electronics store', clicks: '2,450', imp: '42,100', ctr: '5.8%', pos: '3.4' },
+        { query: `${brandLower} sale discount offers`, clicks: '1,890', imp: '28,900', ctr: '6.5%', pos: '2.6' },
+        { query: 'buy clothes and mobiles online', clicks: '980', imp: '19,300', ctr: '5.1%', pos: '4.8' },
+        { query: `${brandLower} customer care delivery`, clicks: '740', imp: '12,500', ctr: '5.9%', pos: '2.1' },
+      ];
+    }
+
+    return [
+      { query: `${brandLower}`, clicks: '4,892', imp: '22,400', ctr: '21.8%', pos: '1.2' },
+      { query: `${brandLower} official website`, clicks: '2,940', imp: '18,100', ctr: '16.2%', pos: '1.4' },
+      { query: `${brandLower} online platform`, clicks: '1,830', imp: '15,900', ctr: '11.5%', pos: '2.1' },
+      { query: `best ${brandLower} reviews`, clicks: '1,220', imp: '19,300', ctr: '6.3%', pos: '3.8' },
+      { query: `${brandLower} pricing and plans`, clicks: '840', imp: '14,500', ctr: '5.8%', pos: '4.2' },
+      { query: `${brandLower} customer support contact`, clicks: '610', imp: '9,800', ctr: '6.2%', pos: '2.8' },
+    ];
+  }, [projectKeywords, cleanDomain, displayBrand, capitalizedBrand]);
 
   const showToast = (msg: string) => {
     setNotification(msg);
@@ -895,7 +940,7 @@ function AnalyticsPageContent() {
         {tabParam === 'snippets' && (
           <div className="px-6 py-5 max-w-[1400px] mx-auto space-y-4 animate-in fade-in duration-200">
             <SnippetsAnalyticsView
-              activeProject={activeProject}
+              activeProject={targetProject}
               onExport={() => showToast('Exporting Snippets intelligence report...')}
             />
           </div>
@@ -1035,22 +1080,36 @@ function AnalyticsPageContent() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
                     <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">TOTAL CLICKS</div>
-                    <div className="text-2xl font-black text-[#7C3AED] mt-1">14.8K</div>
+                    <div className="text-2xl font-black text-[#7C3AED] mt-1">
+                      {analyticsData?.summary?.totalClicks
+                        ? `${(analyticsData.summary.totalClicks / 1000).toFixed(1)}K`
+                        : '14.8K'}
+                    </div>
                     <div className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +12.4% vs last period</div>
                   </div>
                   <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
                     <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">TOTAL IMPRESSIONS</div>
-                    <div className="text-2xl font-black text-purple-600 mt-1">382.4K</div>
+                    <div className="text-2xl font-black text-purple-600 mt-1">
+                      {analyticsData?.summary?.totalImpressions
+                        ? `${(analyticsData.summary.totalImpressions / 1000).toFixed(1)}K`
+                        : '382.4K'}
+                    </div>
                     <div className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +8.7% vs last period</div>
                   </div>
                   <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
                     <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">AVERAGE CTR</div>
-                    <div className="text-2xl font-black text-emerald-600 mt-1">3.9%</div>
+                    <div className="text-2xl font-black text-emerald-600 mt-1">
+                      {analyticsData?.summary?.avgCtr || '3.9%'}
+                    </div>
                     <div className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +0.4% vs last period</div>
                   </div>
                   <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-2xs">
                     <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">AVERAGE POSITION</div>
-                    <div className="text-2xl font-black text-amber-600 mt-1">14.2</div>
+                    <div className="text-2xl font-black text-amber-600 mt-1">
+                      {analyticsData?.summary?.avgPosition
+                        ? Number(analyticsData.summary.avgPosition).toFixed(1)
+                        : '14.2'}
+                    </div>
                     <div className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +2.1 pos vs last period</div>
                   </div>
                 </div>
@@ -1090,8 +1149,9 @@ function AnalyticsPageContent() {
 
                 {/* Top Queries Table */}
                 <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden">
-                  <div className="px-5 py-3 border-b border-gray-200 font-bold text-xs text-gray-800 uppercase tracking-wider">
-                    Top Google Search Queries
+                  <div className="px-5 py-3 border-b border-gray-200 font-bold text-xs text-gray-800 uppercase tracking-wider flex items-center justify-between">
+                    <span>Top Google Search Queries</span>
+                    <span className="text-[11px] text-gray-400 lowercase font-normal">for {cleanDomain}</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
@@ -1105,13 +1165,7 @@ function AnalyticsPageContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 text-gray-700">
-                        {[
-                          { query: 'work composer', clicks: '4,892', imp: '18,400', ctr: '26.6%', pos: '1.2' },
-                          { query: 'employee tracking software', clicks: '2,940', imp: '42,100', ctr: '7.0%', pos: '4.1' },
-                          { query: 'time tracking software with screenshots', clicks: '1,830', imp: '28,900', ctr: '6.3%', pos: '3.8' },
-                          { query: 'remote work monitoring', clicks: '920', imp: '19,300', ctr: '4.8%', pos: '6.4' },
-                          { query: 'stealth employee tracker', clicks: '740', imp: '12,500', ctr: '5.9%', pos: '5.2' },
-                        ].map((row, idx) => (
+                        {topGoogleQueries.map((row, idx) => (
                           <tr key={idx} className="hover:bg-gray-50/70 transition-colors">
                             <td className="py-3 px-4 font-semibold text-gray-900">{row.query}</td>
                             <td className="py-3 px-4 text-right font-mono text-[#7C3AED] font-bold">{row.clicks}</td>
@@ -1267,7 +1321,7 @@ function AnalyticsPageContent() {
             </p>
             <textarea
               rows={5}
-              placeholder={`work composer\nemployee tracking software\ntime tracking software\nremote team management`}
+              placeholder={`${displayBrand.toLowerCase()}\n${displayBrand.toLowerCase()} online shopping\n${displayBrand.toLowerCase()} deals\nbest online offers`}
               value={newKeywordsInput}
               onChange={(e) => setNewKeywordsInput(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg text-xs font-mono focus:outline-hidden focus:border-[#2BB673]"
@@ -1364,9 +1418,9 @@ function AnalyticsPageContent() {
                   onChange={(e) => setGaProperty(e.target.value)}
                   className="w-full p-2.5 border border-gray-300 rounded-lg text-xs font-medium focus:outline-hidden focus:border-[#7C3AED]"
                 >
-                  <option value="workcomposer.com (GA4-48291054)">workcomposer.com (GA4-48291054)</option>
-                  <option value="app.workcomposer.com (GA4-59201948)">app.workcomposer.com (GA4-59201948)</option>
-                  <option value="api.workcomposer.com (GA4-10294851)">api.workcomposer.com (GA4-10294851)</option>
+                  <option value={`${cleanDomain} (GA4-48291054)`}>{cleanDomain} (GA4-48291054)</option>
+                  <option value={`app.${cleanDomain} (GA4-59201948)`}>app.{cleanDomain} (GA4-59201948)</option>
+                  <option value={`api.${cleanDomain} (GA4-10294851)`}>api.{cleanDomain} (GA4-10294851)</option>
                 </select>
               </div>
 
@@ -1432,9 +1486,9 @@ function AnalyticsPageContent() {
                   onChange={(e) => setGscSite(e.target.value)}
                   className="w-full p-2.5 border border-gray-300 rounded-lg text-xs font-medium focus:outline-hidden focus:border-[#7C3AED]"
                 >
-                  <option value="sc-domain:workcomposer.com">sc-domain:workcomposer.com</option>
-                  <option value="https://www.workcomposer.com/">https://www.workcomposer.com/</option>
-                  <option value="https://workcomposer.com/">https://workcomposer.com/</option>
+                  <option value={`sc-domain:${cleanDomain}`}>sc-domain:{cleanDomain}</option>
+                  <option value={`https://www.${cleanDomain}/`}>https://www.{cleanDomain}/</option>
+                  <option value={`https://${cleanDomain}/`}>https://{cleanDomain}/</option>
                 </select>
               </div>
 

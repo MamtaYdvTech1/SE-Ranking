@@ -67,13 +67,22 @@ export async function GET(
       { label: 'Oct 09', day: 'Oct 09', sessions: 1820, users: 1310, clicks: 1470, impressions: 29800 },
     ];
 
-    const defaultLandingPages = [
-      { url: `https://${domain}/`, page: '/', sessions: 16420, share: '38.3%', bounceRate: '32.4%', avgDuration: '3m 12s' },
-      { url: `https://${domain}/features`, page: '/features', sessions: 8950, share: '20.9%', bounceRate: '41.2%', avgDuration: '2m 45s' },
-      { url: `https://${domain}/pricing`, page: '/pricing', sessions: 6120, share: '14.3%', bounceRate: '28.5%', avgDuration: '3m 48s' },
-      { url: `https://${domain}/blog/seo-guide`, page: '/blog/seo-guide', sessions: 4890, share: '11.4%', bounceRate: '45.1%', avgDuration: '2m 18s' },
-      { url: `https://${domain}/integrations`, page: '/integrations', sessions: 3470, share: '8.1%', bounceRate: '36.8%', avgDuration: '2m 30s' },
-    ];
+    const isEcom = /amazon|flipkart|myntra|shop|store|mart|ebay|walmart|retail|mall/i.test(domain);
+    const defaultLandingPages = isEcom
+      ? [
+          { url: `https://${domain}/`, page: '/', sessions: 28420, share: '42.3%', bounceRate: '28.4%', avgDuration: '4m 12s' },
+          { url: `https://${domain}/deals`, page: '/deals', sessions: 14950, share: '22.1%', bounceRate: '31.2%', avgDuration: '3m 45s' },
+          { url: `https://${domain}/electronics`, page: '/electronics', sessions: 9120, share: '13.5%', bounceRate: '26.5%', avgDuration: '4m 18s' },
+          { url: `https://${domain}/best-sellers`, page: '/best-sellers', sessions: 6890, share: '10.2%', bounceRate: '32.1%', avgDuration: '3m 18s' },
+          { url: `https://${domain}/customer-service`, page: '/customer-service', sessions: 4470, share: '6.6%', bounceRate: '41.8%', avgDuration: '2m 10s' },
+        ]
+      : [
+          { url: `https://${domain}/`, page: '/', sessions: 16420, share: '38.3%', bounceRate: '32.4%', avgDuration: '3m 12s' },
+          { url: `https://${domain}/features`, page: '/features', sessions: 8950, share: '20.9%', bounceRate: '41.2%', avgDuration: '2m 45s' },
+          { url: `https://${domain}/pricing`, page: '/pricing', sessions: 6120, share: '14.3%', bounceRate: '28.5%', avgDuration: '3m 48s' },
+          { url: `https://${domain}/blog/guide`, page: '/blog/guide', sessions: 4890, share: '11.4%', bounceRate: '45.1%', avgDuration: '2m 18s' },
+          { url: `https://${domain}/integrations`, page: '/integrations', sessions: 3470, share: '8.1%', bounceRate: '36.8%', avgDuration: '2m 30s' },
+        ];
 
     const defaultChannels = [
       { channel: 'Organic Search', percentage: 68.4, sessions: 29310, color: '#0B69FF' },
