@@ -49,8 +49,11 @@ export async function POST(req: NextRequest) {
     if (captchaToken) {
       const captchaResult = await verifyRecaptcha(captchaToken);
       if (!captchaResult.success) {
+        const errorMsg = captchaResult['error-codes']?.includes('connection-error')
+          ? 'Google reCAPTCHA verification timed out. Please check your internet connection and try again.'
+          : 'Google reCAPTCHA verification failed. Please complete the captcha again.';
         return NextResponse.json(
-          { error: 'Google reCAPTCHA verification failed. Please complete the captcha.' },
+          { error: errorMsg },
           { status: 400 }
         );
       }

@@ -173,8 +173,16 @@ export function GoogleRecaptcha({
       }
     }
 
+    const safetyTimer = setTimeout(() => {
+      if (isMounted && !isRenderedRef.current && !window.grecaptcha?.render) {
+        setStatus('error');
+        setErrorMessage('Google reCAPTCHA service is taking too long to load. Check your internet connection or ad-blocker.');
+      }
+    }, 8000);
+
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimer);
     };
   }, [siteKey, renderWidget]);
 

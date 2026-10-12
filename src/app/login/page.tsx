@@ -44,6 +44,9 @@ export default function LoginPage() {
       if (params.get('registered') === 'true') {
         setRegistrationNotice(true);
       }
+      if (params.get('google') === 'direct') {
+        setIsGoogleModalOpen(true);
+      }
       const saved = localStorage.getItem('seranking_lang');
       if (saved && AUTH_LANGUAGES.some((l) => l.code === saved)) {
         setSelectedLang(saved);
@@ -146,8 +149,7 @@ export default function LoginPage() {
   const handleSocialLogin = (provider: string) => {
     setError(null);
     if (provider === 'Google') {
-      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
-      window.location.href = `/api/auth/google?state=${encodeURIComponent(redirectUrl)}`;
+      setIsGoogleModalOpen(true);
       return;
     }
     setError(`${provider} sign-in is currently unavailable. Please sign in with your email or Google account.`);
@@ -262,7 +264,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 id="login-submit-btn"
-                disabled={isLoading || !email.trim() || !password || !captchaToken}
+                disabled={isLoading}
                 className="w-full h-11 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold rounded-md text-sm transition-all flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md hover:shadow-purple-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
               >
                 {isLoading ? (

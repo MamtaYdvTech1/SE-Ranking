@@ -168,8 +168,7 @@ export default function SignUpPage() {
   };
 
   const handleGoogleSignUp = () => {
-    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
-    window.location.href = `/api/auth/google?state=${encodeURIComponent(redirectUrl)}`;
+    setIsGoogleModalOpen(true);
   };
 
   const handleGoogleAccountSelected = async (account: GoogleAccountProfile) => {
@@ -378,7 +377,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               id="signup-submit-btn"
-              disabled={isLoading || !email.trim() || !password || !confirmPassword || !firstName.trim() || !lastName.trim() || !captchaToken}
+              disabled={isLoading}
               className="w-full h-12 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold rounded-lg text-sm transition-all flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md hover:shadow-purple-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99] mt-2"
             >
               {isLoading ? (

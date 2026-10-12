@@ -36,8 +36,11 @@ export async function POST(req: NextRequest) {
       }
 
       if (!captchaResult.success) {
+        const errorMsg = captchaResult['error-codes']?.includes('connection-error')
+          ? 'Security verification timed out. Please check your internet connection and try again.'
+          : 'Security verification failed. Please complete the captcha again.';
         return NextResponse.json(
-          { error: 'Security verification failed. Please complete the captcha again.' },
+          { error: errorMsg },
           { status: 400 }
         );
       }

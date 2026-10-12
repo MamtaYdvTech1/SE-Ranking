@@ -985,7 +985,12 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
         onCreated(createdProject);
       }
       onClose();
-      refreshProjects().catch(() => {});
+      try {
+        const refreshPromise = refreshProjects?.();
+        if (refreshPromise && typeof refreshPromise.catch === 'function') {
+          refreshPromise.catch(() => {});
+        }
+      } catch {}
       router.push('/project-overview');
     } catch (err: any) {
       setError(err?.message || 'Network error occurred while creating project.');
