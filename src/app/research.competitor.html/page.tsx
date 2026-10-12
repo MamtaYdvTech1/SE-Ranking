@@ -29,7 +29,8 @@ export default function CompetitiveResearchReportPage() {
   const { activeProject } = useApp();
   const displayDomain = activeProject?.domain
     ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    : 'workcomposer.com';
+    : 'amazon.in';
+  const displayBrand = activeProject?.brandName || activeProject?.name || (displayDomain.split('.')[0].charAt(0).toUpperCase() + displayDomain.split('.')[0].slice(1));
 
   const [activeTab, setActiveTab] = useState<'overview' | 'keywords' | 'rankchanges' | 'competitors' | 'country' | 'pages' | 'subdomains' | 'compare'>('overview');
   const [searchScope, setSearchScope] = useState('base_domain');
@@ -485,11 +486,11 @@ export default function CompetitiveResearchReportPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {[
-                  { title: 'WorkComposer - Time Tracking and Screenshot Monitoring ...', url: `https://www.${displayDomain}/`, share: '51.43%', traffic: 233 },
-                  { title: 'Download WorkComposer - Time Tracking Software', url: `https://www.${displayDomain}/download`, share: '19.65%', traffic: 89 },
-                  { title: 'Download WorkComposer Windows / macOS Client', url: `https://www.${displayDomain}/download/`, share: '12.36%', traffic: 56 },
-                  { title: 'How It Works - ▷ WorkComposer Time Tracking Software', url: `https://www.${displayDomain}/how-it-works/`, share: '2.21%', traffic: 10 },
-                  { title: 'WorkComposer Pricing — Time Tracking from $3.99/User', url: `https://www.${displayDomain}/pricing`, share: '1.99%', traffic: 9 },
+                  { title: `${displayBrand} - Official Website Online`, url: `https://www.${displayDomain}/`, share: '51.43%', traffic: 233 },
+                  { title: `Top Deals and Products - ${displayBrand}`, url: `https://www.${displayDomain}/deals`, share: '19.65%', traffic: 89 },
+                  { title: `${displayBrand} Store & Categories`, url: `https://www.${displayDomain}/products`, share: '12.36%', traffic: 56 },
+                  { title: `Features & Solutions - ${displayBrand}`, url: `https://www.${displayDomain}/solutions`, share: '2.21%', traffic: 10 },
+                  { title: `${displayBrand} Pricing & Plans`, url: `https://www.${displayDomain}/pricing`, share: '1.99%', traffic: 9 },
                 ].map((p, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 transition-colors">
                     <td className="py-2.5 px-3">
@@ -513,31 +514,31 @@ export default function CompetitiveResearchReportPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
               <div className="text-xs font-bold text-[#0B69FF] hover:underline cursor-pointer">
-                WorkComposer Time Tracking | Employee Time Tracking Tool
+                {displayBrand} Official Store | Verified Online Shopping
               </div>
-              <div className="text-[11px] text-emerald-700 font-medium">https://www.workcomposer.com/</div>
+              <div className="text-[11px] text-emerald-700 font-medium">https://www.{displayDomain}/</div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Get clean reports for payroll, productivity, and management reviews. Time tracking with optional screenshots and web/app usage insights for teams.
+                Explore official deals, top rated selections, and comprehensive services on {displayBrand}. Verified official portal.
               </p>
             </div>
 
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
               <div className="text-xs font-bold text-[#0B69FF] hover:underline cursor-pointer">
-                Reduce Misreported Hours
+                Top Rated Deals & Best Sellers on {displayBrand}
               </div>
-              <div className="text-[11px] text-emerald-700 font-medium">https://www.workcomposer.com/features</div>
+              <div className="text-[11px] text-emerald-700 font-medium">https://www.{displayDomain}/deals</div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Web & App Usage Reports — Set permissions so only the right people can view data and screenshots.
+                Exclusive seasonal offers and everyday savings. Fast shipping and dependable customer service with {displayBrand}.
               </p>
             </div>
 
             <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
               <div className="text-xs font-bold text-[#0B69FF] hover:underline cursor-pointer">
-                Time Tracking with Screenshots
+                Official {displayBrand} App & Mobile Services
               </div>
-              <div className="text-[11px] text-emerald-700 font-medium">https://www.workcomposer.com/download</div>
+              <div className="text-[11px] text-emerald-700 font-medium">https://www.{displayDomain}/app</div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Employee Time Tracking — WorkComposer - Time Tracking And Screenshot Monitoring Software. Track Work Hours With Real-Time Monitoring.
+                Seamless experience on web, Android, and iOS. Track orders and manage your account in real time.
               </p>
             </div>
           </div>

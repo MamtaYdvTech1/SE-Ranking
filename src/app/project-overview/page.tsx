@@ -211,12 +211,25 @@ export function generateSplinePath(points: typeof BL_POINTS, key: 'yBl' | 'yRd' 
 
 function ProjectOverviewPageContent() {
   const router = useRouter();
-  const { activeProject } = useApp();
+  const { activeProject, projects } = useApp();
 
-  const displayDomain = activeProject?.domain
-    ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    : 'workcomposer.com';
-  const displayBrand = activeProject?.brandName || activeProject?.name || 'WorkComposer';
+  const targetProject = activeProject || (projects && projects.length > 0 ? projects[0] : null);
+
+  const displayDomain = useMemo(() => {
+    if (targetProject?.domain) {
+      return targetProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    }
+    return 'amazon.in';
+  }, [targetProject?.domain]);
+
+  const displayBrand = useMemo(() => {
+    const raw = targetProject?.brandName || targetProject?.name;
+    if (raw && !raw.includes('.')) {
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
+    }
+    const base = displayDomain.split('.')[0] || 'Amazon';
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }, [targetProject?.brandName, targetProject?.name, displayDomain]);
 
   // Persistent Widget Order & Visibility (12 authentic widgets matching SE Ranking)
   const [widgetOrder, setWidgetOrder] = useState<string[]>(DEFAULT_WIDGET_ORDER);
@@ -254,8 +267,8 @@ function ProjectOverviewPageContent() {
   // Content Score Modal state matching Screenshot 3
   const [isContentScoreModalOpen, setIsContentScoreModalOpen] = useState(false);
   const [selectedContentRow, setSelectedContentRow] = useState({
-    url: 'https://www.workcomposer.com/wc/idle-time-tracking-software',
-    kw: 'idle time tracking',
+    url: `https://www.${displayDomain}/deals`,
+    kw: `${displayBrand.toLowerCase()} online shopping`,
     score: 69,
     ratio: '75/85',
     pos: 15,
@@ -319,7 +332,7 @@ function ProjectOverviewPageContent() {
     perplexity: true,
   });
   const [isImproveContentOpen, setIsImproveContentOpen] = useState(false);
-  const [selectedContentKeyword, setSelectedContentKeyword] = useState('idle time tracking');
+  const [selectedContentKeyword, setSelectedContentKeyword] = useState(`${displayBrand} online shopping`);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<string | null>(null);
   const [isGoogleChooserOpen, setIsGoogleChooserOpen] = useState(false);
   const [googleChooserService, setGoogleChooserService] = useState('Google Analytics');
@@ -447,10 +460,11 @@ function ProjectOverviewPageContent() {
   const [isLoadingOverview, setIsLoadingOverview] = useState(false);
 
   useEffect(() => {
-    if (!activeProject?.id) return;
+    const projId = targetProject?.id;
+    if (!projId) return;
     let ignore = false;
     setIsLoadingOverview(true);
-    fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/overview`)
+    fetch(`/api/projects/${encodeURIComponent(projId)}/overview`)
       .then((res) => res.json())
       .then((json) => {
         if (!ignore && json.success) {
@@ -465,7 +479,7 @@ function ProjectOverviewPageContent() {
     return () => {
       ignore = true;
     };
-  }, [activeProject?.id]);
+  }, [targetProject?.id]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -741,14 +755,17 @@ function ProjectOverviewPageContent() {
         }));
       }
     }
+    const b = displayBrand.toLowerCase();
+    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
+
     return [
-      { id: '1', keyword: `${displayBrand.toLowerCase()} download`, position: 1, change: 99, volume: 20, visibility: '100%' },
-      { id: '2', keyword: `${displayBrand.toLowerCase()} app`, position: 2, change: 98, volume: 10, visibility: '84.7%' },
-      { id: '3', keyword: 'official platform online', position: 8, change: 5, volume: 10, visibility: '47.7%' },
-      { id: '4', keyword: 'cloud software tracking', position: 9, change: 91, volume: 10, visibility: '43%' },
-      { id: '5', keyword: 'team workflow tool', position: 10, change: 90, volume: 10, visibility: '38.6%' },
+      { id: '1', keyword: isEcommerce ? `${b} online store deals` : `${b} official platform`, position: 1, change: 99, volume: 20, visibility: '100%' },
+      { id: '2', keyword: isEcommerce ? `best offers on ${b}` : `${b} app download`, position: 2, change: 98, volume: 10, visibility: '84.7%' },
+      { id: '3', keyword: isEcommerce ? `buy products on ${b}` : `cloud platform ${b}`, position: 8, change: 5, volume: 10, visibility: '47.7%' },
+      { id: '4', keyword: isEcommerce ? `${b} shopping offers` : `${b} integrations online`, position: 9, change: 91, volume: 10, visibility: '43%' },
+      { id: '5', keyword: isEcommerce ? `${b} express delivery` : `${b} team workflow`, position: 10, change: 90, volume: 10, visibility: '38.6%' },
     ];
-  }, [overviewData, displayBrand]);
+  }, [overviewData, displayBrand, displayDomain]);
 
   const droppedKeywords = useMemo(() => {
     if (overviewData?.topKeywords && overviewData.topKeywords.length > 0) {
@@ -764,59 +781,183 @@ function ProjectOverviewPageContent() {
         }));
       }
     }
-    return [
-      { id: '8', keyword: 'idle time softwa...', position: 8, change: -3, volume: 10, visibility: '30%' },
-      { id: '7', keyword: 'idle time tracker', position: 13, change: -4, volume: 10, visibility: '0%' },
-      { id: '10', keyword: 'how to track idl...', position: 21, change: -1, volume: 10, visibility: '0%' },
-      { id: '9', keyword: 'work idle', position: 27, change: -1, volume: 10, visibility: '0%' },
-      { id: '6', keyword: 'composer down...', position: 32, change: -18, volume: '1.9K', visibility: '0%' },
-    ];
-  }, [overviewData]);
+    const b = displayBrand.toLowerCase();
+    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
 
-  // Content Score 4 exact rows
-  const contentScoreRows = [
-    {
-      url: 'https://www.workcomposer.com/wc/idle-time-tracking-software',
-      kw: 'idle time tracking',
-      score: 69,
-      ratio: '75/85',
-      pos: 15,
-      vol: 10,
-    },
-    {
-      url: 'https://www.workcomposer.com/wc/idle-time-tracking-software',
-      kw: 'idle time tracker',
-      score: 68,
-      ratio: '76/90',
-      pos: 13,
-      vol: 10,
-    },
-    {
-      url: 'https://www.workcomposer.com/wc/idle-time-tracking-software',
-      kw: 'system idle time tracker software',
-      score: 67,
-      ratio: '77/89',
-      pos: 9,
-      vol: 10,
-    },
-    {
-      url: 'https://www.workcomposer.com/wc/idle-time-tracking-software',
-      kw: 'idle time software',
-      score: 65,
-      ratio: '66/84',
-      pos: 8,
-      vol: 10,
-    },
-  ];
+    return [
+      { id: '8', keyword: isEcommerce ? `${b} today discounts` : `${b} online solutions`, position: 8, change: -3, volume: 10, visibility: '30%' },
+      { id: '7', keyword: isEcommerce ? `${b} customer care` : `${b} platform login`, position: 13, change: -4, volume: 10, visibility: '0%' },
+      { id: '10', keyword: isEcommerce ? `shop electronics ${b}` : `how to use ${b}`, position: 21, change: -1, volume: 10, visibility: '0%' },
+      { id: '9', keyword: isEcommerce ? `${b} return policy` : `${b} api pricing`, position: 27, change: -1, volume: 10, visibility: '0%' },
+      { id: '6', keyword: isEcommerce ? `${b} coupon codes` : `${b} alternatives 2026`, position: 32, change: -18, volume: '1.9K', visibility: '0%' },
+    ];
+  }, [overviewData, displayBrand, displayDomain]);
+
+  // Dynamic Content Score rows derived from real project or domain
+  const contentScoreRows = useMemo(() => {
+    if (overviewData?.topKeywords && Array.isArray(overviewData.topKeywords) && overviewData.topKeywords.length > 0) {
+      const baseScores = [69, 68, 67, 65, 62, 59];
+      const ratios = ['75/85', '76/90', '77/89', '66/84', '70/86', '65/82'];
+      return overviewData.topKeywords.slice(0, 4).map((k: any, idx: number) => {
+        const slug = k.keyword
+          ? k.keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+          : `page-${idx + 1}`;
+        const url = k.url || `https://www.${displayDomain}/${slug}`;
+        return {
+          url,
+          kw: k.keyword,
+          score: baseScores[idx % baseScores.length],
+          ratio: ratios[idx % ratios.length],
+          pos: k.currentPosition || (idx === 0 ? 15 : idx === 1 ? 13 : idx === 2 ? 9 : 8),
+          vol: k.searchVolume || 10,
+        };
+      });
+    }
+
+    const b = displayBrand.toLowerCase();
+    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
+
+    if (isEcommerce) {
+      return [
+        {
+          url: `https://www.${displayDomain}/deals/today-offers`,
+          kw: `${b} online shopping deals`,
+          score: 69,
+          ratio: '75/85',
+          pos: 15,
+          vol: 10,
+        },
+        {
+          url: `https://www.${displayDomain}/products/best-sellers`,
+          kw: `${b} best selling products`,
+          score: 68,
+          ratio: '76/90',
+          pos: 13,
+          vol: 10,
+        },
+        {
+          url: `https://www.${displayDomain}/electronics-store`,
+          kw: `${b} electronics online store`,
+          score: 67,
+          ratio: '77/89',
+          pos: 9,
+          vol: 10,
+        },
+        {
+          url: `https://www.${displayDomain}/customer-support/help`,
+          kw: `${b} customer service order tracking`,
+          score: 65,
+          ratio: '66/84',
+          pos: 8,
+          vol: 10,
+        },
+      ];
+    }
+
+    return [
+      {
+        url: `https://www.${displayDomain}/solutions/${b}-platform`,
+        kw: `${b} official platform`,
+        score: 69,
+        ratio: '75/85',
+        pos: 15,
+        vol: 10,
+      },
+      {
+        url: `https://www.${displayDomain}/features`,
+        kw: `best ${b} tools and features`,
+        score: 68,
+        ratio: '76/90',
+        pos: 13,
+        vol: 10,
+      },
+      {
+        url: `https://www.${displayDomain}/pricing`,
+        kw: `${b} pricing and plans online`,
+        score: 67,
+        ratio: '77/89',
+        pos: 9,
+        vol: 10,
+      },
+      {
+        url: `https://www.${displayDomain}/guide`,
+        kw: `how to use ${b} software guide`,
+        score: 65,
+        ratio: '66/84',
+        pos: 8,
+        vol: 10,
+      },
+    ];
+  }, [overviewData, displayDomain, displayBrand]);
+
+  // Keep selectedContentRow synced with top row of current project
+  useEffect(() => {
+    if (contentScoreRows && contentScoreRows.length > 0) {
+      setSelectedContentRow((prev) => ({
+        ...prev,
+        url: contentScoreRows[0].url,
+        kw: contentScoreRows[0].kw,
+        score: contentScoreRows[0].score,
+        ratio: contentScoreRows[0].ratio,
+        pos: contentScoreRows[0].pos,
+        vol: contentScoreRows[0].vol,
+      }));
+    }
+  }, [contentScoreRows]);
 
   // High Potential Keywords
-  const highPotentialKeywords = [
-    { keyword: 'team chat software', volume: '14,200', kd: 38, cpc: '$3.40' },
-    { keyword: 'hybrid workspace platform', volume: '9,800', kd: 42, cpc: '$4.15' },
-    { keyword: 'remote staff communication', volume: '6,400', kd: 31, cpc: '$2.80' },
-    { keyword: 'virtual meeting rooms online', volume: '8,100', kd: 45, cpc: '$3.90' },
-    { keyword: 'developer team management tool', volume: '5,300', kd: 27, cpc: '$5.10' },
-  ];
+  const highPotentialKeywords = useMemo(() => {
+    if (overviewData?.topKeywords && overviewData.topKeywords.length > 0) {
+      return overviewData.topKeywords.slice(0, 5).map((k: any, idx: number) => ({
+        keyword: k.keyword,
+        volume: k.searchVolume ? Number(k.searchVolume).toLocaleString() : `${Math.round(14000 / (idx + 1))}`,
+        kd: 25 + ((idx * 6) % 30),
+        cpc: `$${(2.4 + idx * 0.75).toFixed(2)}`,
+      }));
+    }
+    const b = displayBrand.toLowerCase();
+    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
+
+    if (isEcommerce) {
+      return [
+        { keyword: `${b} online store shopping`, volume: '18,400', kd: 32, cpc: '$3.20' },
+        { keyword: `best deals on ${b}`, volume: '12,600', kd: 28, cpc: '$2.90' },
+        { keyword: `${b} customer service phone`, volume: '9,800', kd: 24, cpc: '$1.80' },
+        { keyword: `top products on ${b} 2026`, volume: '7,500', kd: 36, cpc: '$3.50' },
+        { keyword: `${b} express delivery tracking`, volume: '6,200', kd: 22, cpc: '$2.40' },
+      ];
+    }
+
+    return [
+      { keyword: `${b} cloud platform`, volume: '14,200', kd: 38, cpc: '$3.40' },
+      { keyword: `best ${b} alternatives`, volume: '9,800', kd: 42, cpc: '$4.15' },
+      { keyword: `${b} pricing and features`, volume: '6,400', kd: 31, cpc: '$2.80' },
+      { keyword: `official ${b} login`, volume: '8,100', kd: 45, cpc: '$3.90' },
+      { keyword: `${b} workflow solutions`, volume: '5,300', kd: 27, cpc: '$5.10' },
+    ];
+  }, [overviewData, displayBrand, displayDomain]);
+
+  // Top competitors for competitive research
+  const topCompetitorsList = useMemo(() => {
+    if (overviewData?.competitors && overviewData.competitors.length > 0) {
+      return overviewData.competitors.slice(0, 2).map((c: any) => ({
+        domain: c.domain,
+        traffic: c.visibilityScore ? `${Math.round(c.visibilityScore * 1.5)}K` : '46',
+        trust: c.avgPosition ? Math.max(1, Math.round(c.avgPosition / 10)) : 1,
+      }));
+    }
+    if (displayDomain.includes('amazon')) {
+      return [
+        { domain: 'flipkart.com', traffic: '185M', trust: 84 },
+        { domain: 'walmart.com', traffic: '92M', trust: 78 },
+      ];
+    }
+    const clean = displayDomain.split('.')[0] || 'brand';
+    return [
+      { domain: `competitor-${clean}.com`, traffic: '46', trust: 1 },
+      { domain: `lead-${clean}.io`, traffic: '120', trust: 4 },
+    ];
+  }, [overviewData?.competitors, displayDomain]);
 
   // RENDER INDIVIDUAL WIDGET CONTENT
   const renderWidgetContent = (id: string, index: number) => {
@@ -2851,11 +2992,11 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <Link
-                      href="https://online.seranking.com/research.competitor.html/organic/keywords/?input=workcomposer.com&mode=base_domain&source=in"
+                      href={`https://online.seranking.com/research.competitor.html/organic/keywords/?input=${encodeURIComponent(displayDomain)}&mode=base_domain&source=in`}
                       target="_blank"
                       className="text-2xl font-black text-[#0B69FF] hover:underline"
                     >
-                      453
+                      {estimatedTrafficValue}
                     </Link>
                     <span className="text-xs font-bold text-red-500">▼ 61</span>
                   </div>
@@ -2869,7 +3010,7 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <Link
-                      href="https://online.seranking.com/research.competitor.html/advertising/keywords/?input=workcomposer.com&mode=base_domain&source=in"
+                      href={`https://online.seranking.com/research.competitor.html/advertising/keywords/?input=${encodeURIComponent(displayDomain)}&mode=base_domain&source=in`}
                       target="_blank"
                       className="text-2xl font-black text-[#0B69FF] hover:underline"
                     >
@@ -2887,11 +3028,11 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <Link
-                      href="https://online.seranking.com/research.competitor.html/organic/keywords/?input=workcomposer.com&mode=base_domain&source=in"
+                      href={`https://online.seranking.com/research.competitor.html/organic/keywords/?input=${encodeURIComponent(displayDomain)}&mode=base_domain&source=in`}
                       target="_blank"
                       className="text-2xl font-black text-[#0B69FF] hover:underline"
                     >
-                      131
+                      {totalKeywordsCount}
                     </Link>
                     <span className="text-xs text-gray-400 font-semibold">0</span>
                   </div>
@@ -2905,7 +3046,7 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <Link
-                      href="https://online.seranking.com/research.competitor.html/advertising/keywords/?input=workcomposer.com&mode=base_domain&source=in"
+                      href={`https://online.seranking.com/research.competitor.html/advertising/keywords/?input=${encodeURIComponent(displayDomain)}&mode=base_domain&source=in`}
                       target="_blank"
                       className="text-2xl font-black text-[#0B69FF] hover:underline"
                     >
@@ -2928,44 +3069,27 @@ function ProjectOverviewPageContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 font-medium text-gray-900 flex items-center gap-1.5">
-                          <img
-                            src="https://www.google.com/s2/favicons?domain=https://onetracker.in"
-                            alt="favicon"
-                            className="w-3.5 h-3.5 rounded"
-                          />
-                          <Link
-                            href="https://online.seranking.com/research.competitor.html/?input=onetracker.in&mode=base_domain&source=in"
-                            target="_blank"
-                            className="text-[#0B69FF] hover:underline"
-                          >
-                            onetracker.in
-                          </Link>
-                          <ArrowUpRight className="w-3 h-3 text-[#0B69FF]" />
-                        </td>
-                        <td className="py-2.5 text-right font-bold text-gray-800">46</td>
-                        <td className="py-2.5 text-right font-bold text-gray-800">1</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 font-medium text-gray-900 flex items-center gap-1.5">
-                          <img
-                            src="https://www.google.com/s2/favicons?domain=https://afk-assistant.com"
-                            alt="favicon"
-                            className="w-3.5 h-3.5 rounded"
-                          />
-                          <Link
-                            href="https://online.seranking.com/research.competitor.html/?input=afk-assistant.com&mode=base_domain&source=in"
-                            target="_blank"
-                            className="text-[#0B69FF] hover:underline"
-                          >
-                            afk-assistant.com
-                          </Link>
-                          <ArrowUpRight className="w-3 h-3 text-[#0B69FF]" />
-                        </td>
-                        <td className="py-2.5 text-right font-bold text-gray-800">0</td>
-                        <td className="py-2.5 text-right font-bold text-gray-800">4</td>
-                      </tr>
+                      {topCompetitorsList.map((comp: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-2.5 font-medium text-gray-900 flex items-center gap-1.5">
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=https://${comp.domain}`}
+                              alt="favicon"
+                              className="w-3.5 h-3.5 rounded"
+                            />
+                            <Link
+                              href={`https://online.seranking.com/research.competitor.html/?input=${encodeURIComponent(comp.domain)}&mode=base_domain&source=in`}
+                              target="_blank"
+                              className="text-[#0B69FF] hover:underline"
+                            >
+                              {comp.domain}
+                            </Link>
+                            <ArrowUpRight className="w-3 h-3 text-[#0B69FF]" />
+                          </td>
+                          <td className="py-2.5 text-right font-bold text-gray-800">{comp.traffic}</td>
+                          <td className="py-2.5 text-right font-bold text-gray-800">{comp.trust}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -4622,7 +4746,7 @@ function ProjectOverviewPageContent() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0B69FF]" />
-                  <span>Add recommended terms to H2-H3 headings (e.g., "idle time tracking features", "activity monitoring")</span>
+                  <span>Add recommended terms to H2-H3 headings (e.g., "{selectedContentRow.kw} guide", "top recommendations")</span>
                 </li>
               </ul>
             </div>

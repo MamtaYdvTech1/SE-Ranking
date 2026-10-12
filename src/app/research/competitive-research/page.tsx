@@ -11,15 +11,15 @@ export default function CompetitiveResearchGooglePage() {
   const { activeProject } = useApp();
   const [viewState, setViewState] = useState<'start' | 'dashboard'>('start');
   const [searchTarget, setSearchTarget] = useState({
-    domain: activeProject?.domain || 'https://www.workcomposer.com/',
+    domain: activeProject?.domain || 'amazon.in',
     scope: '*.domain.com/*',
     country: 'United States of America',
-    brandName: activeProject?.brandName || 'WorkComposer',
+    brandName: activeProject?.brandName || (activeProject?.domain ? activeProject.domain.split('.')[0] : 'Amazon'),
   });
 
   const handleAnalysisSuccess = (data: any) => {
     setSearchTarget({
-      domain: data.domain || activeProject?.domain || 'https://www.workcomposer.com/',
+      domain: data.domain || activeProject?.domain || 'amazon.in',
       scope: data.scope || '*.domain.com/*',
       country: data.country || 'United States of America',
       brandName: data.brandName || activeProject?.brandName || '',

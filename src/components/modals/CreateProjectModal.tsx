@@ -965,6 +965,14 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
       }
 
       const createdProject = data.project;
+      if (createdProject) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('se_ranking_active_project_id', createdProject.id);
+          localStorage.setItem('se_ranking_has_project', 'true');
+        }
+        setActiveProject(createdProject);
+      }
+
       if (createdProject?.id) {
         // Trigger initialization in the background so the user is immediately taken to their project overview
         fetch(`/api/projects/${createdProject.id}/init`, {
@@ -976,9 +984,6 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
       await refreshProjects();
       if (onCreated && createdProject) {
         onCreated(createdProject);
-      }
-      if (createdProject) {
-        setActiveProject(createdProject);
       }
       onClose();
       router.push('/project-overview');
