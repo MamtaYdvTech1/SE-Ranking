@@ -167,10 +167,7 @@ export function MarketingHeader({
     if (user) {
       router.push('/projects');
     } else {
-      const hasAccount = typeof window !== 'undefined' && Boolean(
-        localStorage.getItem('user_email') || localStorage.getItem('seranking_auth_status')
-      );
-      router.push(hasAccount ? '/login?redirect=/projects' : '/signup?redirect=/projects');
+      router.push('/login?redirect=/projects');
     }
   };
 
@@ -182,10 +179,7 @@ export function MarketingHeader({
     if (onTourClick) {
       onTourClick();
     } else {
-      const hasAccount = typeof window !== 'undefined' && Boolean(
-        localStorage.getItem('user_email') || localStorage.getItem('seranking_auth_status')
-      );
-      router.push(hasAccount ? '/login?redirect=/projects' : '/signup?redirect=/projects');
+      router.push('/login?redirect=/projects');
     }
   };
 

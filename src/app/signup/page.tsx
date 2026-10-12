@@ -40,15 +40,9 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [redirectParam, setRedirectParam] = useState('/projects');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const dest = params.get('redirect');
-      if (dest) {
-        setRedirectParam(dest);
-      }
       const saved = localStorage.getItem('seranking_lang');
       if (saved && SIGNUP_LANGUAGES.some((l) => l.code === saved)) {
         setSelectedLang(saved);
@@ -157,7 +151,7 @@ export default function SignUpPage() {
 
       setSuccessMessage('Account created successfully! Welcome to your dashboard...');
       setTimeout(() => {
-        window.location.href = data.redirectTo || redirectParam || '/projects';
+        window.location.href = data.redirectTo || '/projects';
       }, 500);
     } catch (err: any) {
       setError(err?.message || 'Something went wrong. Please try again.');
@@ -174,7 +168,8 @@ export default function SignUpPage() {
   };
 
   const handleGoogleSignUp = () => {
-    window.location.href = `/api/auth/google?state=${encodeURIComponent(redirectParam || '/projects')}`;
+    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
+    window.location.href = `/api/auth/google?state=${encodeURIComponent(redirectUrl)}`;
   };
 
   const handleGoogleAccountSelected = async (account: GoogleAccountProfile) => {
@@ -190,7 +185,8 @@ export default function SignUpPage() {
     } catch {
       // ignore
     }
-    window.location.href = redirectParam || '/projects';
+    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
+    window.location.href = redirectUrl;
   };
 
   return (
@@ -240,21 +236,7 @@ export default function SignUpPage() {
 
       {/* Main Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-[560px] space-y-6">
-          {/* Dual Tabs Switcher */}
-          <div className="grid grid-cols-2 p-1 bg-[#F8FAFC] rounded-xl max-w-[320px] mx-auto border border-gray-200/80 shadow-2xs">
-            <div className="py-2 text-center text-xs sm:text-sm font-extrabold rounded-lg bg-white text-[#7C3AED] shadow-xs border border-purple-100 flex items-center justify-center gap-1.5">
-              <span>Sign Up</span>
-              <span className="text-[10px] bg-purple-100 text-[#7C3AED] px-1.5 py-0.2 rounded-full font-bold">14 Days Free</span>
-            </div>
-            <Link
-              href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
-              className="py-2 text-center text-xs sm:text-sm font-semibold text-gray-500 hover:text-gray-900 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
-            >
-              Sign In
-            </Link>
-          </div>
-
+        <div className="w-full max-w-[560px] space-y-7">
           {/* Headline with Purple Accent and Subtitle */}
           <div className="text-center space-y-3">
             <h1 className="text-3xl sm:text-[40px] font-extrabold text-[#111827] tracking-tight leading-tight">
@@ -457,7 +439,7 @@ export default function SignUpPage() {
               <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-700">
                 <span>Already have an account?</span>
                 <Link
-                  href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
+                  href="/login"
                   className="text-[#7C3AED] hover:text-[#6D28D9] font-semibold hover:underline"
                 >
                   Log in
