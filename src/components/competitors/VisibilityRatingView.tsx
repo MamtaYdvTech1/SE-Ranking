@@ -2835,9 +2835,11 @@ export function VisibilityRatingView({
                       {/* Visibility Score */}
                       {visibleColumns.visibility && (
                         <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                          {domain.visibility === 0 || domain.visibility === 100 || Number.isInteger(domain.visibility)
-                            ? domain.visibility
-                            : domain.visibility.toFixed(1)}
+                          {typeof domain.visibility === 'number'
+                            ? (domain.visibility === 0 || domain.visibility === 100 || Number.isInteger(domain.visibility)
+                              ? domain.visibility
+                              : domain.visibility.toFixed(1))
+                            : '0'}
                         </td>
                       )}
 

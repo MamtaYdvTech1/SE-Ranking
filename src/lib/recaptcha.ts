@@ -12,7 +12,7 @@ export interface RecaptchaVerificationResult {
   provider: 'google_recaptcha';
 }
 
-const DEFAULT_RECAPTCHA_SECRET_KEY = '6LeM0ugtAAAAALH_V49LKgPLlGjHabUUdqwJseq9';
+const DEFAULT_RECAPTCHA_SECRET_KEY = '6Le5qOstAAAAAChtwfJepF8dyxs-q-IccxxRjnB5';
 
 export async function verifyRecaptcha(
   token?: string,

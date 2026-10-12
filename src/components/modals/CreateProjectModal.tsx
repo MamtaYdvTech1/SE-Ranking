@@ -981,11 +981,11 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
         }).catch((e) => console.warn('Background project init:', e));
       }
 
-      await refreshProjects();
       if (onCreated && createdProject) {
         onCreated(createdProject);
       }
       onClose();
+      refreshProjects().catch(() => {});
       router.push('/project-overview');
     } catch (err: any) {
       setError(err?.message || 'Network error occurred while creating project.');

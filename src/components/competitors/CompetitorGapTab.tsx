@@ -310,11 +310,11 @@ export function CompetitorGapTab({ projectId, competitors = [] }: CompetitorGapT
                                 ? "bg-amber-500"
                                 : "bg-slate-400"
                             }`}
-                            style={{ width: `${Math.min(100, Math.max(0, row.opportunityScore))}%` }}
+                            style={{ width: `${Math.min(100, Math.max(0, row.opportunityScore ?? 0))}%` }}
                           />
                         </div>
                         <span className="font-bold text-xs text-slate-900 dark:text-slate-100">
-                          {row.opportunityScore.toFixed(1)}
+                          {(row.opportunityScore ?? 0).toFixed(1)}
                         </span>
                       </div>
                     </td>

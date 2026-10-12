@@ -1231,201 +1231,111 @@ function SecondarySidebarInner() {
 
           {/* Project Selector Card (Visible ONLY on Projects mode matching screenshot) */}
           {effectiveSection === 'projects' && (
-            (pathname === '/projects' || pathname === '/admin.dashboard.html' || pathname.startsWith('/admin.dashboard') || pathname === '/' || projects.length === 0) ? (
-              <div className="p-2.5 border-b border-[#2C3848]">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="w-full bg-white hover:bg-gray-50 text-[#0062FF] rounded-lg px-3 py-2 flex items-center justify-center gap-2 font-bold text-xs shadow-xs transition-colors cursor-pointer uppercase tracking-wider border border-transparent"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[3] text-[#0062FF]" />
-                  <span>CREATE PROJECT</span>
-                </button>
-              </div>
-            ) : (
-            <div ref={projectDropdownRef} className="p-2.5 relative border-b border-[#2C3848] overflow-visible z-40">
-              <div
-                onClick={() => {
-                  const nextState = !isProjectDropdownOpen;
-                  setIsProjectDropdownOpen(nextState);
-                  if (!nextState) {
-                    setIsProjectFlyoutOpen(false);
-                    setHoveredProject(null);
-                    setHoveredSubmenu(null);
-                  }
-                }}
-                className="w-full bg-[#20183B] hover:bg-[#2B2150] text-white rounded-lg px-2.5 py-2 flex items-center justify-between shadow-xs transition-colors border border-[#3E2E66] cursor-pointer select-none group"
+            <div className="p-2.5 border-b border-[#2C3848] space-y-2">
+              {/* White + CREATE PROJECT Button matching exact user screenshot */}
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="w-full bg-white hover:bg-gray-100 text-[#0062FF] rounded-lg px-3 py-2.5 flex items-center justify-center gap-2 font-bold text-xs shadow-xs transition-colors cursor-pointer uppercase tracking-wider border border-transparent"
               >
-                <div className="flex items-center gap-2.5 truncate flex-1 min-w-0">
-                  <ProjectFavicon
-                    domain={activeProject?.domain || activeProject?.name || ''}
-                    name={activeProject?.name}
-                    size={20}
-                    className="w-5 h-5 rounded-[4px] shrink-0 object-contain shadow-xs border border-white/10"
-                  />
-                  <span className="text-[13px] font-semibold text-white truncate group-hover:text-white transition-colors">
-                    {activeProject?.domain
-                      ? (activeProject.domain.startsWith('http') ? activeProject.domain : `https://${activeProject.domain}`)
-                      : '+ Add Website / Project'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 pl-1">
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 text-[#A78BFA] group-hover:text-white shrink-0 transition-transform duration-200 ${
-                      isProjectDropdownOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-              </div>
+                <Plus className="w-3.5 h-3.5 stroke-[3] text-[#0062FF]" />
+                <span>CREATE PROJECT</span>
+              </button>
 
-            {/* Click-away backdrop */}
-            {isProjectDropdownOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-transparent"
-                onClick={() => {
-                  setIsProjectDropdownOpen(false);
-                  setIsProjectFlyoutOpen(false);
-                  setHoveredProject(null);
-                  setHoveredSubmenu(null);
-                }}
-              />
-            )}
-
-            {/* Project Dropdown Modal with Real Dynamic Projects List & Flyout (Matching exact user screenshot) */}
-            {isProjectDropdownOpen && (
-              <div className="absolute left-2.5 top-[68px] w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs animate-in fade-in zoom-in-95 duration-100 flex flex-col">
-                {/* Search Box matching screenshot */}
-                <div className="p-2 border-b border-gray-100 flex items-center justify-between gap-1.5 bg-white rounded-t-xl">
-                  <div className="flex items-center gap-2 flex-1 border border-[#7C3AED] rounded-lg px-2.5 py-1.5 bg-white shadow-xs focus-within:ring-2 focus-within:ring-[#7C3AED]/20">
-                    <SearchIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <input
-                      type="text"
-                      value={projectSearch}
-                      onChange={(e) => setProjectSearch(e.target.value)}
-                      placeholder="Search project"
-                      className="w-full bg-transparent text-gray-800 placeholder:text-gray-400 focus:outline-none text-xs"
-                      autoFocus
+              {/* Active Project Switcher with Dropdown & Live Search */}
+              <div ref={projectDropdownRef} className="relative">
+                {activeProject && (
+                  <div
+                    onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                    className="w-full bg-[#18233C] hover:bg-[#1E2B45] text-white rounded-lg px-2.5 py-1.5 flex items-center justify-between border border-[#2C384A] cursor-pointer select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                      <ProjectFavicon
+                        domain={activeProject.domain || activeProject.name || ''}
+                        name={activeProject.name}
+                        size={16}
+                        className="w-4 h-4 rounded-xs shrink-0 object-contain"
+                      />
+                      <span className="text-xs font-semibold text-white truncate">
+                        {activeProject.domain || activeProject.name}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${
+                        isProjectDropdownOpen ? 'rotate-180' : ''
+                      }`}
                     />
-                    {projectSearch ? (
-                      <button
-                        type="button"
-                        onClick={() => setProjectSearch('')}
-                        className="text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400 shrink-0 cursor-pointer" />
-                    )}
                   </div>
+                )}
+
+                {/* Live Search Input right in the sidebar */}
+                <div className="relative mt-1.5">
+                  <SearchIcon className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={projectSearch}
+                    onChange={(e) => setProjectSearch(e.target.value)}
+                    placeholder="Search project"
+                    className="w-full bg-[#18233C] border border-[#2C384A] rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-[#0062FF] transition-colors"
+                  />
+                  {projectSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setProjectSearch('')}
+                      className="absolute right-2 top-1.5 text-gray-400 hover:text-white cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                {/* Dynamic Groups & Projects List matching screenshot */}
-                <div className="p-1 max-h-[340px] overflow-y-auto overflow-x-hidden">
-                  {/* 1. Groups */}
-                  {projectGroups.map((group) => {
-                    const groupProjects = displayProjects.filter((p) => {
-                      return (
-                        group.projectIds.includes(p.id) ||
-                        group.projectIds.includes(p.domain)
-                      );
-                    });
-
-                    // Search filter
-                    if (
-                      projectSearch.trim() &&
-                      !group.name.toLowerCase().includes(projectSearch.toLowerCase()) &&
-                      groupProjects.length === 0
-                    ) {
-                      return null;
-                    }
-
-                    const isCollapsed = collapsedGroups[group.id];
-
-                    return (
-                      <div key={group.id} className="mb-1">
-                        {/* Group Folder Row matching Screenshot */}
+                {/* Dropdown panel if opened */}
+                {isProjectDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-transparent"
+                      onClick={() => setIsProjectDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-1.5 w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs flex flex-col p-1 max-h-[300px] overflow-y-auto">
+                      <div className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                        Switch Project ({displayProjects.length})
+                      </div>
+                      {displayProjects.map((p) => (
                         <div
+                          key={p.id}
                           onClick={() => {
-                            setCollapsedGroups((prev) => ({
-                              ...prev,
-                              [group.id]: !prev[group.id],
-                            }));
+                            setActiveProject(p);
+                            setIsProjectDropdownOpen(false);
                           }}
-                          className="flex items-center justify-between px-2.5 py-1.5 text-gray-900 font-semibold text-[13px] hover:bg-gray-50 rounded-md cursor-pointer select-none"
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                            activeProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-gray-100 text-gray-800'
+                          }`}
                         >
                           <div className="flex items-center gap-2 truncate">
-                            <Folder className="w-4 h-4 text-[#2A3749] fill-[#2A3749] shrink-0" />
-                            <span className="truncate text-xs font-semibold">{group.name}</span>
+                            <ProjectFavicon domain={p.domain} name={p.name} size={16} className="w-4 h-4 rounded-xs shrink-0" />
+                            <span className="truncate text-xs">{p.domain || p.name}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full font-medium">
-                              {groupProjects.length}
-                            </span>
-                            <ChevronDown
-                              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${
-                                isCollapsed ? '-rotate-90' : ''
-                              }`}
-                            />
-                          </div>
+                          {activeProject?.id === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
                         </div>
-
-                        {/* Projects inside Group */}
-                        {!isCollapsed && (
-                          <div className="space-y-0.5 ml-1 mt-0.5">
-                            {groupProjects.map((p) => renderDropdownProjectItem(p, true))}
-                          </div>
-                        )}
+                      ))}
+                      <div className="pt-1 mt-1 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProjectDropdownOpen(false);
+                            setIsCreateModalOpen(true);
+                          }}
+                          className="w-full px-2 py-1.5 flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 rounded-lg font-semibold text-xs cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add New Project</span>
+                        </button>
                       </div>
-                    );
-                  })}
-
-                  {/* 2. Ungrouped Projects */}
-                  {(() => {
-                    const ungrouped = displayProjects.filter((p) => {
-                      return !projectGroups.some(
-                        (g) =>
-                          g.projectIds.includes(p.id) ||
-                          g.projectIds.includes(p.domain)
-                      );
-                    });
-
-                    if (ungrouped.length === 0 && projectGroups.length > 0) return null;
-                    return (
-                      <div className="space-y-0.5">
-                        {ungrouped.map((p) => renderDropdownProjectItem(p, false))}
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* Create Project Button matching screenshot */}
-                <div className="p-1 border-t border-gray-100 bg-white rounded-b-xl">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProjectDropdownOpen(false);
-                      setIsProjectFlyoutOpen(false);
-                      setHoveredProject(null);
-                      setIsCreateModalOpen(true);
-                    }}
-                    className="w-full px-2.5 py-2 flex items-center gap-2 text-gray-700 hover:bg-gray-50 hover:text-[#7C3AED] font-medium transition-colors cursor-pointer rounded-lg text-xs group"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-[#7C3AED] shrink-0" strokeWidth={2.5} />
-                    <span className="text-[#7C3AED] font-semibold text-xs">Create project</span>
-                  </button>
-                </div>
-
-                {/* Sleek Flyout Menu to the right of the dropdown (Positioned outside the scroll container so NO clipping or horizontal scrollbar) */}
-                {isProjectFlyoutOpen && hoveredProject && (() => {
-                  const p = displayProjects.find((x) => x.id === hoveredProject) || activeProject;
-                  if (!p) return null;
-                  return renderProjectFlyout(p);
-                })()}
+                    </div>
+                  </>
+                )}
               </div>
-            )}
-          </div>
-            )
+            </div>
           )}
           {effectiveSection === 'reports' && (
             <div className="p-2.5 border-b border-[#2C374A]/60">
@@ -2267,17 +2177,24 @@ function SecondarySidebarInner() {
         ) : effectiveSection === 'projects' ? (
               /* Projects Mode Menu (Exact 1:1 match to uploaded SE Ranking screenshot) */
               <div className="space-y-0.5">
-                {/* 1. All Projects */}
+                {/* 1. All Projects (Exact match to user screenshot) */}
                 <Link
                   href="/projects"
-                  className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
+                  className={`group flex items-center justify-between px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
                     isAllProjectsActive
-                      ? 'bg-[#283547] text-white font-bold shadow-xs border-l-2 border-[#0062FF]'
-                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
+                      ? 'bg-[#18233C] text-white font-bold shadow-xs border-l-[3px] border-[#0062FF]'
+                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#18233C]'
                   }`}
                 >
-                  <Home className={`w-4 h-4 shrink-0 transition-colors ${isAllProjectsActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
-                  <span className="truncate">All Projects</span>
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Home className={`w-4 h-4 shrink-0 transition-colors ${isAllProjectsActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
+                    <span className="truncate">All Projects</span>
+                  </div>
+                  {mergedProjectList.length > 0 && (
+                    <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-[#2A3749] text-gray-300 font-semibold">
+                      {mergedProjectList.length}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Other project tools - all real and working */}
@@ -2285,10 +2202,10 @@ function SecondarySidebarInner() {
                 {/* 2. Project Overview */}
                 <Link
                   href="/project-overview"
-                  className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
+                  className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
                     isProjectOverviewActive
-                      ? 'bg-[#283547] text-white font-bold shadow-xs border-l-2 border-[#0062FF]'
-                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
+                      ? 'bg-[#18233C] text-white font-bold shadow-xs border-l-[3px] border-[#0062FF]'
+                      : 'text-[#CBD5E1] hover:text-white hover:bg-[#18233C]'
                   }`}
                 >
                   <LayoutGrid className={`w-4 h-4 shrink-0 transition-colors ${isProjectOverviewActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
@@ -2748,6 +2665,49 @@ function SecondarySidebarInner() {
                     </div>
                   )}
                 </div>
+                </div>
+
+                {/* Tracked Projects List with Live Search Filtering matching user prompt */}
+                <div className="pt-3 mt-2 border-t border-[#2C3848] space-y-1">
+                  <div className="px-3 py-1 flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    <span>{projectSearch ? 'Search Results' : 'Tracked Projects'}</span>
+                    <span className="text-[10px] bg-[#2A3749] text-gray-300 px-1.5 py-0.2 rounded font-semibold">
+                      {displayProjects.length}
+                    </span>
+                  </div>
+                  {displayProjects.map((p) => {
+                    const isSelected = activeProject?.id === p.id || activeProject?.domain === p.domain;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveProject(p);
+                          router.push('/rankings');
+                        }}
+                        className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-[#18233C] text-white font-bold border-l-2 border-[#0062FF]'
+                            : 'text-[#CBD5E1] hover:text-white hover:bg-[#18233C]'
+                        }`}
+                        title={p.domain || p.name}
+                      >
+                        <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                          <ProjectFavicon
+                            domain={p.domain || p.name}
+                            name={p.name}
+                            size={16}
+                            className="w-4 h-4 rounded-xs shrink-0 object-contain"
+                          />
+                          <span className="truncate">{p.name || p.domain}</span>
+                        </div>
+                        {isSelected ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#0062FF] shrink-0" />
+                        ) : (
+                          <ChevronRight className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : effectiveSection === 'audit' ? (

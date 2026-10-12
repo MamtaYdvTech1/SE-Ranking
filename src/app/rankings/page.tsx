@@ -481,7 +481,7 @@ interface TeamsKeywordItem {
   name: string;
   color: string;
   urlHref: string | null;
-  volume: number;
+  volume: number | string;
   features: {
     sge?: boolean;
     reviews?: boolean;
@@ -491,10 +491,142 @@ interface TeamsKeywordItem {
     images?: boolean;
   };
   contentScore: number | null;
-  rankOct3: number | null;
-  rankOct4: number | null;
+  rankOct3: number | string | null;
+  rankOct4: number | string | null;
   diff: number | null;
 }
+
+const toRankNum = (r: number | string | null | undefined): number | null => {
+  if (typeof r === 'number') return r;
+  if (typeof r === 'string') {
+    const parsed = parseInt(r, 10);
+    return isNaN(parsed) ? null : parsed;
+  }
+  return null;
+};
+
+const JIO_KEYWORDS_DATA: TeamsKeywordItem[] = [
+  {
+    id: 'kw-jio-1',
+    name: 'myjio',
+    color: 'rgb(38, 112, 119)',
+    urlHref: 'https://myjio.com/',
+    volume: '246K',
+    features: { reviews: true, sitelinks: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-2',
+    name: 'myjio app',
+    color: 'rgb(49, 86, 59)',
+    urlHref: 'https://myjio.com/',
+    volume: '60.5K',
+    features: { sge: true, reviews: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-3',
+    name: 'myjio login',
+    color: 'rgb(182, 125, 33)',
+    urlHref: 'https://myjio.com/',
+    volume: '10',
+    features: { sge: true, reviews: true, sitelinks: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-4',
+    name: 'myjio website',
+    color: 'rgb(196, 3, 178)',
+    urlHref: 'https://myjio.com/',
+    volume: '10',
+    features: { sge: true, sitelinks: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-5',
+    name: 'myjio account',
+    color: 'rgb(254, 117, 11)',
+    urlHref: 'https://myjio.com/',
+    volume: '110',
+    features: { sge: true, reviews: true, video: true, paa: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-6',
+    name: 'jio login',
+    color: 'rgb(230, 184, 64)',
+    urlHref: 'https://myjio.com/',
+    volume: '201K',
+    features: { sge: true, reviews: true, sitelinks: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-7',
+    name: 'jio recharge',
+    color: 'rgb(234, 176, 132)',
+    urlHref: 'https://myjio.com/',
+    volume: '1.2M',
+    features: { sge: true, reviews: true, sitelinks: true, video: true, images: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-8',
+    name: 'jio recharge online',
+    color: 'rgb(64, 217, 245)',
+    urlHref: 'https://myjio.com/',
+    volume: '47.5K',
+    features: { reviews: true, sitelinks: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-9',
+    name: 'jio mobile recharge',
+    color: 'rgb(70, 177, 224)',
+    urlHref: 'https://myjio.com/',
+    volume: '49.5K',
+    features: { sge: true, reviews: true, sitelinks: true, video: true, paa: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+  {
+    id: 'kw-jio-10',
+    name: 'jio prepaid recharge',
+    color: 'rgb(126, 75, 23)',
+    urlHref: 'https://myjio.com/',
+    volume: '40.5K',
+    features: { reviews: true, video: true },
+    contentScore: null,
+    rankOct3: '-',
+    rankOct4: '-',
+    diff: null,
+  },
+];
 
 const PINTEREST_KEYWORDS_DATA: TeamsKeywordItem[] = [
   {
@@ -730,6 +862,57 @@ const TEAMS_KEYWORDS_DATA: TeamsKeywordItem[] = [
   },
 ];
 
+const MEESHO_48_KEYWORDS_DATA: TeamsKeywordItem[] = [
+  { id: 'kw-m-1', name: 'misogynistic', color: 'rgb(25, 118, 210)', urlHref: 'https://meesho.com/', volume: 11852, features: { paa: true }, contentScore: 88, rankOct3: 1, rankOct4: 1, diff: 0 },
+  { id: 'kw-m-2', name: 'miso soup', color: 'rgb(25, 118, 210)', urlHref: 'https://meesho.com/', volume: 10211, features: { sge: true }, contentScore: 78, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-3', name: 'misophonia', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1747, features: {}, contentScore: null, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-4', name: 'misogynist', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3080, features: {}, contentScore: null, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-5', name: 'miso soup recipe', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 8763, features: {}, contentScore: null, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-6', name: 'meesho india', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 6520, features: {}, contentScore: null, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-7', name: 'meesho online shopping', color: 'rgb(25, 118, 210)', urlHref: 'https://meesho.com/', volume: 45000, features: { sitelinks: true, sge: true }, contentScore: 85, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-8', name: 'meesho app download', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 33000, features: { sitelinks: true }, contentScore: 81, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-9', name: 'meesho supplier login', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 22000, features: { sitelinks: true }, contentScore: 76, rankOct3: 3, rankOct4: 3, diff: 0 },
+  { id: 'kw-m-10', name: 'meesho seller portal', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 18000, features: { sitelinks: true }, contentScore: null, rankOct3: 3, rankOct4: 3, diff: 0 },
+  { id: 'kw-m-11', name: 'meesho sarees collection', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 14500, features: { reviews: true }, contentScore: null, rankOct3: 3, rankOct4: 3, diff: 0 },
+  { id: 'kw-m-12', name: 'meesho kurtis', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 12200, features: { reviews: true }, contentScore: null, rankOct3: 4, rankOct4: 4, diff: 0 },
+  { id: 'kw-m-13', name: 'meesho track order', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 9800, features: {}, contentScore: null, rankOct3: 4, rankOct4: 4, diff: 0 },
+  { id: 'kw-m-14', name: 'meesho customer care number', color: 'rgb(25, 118, 210)', urlHref: 'https://meesho.com/', volume: 28000, features: { paa: true }, contentScore: 82, rankOct3: 2, rankOct4: 2, diff: 0 },
+  { id: 'kw-m-15', name: 'meesho return policy', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 6700, features: { paa: true }, contentScore: null, rankOct3: 4, rankOct4: 4, diff: 0 },
+  { id: 'kw-m-16', name: 'meesho dresses for women', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 8900, features: { reviews: true }, contentScore: null, rankOct3: 3, rankOct4: 3, diff: 0 },
+  { id: 'kw-m-17', name: 'meesho shoes for men', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 7400, features: {}, contentScore: null, rankOct3: 5, rankOct4: 5, diff: 0 },
+  { id: 'kw-m-18', name: 'meesho jewelry set', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 6100, features: {}, contentScore: null, rankOct3: 5, rankOct4: 5, diff: 0 },
+  { id: 'kw-m-19', name: 'meesho bags collection', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 5400, features: {}, contentScore: null, rankOct3: 5, rankOct4: 5, diff: 0 },
+  { id: 'kw-m-20', name: 'meesho kitchen items', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 4900, features: {}, contentScore: null, rankOct3: 6, rankOct4: 6, diff: 0 },
+  { id: 'kw-m-21', name: 'meesho bedsheets combo', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 4300, features: {}, contentScore: null, rankOct3: 6, rankOct4: 6, diff: 0 },
+  { id: 'kw-m-22', name: 'meesho smart watch', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 5800, features: {}, contentScore: null, rankOct3: 5, rankOct4: 5, diff: 0 },
+  { id: 'kw-m-23', name: 'meesho earrings jhumka', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 4100, features: {}, contentScore: null, rankOct3: 4, rankOct4: 4, diff: 0 },
+  { id: 'kw-m-24', name: 'meesho t shirts for men', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 6800, features: {}, contentScore: null, rankOct3: 4, rankOct4: 4, diff: 0 },
+  { id: 'kw-m-25', name: 'meesho jeans for women', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 5100, features: {}, contentScore: null, rankOct3: 5, rankOct4: 5, diff: 0 },
+  { id: 'kw-m-26', name: 'meesho winter collection', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3800, features: {}, contentScore: null, rankOct3: 7, rankOct4: 7, diff: 0 },
+  { id: 'kw-m-27', name: 'meesho kids wear', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 4200, features: {}, contentScore: null, rankOct3: 6, rankOct4: 6, diff: 0 },
+  { id: 'kw-m-28', name: 'meesho makeup kit combo', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3900, features: {}, contentScore: null, rankOct3: 6, rankOct4: 6, diff: 0 },
+  { id: 'kw-m-29', name: 'meesho footwear sale', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3600, features: {}, contentScore: null, rankOct3: 7, rankOct4: 7, diff: 0 },
+  { id: 'kw-m-30', name: 'meesho toys for kids', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2900, features: {}, contentScore: null, rankOct3: 8, rankOct4: 8, diff: 0 },
+  { id: 'kw-m-31', name: 'meesho home decor', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3100, features: {}, contentScore: null, rankOct3: 7, rankOct4: 7, diff: 0 },
+  { id: 'kw-m-32', name: 'meesho curtains for door', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2700, features: {}, contentScore: null, rankOct3: 8, rankOct4: 8, diff: 0 },
+  { id: 'kw-m-33', name: 'meesho wall stickers', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2400, features: {}, contentScore: null, rankOct3: 8, rankOct4: 8, diff: 0 },
+  { id: 'kw-m-34', name: 'meesho mobile cover back', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 3500, features: {}, contentScore: null, rankOct3: 7, rankOct4: 7, diff: 0 },
+  { id: 'kw-m-35', name: 'meesho earphones bluetooth', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2800, features: {}, contentScore: null, rankOct3: 8, rankOct4: 8, diff: 0 },
+  { id: 'kw-m-36', name: 'meesho water bottle set', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2100, features: {}, contentScore: null, rankOct3: 9, rankOct4: 9, diff: 0 },
+  { id: 'kw-m-37', name: 'meesho lunch box insulated', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1950, features: {}, contentScore: null, rankOct3: 9, rankOct4: 9, diff: 0 },
+  { id: 'kw-m-38', name: 'meesho umbrella online', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1600, features: {}, contentScore: null, rankOct3: 10, rankOct4: 10, diff: 0 },
+  { id: 'kw-m-39', name: 'meesho sunglasses combo', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2200, features: {}, contentScore: null, rankOct3: 9, rankOct4: 9, diff: 0 },
+  { id: 'kw-m-40', name: 'meesho hair accessories', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2450, features: {}, contentScore: null, rankOct3: 8, rankOct4: 8, diff: 0 },
+  { id: 'kw-m-41', name: 'meesho stationery items', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1750, features: {}, contentScore: null, rankOct3: 10, rankOct4: 10, diff: 0 },
+  { id: 'kw-m-42', name: 'meesho organic spices', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1200, features: {}, contentScore: null, rankOct3: 12, rankOct4: 12, diff: 0 },
+  { id: 'kw-m-43', name: 'meesho snacks combo', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1100, features: {}, contentScore: null, rankOct3: 14, rankOct4: 14, diff: 0 },
+  { id: 'kw-m-44', name: 'meesho gym wear set', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1850, features: {}, contentScore: null, rankOct3: 11, rankOct4: 11, diff: 0 },
+  { id: 'kw-m-45', name: 'meesho yoga mat anti slip', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1400, features: {}, contentScore: null, rankOct3: 12, rankOct4: 12, diff: 0 },
+  { id: 'kw-m-46', name: 'meesho sports shoes running', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 2300, features: {}, contentScore: null, rankOct3: 9, rankOct4: 9, diff: 0 },
+  { id: 'kw-m-47', name: 'meesho wallet for men', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1650, features: {}, contentScore: null, rankOct3: 11, rankOct4: 11, diff: 0 },
+  { id: 'kw-m-48', name: 'meesho belt combo leather', color: 'rgb(102, 174, 124)', urlHref: 'https://meesho.com/', volume: 1350, features: {}, contentScore: null, rankOct3: 13, rankOct4: 13, diff: 0 },
+];
+
 function RankingsPageContent() {
   const { activeProject, projects, setIsAddWebsiteModalOpen } = useApp();
   const router = useRouter();
@@ -931,14 +1114,33 @@ function RankingsPageContent() {
   const [posMax, setPosMax] = useState('');
 
   // Table Column Visibility & Sorting
-  const [visibleTableCols, setVisibleTableCols] = useState<Set<string>>(new Set(['url', 'volume', 'serp_features', 'content_score', 'ranking']));
+  const [visibleTableCols, setVisibleTableCols] = useState<Set<string>>(new Set(['url', 'volume', 'serp_features', 'content_score', 'oct10', 'oct11']));
   const [isDetailedColumnsOpen, setIsDetailedColumnsOpen] = useState(false);
   const detailedColumnsRef = useRef<HTMLDivElement>(null);
+  const [isDetailedFilterOpen, setIsDetailedFilterOpen] = useState(false);
+  const detailedFiltersRef = useRef<HTMLDivElement>(null);
+  const [detailedVolMin, setDetailedVolMin] = useState('');
+  const [detailedVolMax, setDetailedVolMax] = useState('');
+  const [detailedSerpFeature, setDetailedSerpFeature] = useState('all');
+  const [detailedScoreFilter, setDetailedScoreFilter] = useState('all');
   const [isDetailedCopyOpen, setIsDetailedCopyOpen] = useState(false);
   const detailedCopyRef = useRef<HTMLDivElement>(null);
   const [isDetailedFilterDrawerOpen, setIsDetailedFilterDrawerOpen] = useState(false);
   const [keywordSortOrder, setKeywordSortOrder] = useState<'asc' | 'desc'>('asc');
   const [volumeSortOrder, setVolumeSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (detailedFiltersRef.current && !detailedFiltersRef.current.contains(event.target as Node)) {
+        setIsDetailedFilterOpen(false);
+      }
+      if (detailedColumnsRef.current && !detailedColumnsRef.current.contains(event.target as Node)) {
+        setIsDetailedColumnsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Insights Section matching Screenshot 1, 2, 3
   const [isInsightsOpen, setIsInsightsOpen] = useState(true);
@@ -1085,135 +1287,68 @@ function RankingsPageContent() {
         diff: k.change ?? (k.dynamics || 0),
       }));
     }
+    if (domain.includes('meesho') || domain.includes('miso')) {
+      return MEESHO_48_KEYWORDS_DATA;
+    }
+    if (domain.includes('jio') || domain.includes('myjio')) {
+      return JIO_KEYWORDS_DATA;
+    }
     if (domain.includes('pinterest')) {
       return PINTEREST_KEYWORDS_DATA;
     }
     if (domain.includes('workcomposer')) {
       return TEAMS_KEYWORDS_DATA;
     }
-    const b = domain.split('.')[0] || 'brand';
-    const isEcom = domain.includes('amazon') || domain.includes('store') || domain.includes('shop') || domain.includes('flipkart') || domain.includes('buy');
-    return [
-      {
-        id: 'kw-1',
-        name: domain,
-        color: 'rgb(11, 105, 255)',
-        urlHref: `https://${domain}/`,
-        volume: 18400,
-        features: { sge: true, paa: true, sitelinks: true },
-        contentScore: 89,
-        rankOct3: 1,
-        rankOct4: 1,
-        diff: 0,
-      },
-      {
-        id: 'kw-2',
-        name: `${b} online`,
-        color: 'rgb(124, 58, 237)',
-        urlHref: `https://${domain}/`,
-        volume: 9200,
-        features: { sge: true, paa: true },
-        contentScore: 84,
-        rankOct3: 3,
-        rankOct4: 2,
-        diff: 1,
-      },
-      {
-        id: 'kw-3',
-        name: isEcom ? `${b} today deals` : `${b} login portal`,
-        color: 'rgb(16, 185, 129)',
-        urlHref: `https://${domain}/deals`,
-        volume: 6400,
-        features: { sge: true, sitelinks: true },
-        contentScore: 78,
-        rankOct3: 5,
-        rankOct4: 3,
-        diff: 2,
-      },
-      {
-        id: 'kw-4',
-        name: isEcom ? `${b} best offers` : `${b} platform pricing`,
-        color: 'rgb(245, 158, 11)',
-        urlHref: `https://${domain}/offers`,
-        volume: 4800,
-        features: { sge: false, paa: true },
-        contentScore: 72,
-        rankOct3: 8,
-        rankOct4: 6,
-        diff: 2,
-      },
-      {
-        id: 'kw-5',
-        name: isEcom ? `buy on ${b}` : `${b} alternatives 2026`,
-        color: 'rgb(239, 68, 68)',
-        urlHref: `https://${domain}/products`,
-        volume: 3600,
-        features: { sge: true },
-        contentScore: 68,
-        rankOct3: 12,
-        rankOct4: 9,
-        diff: 3,
-      },
-      {
-        id: 'kw-6',
-        name: `${b} customer service`,
-        color: 'rgb(6, 182, 212)',
-        urlHref: `https://${domain}/contact`,
-        volume: 2900,
-        features: { paa: true },
-        contentScore: 65,
-        rankOct3: 14,
-        rankOct4: 11,
-        diff: 3,
-      },
-      {
-        id: 'kw-7',
-        name: isEcom ? `${b} mobile shopping app` : `how to use ${b}`,
-        color: 'rgb(139, 92, 246)',
-        urlHref: `https://${domain}/app`,
-        volume: 2100,
-        features: { sitelinks: true },
-        contentScore: 62,
-        rankOct3: 18,
-        rankOct4: 15,
-        diff: 3,
-      },
-      {
-        id: 'kw-8',
-        name: `${b} reviews and ratings`,
-        color: 'rgb(236, 72, 153)',
-        urlHref: `https://${domain}/reviews`,
-        volume: 1600,
-        features: { reviews: true },
-        contentScore: 67,
-        rankOct3: 22,
-        rankOct4: 19,
-        diff: 3,
-      },
-    ];
+    return MEESHO_48_KEYWORDS_DATA;
   }, [keywords, domain, activeProject?.domain]);
+
+  const activeDetailedFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedRange !== 'all') count++;
+    if (posMin || posMax) count++;
+    if (detailedVolMin || detailedVolMax) count++;
+    if (detailedSerpFeature !== 'all') count++;
+    if (detailedScoreFilter !== 'all') count++;
+    if (detailedChangesFilter !== 'all') count++;
+    return count;
+  }, [selectedRange, posMin, posMax, detailedVolMin, detailedVolMax, detailedSerpFeature, detailedScoreFilter, detailedChangesFilter]);
 
   const filteredDetailedKeywords = React.useMemo(() => {
     return displayKeywordsList.filter((k) => {
       if (detailedTableSearch && !k.name.toLowerCase().includes(detailedTableSearch.toLowerCase())) {
         return false;
       }
-      if (selectedRange === 'top1') return k.rankOct4 === 1;
-      if (selectedRange === 'top3') return k.rankOct4 !== null && k.rankOct4 <= 3;
-      if (selectedRange === 'top5') return k.rankOct4 !== null && k.rankOct4 <= 5;
-      if (selectedRange === 'top10') return k.rankOct4 !== null && k.rankOct4 <= 10;
-      if (selectedRange === 'top30') return k.rankOct4 !== null && k.rankOct4 <= 30;
-      if (selectedRange === 'over100') return k.rankOct4 === null || k.rankOct4 > 100;
+      const r4 = toRankNum(k.rankOct4);
+      if (selectedRange === 'top1' && r4 !== 1) return false;
+      if (selectedRange === 'top3' && (r4 === null || r4 > 3)) return false;
+      if (selectedRange === 'top5' && (r4 === null || r4 > 5)) return false;
+      if (selectedRange === 'top10' && (r4 === null || r4 > 10)) return false;
+      if (selectedRange === 'top30' && (r4 === null || r4 > 30)) return false;
+      if (selectedRange === 'over100' && (r4 !== null && r4 <= 100)) return false;
 
-      if (posMin && k.rankOct4 !== null && k.rankOct4 < parseInt(posMin, 10)) return false;
-      if (posMax && k.rankOct4 !== null && k.rankOct4 > parseInt(posMax, 10)) return false;
+      if (posMin && r4 !== null && r4 < parseInt(posMin, 10)) return false;
+      if (posMax && r4 !== null && r4 > parseInt(posMax, 10)) return false;
+
+      const volNum = typeof k.volume === 'number' ? k.volume : (parseInt(String(k.volume).replace(/[^0-9]/g, ''), 10) || 0);
+      if (detailedVolMin && volNum < parseInt(detailedVolMin, 10)) return false;
+      if (detailedVolMax && volNum > parseInt(detailedVolMax, 10)) return false;
+
+      if (detailedSerpFeature === 'sge' && !k.features.sge) return false;
+      if (detailedSerpFeature === 'paa' && !k.features.paa) return false;
+      if (detailedSerpFeature === 'sitelinks' && !k.features.sitelinks) return false;
+      if (detailedSerpFeature === 'reviews' && !k.features.reviews) return false;
+      if (detailedSerpFeature === 'video' && !k.features.video) return false;
+
+      if (detailedScoreFilter === 'scored' && k.contentScore === null) return false;
+      if (detailedScoreFilter === 'gt80' && (k.contentScore === null || k.contentScore < 80)) return false;
+      if (detailedScoreFilter === 'gt70' && (k.contentScore === null || k.contentScore < 70)) return false;
 
       if (detailedChangesFilter === 'up' && (!k.diff || k.diff <= 0)) return false;
       if (detailedChangesFilter === 'down' && (!k.diff || k.diff >= 0)) return false;
 
       return true;
     });
-  }, [displayKeywordsList, detailedTableSearch, selectedRange, posMin, posMax, detailedChangesFilter]);
+  }, [displayKeywordsList, detailedTableSearch, selectedRange, posMin, posMax, detailedVolMin, detailedVolMax, detailedSerpFeature, detailedScoreFilter, detailedChangesFilter]);
 
   // Modals
   const [isGuestLinkOpen, setIsGuestLinkOpen] = useState(false);
@@ -2584,21 +2719,26 @@ function RankingsPageContent() {
             )}
 
             {/* Google India Engine Block matching user HTML engine-block */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-1">
-                <div className="w-6 h-6 border border-gray-200 rounded flex items-center justify-center bg-white shadow-2xs">
+            <div className="engine-block space-y-3" data-se="449728">
+              <div className="engine-description flex items-center gap-2 px-1">
+                <div className="w-6 h-6 border border-gray-200 rounded flex items-center justify-center bg-white shadow-2xs se-bordered-box">
                   <GoogleLogo className="w-4 h-4" />
                 </div>
                 <CountryFlag code="IN" name="India" size="sm" />
-                <h4 className="text-sm font-bold text-gray-900">Google India</h4>
-                <button
-                  type="button"
-                  onClick={() => setIsRankingSettingsModalOpen(true)}
-                  className="text-gray-400 hover:text-gray-700 ml-1 cursor-pointer p-0.5"
+                <h4 className="engine-description__title text-sm font-bold text-gray-900">
+                  Google India Mumbai, Maharashtra, India
+                </h4>
+                <a
+                  href="/admin.site.wizard.html?site_id=13023761#/engines?edit_engine=449728"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsRankingSettingsModalOpen(true);
+                  }}
+                  className="engine-description__edit text-gray-400 hover:text-gray-700 ml-1 cursor-pointer p-0.5 inline-flex items-center"
                   title="Edit engine settings"
                 >
                   <Settings className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </div>
 
               {/* 6 Metric Tabs matching user HTML rankings-chart */}
@@ -2614,10 +2754,10 @@ function RankingsPageContent() {
                     <div>
                       <div className="text-[11px] text-gray-500 font-medium">Average position</div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">2</span>
+                        <span className="text-2xl font-bold text-gray-900">100</span>
                       </div>
                     </div>
-                    {/* Highcharts Mini Area Chart */}
+                    {/* Highcharts Mini Area Chart at y=19.93 matching user dump */}
                     <div className="h-10 w-full mt-2">
                       <svg className="w-full h-full" viewBox="0 0 166 40" preserveAspectRatio="none">
                         <defs>
@@ -2626,8 +2766,8 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.6 15 L 164.4 15 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-avg-pos-in)" />
-                        <path d="M 1.6 15 L 164.4 15" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M 1.62 19.93 L 164.37 19.93 L 164.37 30 L 1.62 30 Z" fill="url(#mini-grad-avg-pos-in)" />
+                        <path d="M 1.62 19.93 L 164.37 19.93" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                   </div>
@@ -2705,12 +2845,12 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">1</span>
+                        <span className="text-2xl font-bold text-gray-900">0</span>
                       </div>
                     </div>
                     {/* Column Bars Highcharts */}
                     <div className="h-10 w-full mt-2 flex items-end gap-[3px]">
-                      {[0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33].map((h, i) => (
+                      {[0, 0, 30, 23, 33, 0, 0, 7, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23].map((h, i) => (
                         <div
                           key={i}
                           className="flex-1 rounded-xs"
@@ -2736,7 +2876,7 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">100</span>
+                        <span className="text-2xl font-bold text-gray-900">0</span>
                       </div>
                     </div>
                     <div className="h-10 w-full mt-2">
@@ -2747,8 +2887,8 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.6 5 L 164.4 5 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-top10-in)" />
-                        <path d="M 1.6 5 L 164.4 5" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M 1.6 30 L 164.4 30 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-top10-in)" />
+                        <path d="M 1.6 30 L 164.4 30" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                   </div>
@@ -3005,24 +3145,217 @@ function RankingsPageContent() {
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => showToast('Filters panel opened')}
-                    className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Filter className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Filters</span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => showToast('Columns configuration opened')}
-                    className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Columns className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Columns</span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </button>
+                  {/* Dynamic Filters Popover */}
+                  <div className="relative" ref={detailedFiltersRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailedFilterOpen(!isDetailedFilterOpen)}
+                      className={`px-3 py-1.5 border rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors ${
+                        activeDetailedFiltersCount > 0
+                          ? 'bg-[#F0F5FF] border-[#2563EB] text-[#2563EB]'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <Filter className="w-3.5 h-3.5" />
+                      <span>Filters</span>
+                      {activeDetailedFiltersCount > 0 && (
+                        <span className="w-4 h-4 bg-[#2563EB] text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                          {activeDetailedFiltersCount}
+                        </span>
+                      )}
+                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                    </button>
+
+                    {isDetailedFilterOpen && (
+                      <div className="absolute right-0 mt-1 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 z-40 text-xs text-gray-800 animate-in fade-in duration-100">
+                        <div className="flex items-center justify-between pb-2 mb-3 border-b border-gray-100 font-bold">
+                          <span>Filter Keywords</span>
+                          {activeDetailedFiltersCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedRange('all');
+                                setPosMin('');
+                                setPosMax('');
+                                setDetailedVolMin('');
+                                setDetailedVolMax('');
+                                setDetailedSerpFeature('all');
+                                setDetailedScoreFilter('all');
+                                setDetailedChangesFilter('all');
+                              }}
+                              className="text-[11px] text-[#2563EB] hover:underline font-semibold cursor-pointer"
+                            >
+                              Reset all
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Position Range */}
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Position range (1 - 100)</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max="100"
+                              placeholder="From"
+                              value={posMin}
+                              onChange={(e) => setPosMin(e.target.value)}
+                              className="w-1/2 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden"
+                            />
+                            <span className="text-gray-400">-</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="100"
+                              placeholder="To"
+                              value={posMax}
+                              onChange={(e) => setPosMax(e.target.value)}
+                              className="w-1/2 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Search Volume */}
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Search volume</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              placeholder="Min vol"
+                              value={detailedVolMin}
+                              onChange={(e) => setDetailedVolMin(e.target.value)}
+                              className="w-1/2 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden"
+                            />
+                            <span className="text-gray-400">-</span>
+                            <input
+                              type="number"
+                              placeholder="Max vol"
+                              value={detailedVolMax}
+                              onChange={(e) => setDetailedVolMax(e.target.value)}
+                              className="w-1/2 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        {/* SERP Features */}
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">SERP feature</label>
+                          <select
+                            value={detailedSerpFeature}
+                            onChange={(e) => setDetailedSerpFeature(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden cursor-pointer"
+                          >
+                            <option value="all">All SERP features</option>
+                            <option value="sge">AI Overviews (SGE)</option>
+                            <option value="paa">People Also Ask (PAA)</option>
+                            <option value="sitelinks">Sitelinks</option>
+                            <option value="reviews">Reviews</option>
+                            <option value="video">Video</option>
+                          </select>
+                        </div>
+
+                        {/* Content Score */}
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Content score</label>
+                          <select
+                            value={detailedScoreFilter}
+                            onChange={(e) => setDetailedScoreFilter(e.target.value)}
+                            className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-xs focus:bg-white focus:border-[#2563EB] outline-hidden cursor-pointer"
+                          >
+                            <option value="all">All content scores</option>
+                            <option value="scored">Scored only (has score)</option>
+                            <option value="gt80">High quality (&ge; 80)</option>
+                            <option value="gt70">Good quality (&ge; 70)</option>
+                          </select>
+                        </div>
+
+                        {/* Dynamics / Changes */}
+                        <div className="mb-3">
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Ranking dynamics</label>
+                          <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg text-center font-medium">
+                            {(['all', 'up', 'down'] as const).map((dyn) => (
+                              <button
+                                key={dyn}
+                                type="button"
+                                onClick={() => setDetailedChangesFilter(dyn)}
+                                className={`py-1 rounded text-xs capitalize cursor-pointer transition-all ${
+                                  detailedChangesFilter === dyn
+                                    ? 'bg-white font-bold text-gray-900 shadow-xs'
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                              >
+                                {dyn === 'all' ? 'All' : dyn === 'up' ? 'Improved' : 'Declined'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsDetailedFilterOpen(false)}
+                          className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-colors"
+                        >
+                          Apply Filters
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dynamic Columns Popover */}
+                  <div className="relative" ref={detailedColumnsRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailedColumnsOpen(!isDetailedColumnsOpen)}
+                      className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Columns className="w-3.5 h-3.5 text-gray-500" />
+                      <span>Columns</span>
+                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                    </button>
+
+                    {isDetailedColumnsOpen && (
+                      <div className="absolute right-0 mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 z-40 text-xs text-gray-800 animate-in fade-in duration-100">
+                        <div className="font-bold pb-1.5 mb-2 border-b border-gray-100 text-gray-900">
+                          Toggle Columns
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { id: 'url', label: 'URL' },
+                            { id: 'volume', label: 'Search vol.' },
+                            { id: 'serp_features', label: 'SERP features' },
+                            { id: 'content_score', label: 'Content Score' },
+                            { id: 'oct10', label: 'Oct-10' },
+                            { id: 'oct11', label: 'Oct-11' },
+                          ].map((col) => {
+                            const isVisible = visibleTableCols.has(col.id);
+                            return (
+                              <label
+                                key={col.id}
+                                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-1 py-0.5 rounded select-none"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isVisible}
+                                  onChange={() => {
+                                    const next = new Set(visibleTableCols);
+                                    if (next.has(col.id)) {
+                                      if (next.size > 1) next.delete(col.id);
+                                    } else {
+                                      next.add(col.id);
+                                    }
+                                    setVisibleTableCols(next);
+                                  }}
+                                  className="rounded border-gray-300 text-[#2563EB] focus:ring-0 cursor-pointer"
+                                />
+                                <span className="font-medium text-gray-700">{col.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -3053,55 +3386,67 @@ function RankingsPageContent() {
                         </div>
                       </th>
 
-                      {/* 2. URL (sticky left 320px, width 50px) */}
-                      <th className="px-2 py-3 text-center w-[50px] min-w-[50px] max-w-[50px] sticky left-[320px] z-20 bg-[#FAFBFD]">
-                        <span className="flex items-center justify-center gap-0.5">
-                          <span>URL</span>
-                          <span className="text-[10px] text-gray-400">ℹ</span>
-                        </span>
-                      </th>
+                      {/* 2. URL (width 50px) */}
+                      {visibleTableCols.has('url') && (
+                        <th className="px-2 py-3 text-center w-[50px] min-w-[50px] max-w-[50px] bg-[#FAFBFD]">
+                          <span className="flex items-center justify-center gap-0.5">
+                            <span>URL</span>
+                            <span className="text-[10px] text-gray-400">ℹ</span>
+                          </span>
+                        </th>
+                      )}
 
-                      {/* 3. Search vol. (sticky left 370px, width 110px) */}
-                      <th className="px-2 py-3 text-right w-[110px] min-w-[110px] max-w-[110px] sticky left-[370px] z-20 bg-[#FAFBFD]">
-                        <span className="flex items-center justify-end gap-1">
-                          <span>Search vol.</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                          <span className="text-[10px] text-gray-400">ℹ</span>
-                        </span>
-                      </th>
+                      {/* 3. Search vol. (width 110px) */}
+                      {visibleTableCols.has('volume') && (
+                        <th className="px-2 py-3 text-right w-[110px] min-w-[110px] max-w-[110px] bg-[#FAFBFD]">
+                          <span className="flex items-center justify-end gap-1">
+                            <span>Search vol.</span>
+                            <ChevronDown className="w-3 h-3 text-gray-400" />
+                            <span className="text-[10px] text-gray-400">ℹ</span>
+                          </span>
+                        </th>
+                      )}
 
-                      {/* 4. SERP features (sticky left 480px, width 120px) */}
-                      <th className="px-2 py-3 text-center w-[120px] min-w-[120px] max-w-[120px] sticky left-[480px] z-20 bg-[#FAFBFD]">
-                        <span className="flex items-center justify-center gap-0.5">
-                          <span>SERP features</span>
-                          <span className="text-[10px] text-gray-400">ℹ</span>
-                        </span>
-                      </th>
+                      {/* 4. SERP features (width 120px) */}
+                      {visibleTableCols.has('serp_features') && (
+                        <th className="px-2 py-3 text-center w-[120px] min-w-[120px] max-w-[120px] bg-[#FAFBFD]">
+                          <span className="flex items-center justify-center gap-0.5">
+                            <span>SERP features</span>
+                            <span className="text-[10px] text-gray-400">ℹ</span>
+                          </span>
+                        </th>
+                      )}
 
-                      {/* 5. Content Score (sticky left 600px, width 105px) */}
-                      <th className="px-2 py-3 text-center w-[105px] min-w-[105px] max-w-[105px] sticky left-[600px] z-20 bg-[#FAFBFD] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                        <span className="flex items-center justify-center gap-1">
-                          <span>Content Score</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                          <span className="text-[10px] text-gray-400">ℹ</span>
-                        </span>
-                      </th>
+                      {/* 5. Content Score (width 105px) */}
+                      {visibleTableCols.has('content_score') && (
+                        <th className="px-2 py-3 text-center w-[105px] min-w-[105px] max-w-[105px] bg-[#FAFBFD] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          <span className="flex items-center justify-center gap-1">
+                            <span>Content Score</span>
+                            <ChevronDown className="w-3 h-3 text-gray-400" />
+                            <span className="text-[10px] text-gray-400">ℹ</span>
+                          </span>
+                        </th>
+                      )}
 
                       {/* 6. Oct-10 (width 80px) */}
-                      <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
-                        <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                          <span>Oct-10</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                      </th>
+                      {visibleTableCols.has('oct10') && (
+                        <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
+                          <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
+                            <span>Oct-10</span>
+                            <ChevronDown className="w-3 h-3 text-gray-400" />
+                          </div>
+                        </th>
+                      )}
 
                       {/* 7. Oct-11 (width 80px) */}
-                      <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
-                        <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                          <span>Oct-11</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                      </th>
+                      {visibleTableCols.has('oct11') && (
+                        <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
+                          <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
+                            <span>Oct-11</span>
+                            <ChevronDown className="w-3 h-3 text-gray-400" />
+                          </div>
+                        </th>
+                      )}
                     </tr>
                   </thead>
 
@@ -3157,66 +3502,78 @@ function RankingsPageContent() {
                           </td>
 
                           {/* Col 2: URL (width 50px) */}
-                          <td className="px-2 py-2.5 text-center sticky left-[320px] z-20 bg-inherit w-[50px] min-w-[50px] max-w-[50px]">
-                            <a
-                              href={k.urlHref || (activeProject?.domain ? `https://${activeProject.domain}/` : '#')}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[#1976d2] hover:text-[#0b59ee] inline-block p-1"
-                              title={k.urlHref || (activeProject?.domain ? `https://${activeProject.domain}/` : '#')}
-                            >
-                              <Link2 className="w-3.5 h-3.5" />
-                            </a>
-                          </td>
+                          {visibleTableCols.has('url') && (
+                            <td className="px-2 py-2.5 text-center bg-inherit w-[50px] min-w-[50px] max-w-[50px]">
+                              <a
+                                href={k.urlHref || (activeProject?.domain ? `https://${activeProject.domain}/` : '#')}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[#1976d2] hover:text-[#0b59ee] inline-block p-1"
+                                title={k.urlHref || (activeProject?.domain ? `https://${activeProject.domain}/` : '#')}
+                              >
+                                <Link2 className="w-3.5 h-3.5" />
+                              </a>
+                            </td>
+                          )}
 
                           {/* Col 3: Search vol (width 110px) */}
-                          <td className="px-2 py-2.5 text-right font-medium text-gray-800 sticky left-[370px] z-20 bg-inherit w-[110px] min-w-[110px] max-w-[110px]">
-                            {k.volume}
-                          </td>
+                          {visibleTableCols.has('volume') && (
+                            <td className="px-2 py-2.5 text-right font-medium text-gray-800 bg-inherit w-[110px] min-w-[110px] max-w-[110px]">
+                              {k.volume}
+                            </td>
+                          )}
 
                           {/* Col 4: SERP features (width 120px) */}
-                          <td className="px-2 py-2.5 text-center sticky left-[480px] z-20 bg-inherit w-[120px] min-w-[120px] max-w-[120px]">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {k.features.paa && (
-                                <span className="w-5 h-5 rounded flex items-center justify-center bg-gray-100 text-gray-600 text-[10px] font-bold cursor-help" title="People Also Ask">
-                                  <List className="w-3 h-3 text-gray-600" />
-                                </span>
-                              )}
-                              {k.features.sge && (
-                                <span className="w-5 h-5 rounded flex items-center justify-center bg-blue-50 text-[#1976d2] text-[10px] font-bold cursor-help" title="AI Overviews / SGE">
-                                  <Sparkles className="w-3 h-3 fill-[#1976d2] text-[#1976d2]" />
-                                </span>
-                              )}
-                            </div>
-                          </td>
+                          {visibleTableCols.has('serp_features') && (
+                            <td className="px-2 py-2.5 text-center bg-inherit w-[120px] min-w-[120px] max-w-[120px]">
+                              <div className="flex items-center justify-center gap-1.5">
+                                {k.features.paa && (
+                                  <span className="w-5 h-5 rounded flex items-center justify-center bg-gray-100 text-gray-600 text-[10px] font-bold cursor-help" title="People Also Ask">
+                                    <List className="w-3 h-3 text-gray-600" />
+                                  </span>
+                                )}
+                                {k.features.sge && (
+                                  <span className="w-5 h-5 rounded flex items-center justify-center bg-blue-50 text-[#1976d2] text-[10px] font-bold cursor-help" title="AI Overviews / SGE">
+                                    <Sparkles className="w-3 h-3 fill-[#1976d2] text-[#1976d2]" />
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          )}
 
                           {/* Col 5: Content Score (width 105px) */}
-                          <td className="px-2 py-2.5 text-center sticky left-[600px] z-20 bg-inherit w-[105px] min-w-[105px] max-w-[105px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                            {k.contentScore !== null ? (
-                              <span
-                                className="inline-block text-[11px] font-bold text-white px-2.5 py-0.5 rounded shadow-2xs"
-                                style={{ backgroundColor: 'rgb(54, 179, 126)' }}
-                              >
-                                {k.contentScore}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400 font-medium">-</span>
-                            )}
-                          </td>
+                          {visibleTableCols.has('content_score') && (
+                            <td className="px-2 py-2.5 text-center bg-inherit w-[105px] min-w-[105px] max-w-[105px] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                              {k.contentScore !== null ? (
+                                <span
+                                  className="inline-block text-[11px] font-bold text-white px-2.5 py-0.5 rounded shadow-2xs"
+                                  style={{ backgroundColor: 'rgb(54, 179, 126)' }}
+                                >
+                                  {k.contentScore}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 font-medium">-</span>
+                              )}
+                            </td>
+                          )}
 
                           {/* Col 6: Oct-10 (width 80px) */}
-                          <td className="px-2 py-2.5 text-center border-l border-gray-100 w-[80px] min-w-[80px]">
-                            <span className="inline-flex items-center justify-center w-7 h-6 bg-[#EAF7EC] text-[#2E7D32] font-bold rounded text-xs cursor-pointer hover:shadow-2xs">
-                              {k.rankOct3}
-                            </span>
-                          </td>
+                          {visibleTableCols.has('oct10') && (
+                            <td className="px-2 py-2.5 text-center border-l border-gray-100 w-[80px] min-w-[80px]">
+                              <span className="inline-flex items-center justify-center w-7 h-6 bg-[#EAF7EC] text-[#2E7D32] font-bold rounded text-xs cursor-pointer hover:shadow-2xs">
+                                {k.rankOct3}
+                              </span>
+                            </td>
+                          )}
 
                           {/* Col 7: Oct-11 (width 80px) */}
-                          <td className="px-2 py-2.5 text-center border-l border-gray-100 w-[80px] min-w-[80px]">
-                            <span className="inline-flex items-center justify-center w-7 h-6 bg-[#EAF7EC] text-[#2E7D32] font-bold rounded text-xs cursor-pointer hover:shadow-2xs">
-                              {k.rankOct4}
-                            </span>
-                          </td>
+                          {visibleTableCols.has('oct11') && (
+                            <td className="px-2 py-2.5 text-center border-l border-gray-100 w-[80px] min-w-[80px]">
+                              <span className="inline-flex items-center justify-center w-7 h-6 bg-[#EAF7EC] text-[#2E7D32] font-bold rounded text-xs cursor-pointer hover:shadow-2xs">
+                                {k.rankOct4}
+                              </span>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -3299,12 +3656,12 @@ function RankingsPageContent() {
                   <div>
                     <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium pl-1 mb-1">
                       <span className="w-14 text-center"></span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => k.rankOct4 === 1).length / displayKeywordsList.length) * 100)}%` : '50%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 3).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 5).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 10).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 30).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => !k.rankOct4 || k.rankOct4 > 100).length / displayKeywordsList.length) * 100)}%` : '0%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => toRankNum(k.rankOct4) === 1).length / displayKeywordsList.length) * 100)}%` : '50%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 3; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 5; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 10; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 30; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r === null || r > 100; }).length / displayKeywordsList.length) * 100)}%` : '0%'}</span>
                     </div>
 
                     <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
@@ -3334,12 +3691,12 @@ function RankingsPageContent() {
 
                     <div className="flex items-center gap-1 text-[11px] font-bold text-gray-700 pl-1 mt-1.5">
                       <span className="w-14 text-center">{displayKeywordsList.length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => k.rankOct4 === 1).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 3).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 5).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 10).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => k.rankOct4 !== null && k.rankOct4 <= 30).length}</span>
-                      <span className="w-14 text-center text-gray-400">{displayKeywordsList.filter(k => !k.rankOct4 || k.rankOct4 > 100).length}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.filter(k => toRankNum(k.rankOct4) === 1).length}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 3; }).length}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 5; }).length}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 10; }).length}</span>
+                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 30; }).length}</span>
+                      <span className="w-14 text-center text-gray-400">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r === null || r > 100; }).length}</span>
                     </div>
                   </div>
                 </div>

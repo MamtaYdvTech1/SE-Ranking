@@ -475,7 +475,7 @@ export function SeRankingVisibilityRating({
   }, [period]);
 
   const [hoverDateIdx, setHoverDateIdx] = useState<number>(3); // Default to '09 Oct' matching Screenshot
-  const activeDateIndex = Math.min(hoverDateIdx, dates.length - 1);
+  const activeDateIndex = Math.max(0, Math.min(hoverDateIdx, (dates?.length || 1) - 1));
 
   const svgWidth = 920;
   const svgHeight = 260;
@@ -758,7 +758,8 @@ export function SeRankingVisibilityRating({
               {activeCompetitors.map((comp) => {
                 const pts = dates.map((_: string, i: number) => {
                   const x = getX(i);
-                  const val = comp.seriesData ? comp.seriesData[i] : comp.visibility;
+                  const rawVal = comp.seriesData && comp.seriesData[i] !== undefined ? comp.seriesData[i] : comp.visibility;
+                  const val = typeof rawVal === 'number' && !isNaN(rawVal) ? rawVal : 0;
                   const y = getY(val);
                   return { x, y, val };
                 });
@@ -785,10 +786,10 @@ export function SeRankingVisibilityRating({
                       className="transition-all hover:stroke-width-4 cursor-pointer"
                     />
                     {/* Active point marker at crosshair */}
-                    {pts[hoverDateIdx] && (
+                    {pts[activeDateIndex] && (
                       <circle
                         cx={activeHoverX}
-                        cy={pts[hoverDateIdx].y}
+                        cy={pts[activeDateIndex].y}
                         r={comp.isYou ? 5 : 4}
                         fill={comp.color}
                         stroke="#ffffff"
@@ -810,12 +811,13 @@ export function SeRankingVisibilityRating({
               }}
             >
               <div className="text-[11px] font-bold text-gray-800 pb-1.5 border-b border-gray-100 flex items-center justify-between">
-                <span>{dates[hoverDateIdx].toUpperCase()} 2026</span>
+                <span>{dates[activeDateIndex] ? dates[activeDateIndex].toUpperCase() : 'OCTOBER'} 2026</span>
                 <span className="text-[10px] text-gray-400 font-semibold tracking-wider">VISIBILITY</span>
               </div>
               <div className="space-y-1 pt-1">
                 {activeCompetitors.map((c) => {
-                  const val = c.seriesData ? c.seriesData[hoverDateIdx] : c.visibility;
+                  const rawVal = c.seriesData && c.seriesData[activeDateIndex] !== undefined ? c.seriesData[activeDateIndex] : c.visibility;
+                  const val = typeof rawVal === 'number' && !isNaN(rawVal) ? rawVal : (typeof c.visibility === 'number' && !isNaN(c.visibility) ? c.visibility : 0);
                   return (
                     <div key={c.domain} className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1.5 min-w-0">

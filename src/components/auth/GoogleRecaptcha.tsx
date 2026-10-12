@@ -55,7 +55,7 @@ export function GoogleRecaptcha({
   const siteKey =
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
     process.env.RECAPTCHA_SITE_KEY ||
-    '6LeM0ugtAAAAAI2KNBe5VmDfNzN2xbKwJPcnUqAS';
+    '6Le5qOstAAAAANpDAySWoDVfz-OrmwSVlQtHsF7v';
 
   const onVerifyRef = useRef(onVerify);
   onVerifyRef.current = onVerify;
@@ -208,9 +208,7 @@ export function GoogleRecaptcha({
       {/* Official Google reCAPTCHA iframe mount container */}
       <div
         ref={containerRef}
-        className={`w-[304px] min-h-[78px] flex items-center justify-center ${
-          status === 'loading' ? 'hidden' : 'block'
-        }`}
+        className="w-[304px] min-h-[78px] flex items-center justify-center relative"
         data-testid="google-recaptcha-mount"
       />
 

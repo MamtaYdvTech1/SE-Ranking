@@ -450,17 +450,11 @@ export async function POST(req: NextRequest) {
     // Instead, if DataForSEO is configured, fetch live keyword search volume.
     const isRealSeoMode = process.env.SEO_PROVIDER_MODE === 'real' || process.env.NODE_ENV === 'production';
     if (!isRealSeoMode) {
-      try {
-        const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
-        await seedProjectData(
-          createdProject.id,
-          cleanDomain,
-          projectName,
-          initialKeywords
-        );
-      } catch (seedErr) {
-        console.warn('Initial project seed warning:', seedErr);
-      }
+      import('@/services/seo/seed-project-data.service')
+        .then(({ seedProjectData }) =>
+          seedProjectData(createdProject.id, cleanDomain, projectName, initialKeywords)
+        )
+        .catch((seedErr) => console.warn('Initial project seed warning:', seedErr));
     } else {
       // Real SEO mode: fetch real search volume from DataForSEO or provide realistic volumes
       try {
