@@ -260,6 +260,9 @@ export const AnalyzeRequestSchema = z.object({
   domain: z
     .string()
     .min(1, 'Enter a valid website domain or URL.')
+    .refine((val) => validateRealDomainFormat(val).valid, {
+      message: 'Enter a valid website domain or URL.',
+    })
     .transform(normalizeDomain),
   scope: z.enum(['*.domain.com/*', 'domain.com/*', 'Exact URL']).default('*.domain.com/*'),
   country: z.string().min(1, 'Target location is required'),

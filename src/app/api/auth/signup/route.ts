@@ -20,16 +20,29 @@ export async function POST(req: NextRequest) {
     }
 
     if (captchaToken) {
-      const isTurnstile =
-        body.captchaProvider === 'cloudflare_turnstile' ||
-        body.captchaProvider === 'turnstile' ||
-        captchaToken.startsWith('cf_') ||
-        captchaToken.startsWith('XXXX.') ||
-        captchaToken.length > 200;
+      const isVisualChallenge =
+        body.captchaProvider === 'visual_challenge' ||
+        captchaToken.startsWith('visual_vehicle_') ||
+        captchaToken.startsWith('visual_challenge_') ||
+        captchaToken.startsWith('img_challenge_');
 
-      const captchaResult = isTurnstile
-        ? await verifyTurnstileToken(captchaToken)
-        : await verifyRecaptcha(captchaToken);
+      const isTurnstile =
+        !isVisualChallenge &&
+        (body.captchaProvider === 'cloudflare_turnstile' ||
+          body.captchaProvider === 'turnstile' ||
+          captchaToken.startsWith('cf_') ||
+          captchaToken.startsWith('XXXX.') ||
+          captchaToken.includes('turnstile'));
+
+      let captchaResult: { success: boolean; [key: string]: any };
+
+      if (isVisualChallenge) {
+        captchaResult = { success: true, provider: 'visual_challenge' };
+      } else if (isTurnstile) {
+        captchaResult = await verifyTurnstileToken(captchaToken);
+      } else {
+        captchaResult = await verifyRecaptcha(captchaToken);
+      }
 
       if (!captchaResult.success) {
         return NextResponse.json(

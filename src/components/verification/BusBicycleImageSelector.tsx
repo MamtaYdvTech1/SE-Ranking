@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useId } from 'react';
-import Image from 'next/image';
-import { Check, RotateCcw, ShieldCheck, Bus, Bike, AlertCircle } from 'lucide-react';
+import React, { useState, useId, useMemo } from 'react';
+import { Check, RotateCcw, ShieldCheck, Bus, Bike, Car, AlertCircle } from 'lucide-react';
 
 export interface VehicleImageItem {
   id: string;
-  category: 'bus' | 'bicycle';
+  category: 'bus' | 'bicycle' | 'car' | 'motorcycle';
   title: string;
   description: string;
   src: string;
   alt: string;
 }
 
+// Base 8 items for test suite backward compatibility
 export const REAL_VEHICLE_IMAGES: VehicleImageItem[] = [
   {
     id: 'bus-1',
@@ -80,16 +80,93 @@ export const REAL_VEHICLE_IMAGES: VehicleImageItem[] = [
   },
 ];
 
-interface BusBicycleImageSelectorProps {
-  targetCategory?: 'bus' | 'bicycle';
-  onSelectionChange?: (selectedIds: string[], isCorrect: boolean) => void;
+// Additional genuine licensed Unsplash photos for Cars and Motorcycles/Bikes
+export const EXTENDED_VEHICLE_IMAGES: VehicleImageItem[] = [
+  {
+    id: 'car-1',
+    category: 'car',
+    title: 'Modern Sports Coupe',
+    description: 'Aerodynamic performance sports car parked on coastal road',
+    src: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&auto=format&fit=crop&q=80',
+    alt: 'High-performance sports coupe on an open scenic road',
+  },
+  {
+    id: 'car-2',
+    category: 'car',
+    title: 'Classic Vintage Muscle Car',
+    description: 'Restored vibrant yellow vintage American classic car',
+    src: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&auto=format&fit=crop&q=80',
+    alt: 'Classic vintage yellow car parked curbside in the city',
+  },
+  {
+    id: 'car-3',
+    category: 'car',
+    title: 'Urban Compact Hatchback',
+    description: 'Modern red commuter automobile parked on urban street',
+    src: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80',
+    alt: 'Compact red city car parked outdoors in daylight',
+  },
+  {
+    id: 'car-4',
+    category: 'car',
+    title: 'All-Terrain Luxury SUV',
+    description: 'Four-wheel drive adventure sport utility vehicle',
+    src: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&auto=format&fit=crop&q=80',
+    alt: 'Silver luxury SUV parked in picturesque mountain background',
+  },
+  {
+    id: 'motorcycle-1',
+    category: 'motorcycle',
+    title: 'High-Speed Sports Motorbike',
+    description: 'Full-fairing racing motorcycle on open tarmac',
+    src: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
+    alt: 'Performance sports motorbike parked on scenic asphalt',
+  },
+  {
+    id: 'motorcycle-2',
+    category: 'motorcycle',
+    title: 'Classic Highway Cruiser Bike',
+    description: 'Custom cruiser motorcycle with chrome exhaust pipes',
+    src: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&auto=format&fit=crop&q=80',
+    alt: 'Black cruiser motorbike parked against an urban wall',
+  },
+  {
+    id: 'motorcycle-3',
+    category: 'motorcycle',
+    title: 'Retro Urban Scooter',
+    description: 'Pastel teal city motor scooter parked by sidewalk',
+    src: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
+    alt: 'Classic vintage scooter bike beside an urban café',
+  },
+  {
+    id: 'motorcycle-4',
+    category: 'motorcycle',
+    title: 'Adventure Dual-Sport Motorbike',
+    description: 'All-terrain adventure touring motorbike on dirt trail',
+    src: 'https://images.unsplash.com/photo-1558980664-769d59546b3d?w=600&auto=format&fit=crop&q=80',
+    alt: 'Adventure dual-sport motorcycle parked on outdoor landscape',
+  },
+];
+
+export const ALL_VEHICLE_IMAGES: VehicleImageItem[] = [
+  ...REAL_VEHICLE_IMAGES,
+  ...EXTENDED_VEHICLE_IMAGES,
+];
+
+export type VehicleCategoryTarget = 'bus' | 'bicycle' | 'car' | 'motorcycle' | 'cycle' | 'bike';
+
+export interface BusBicycleImageSelectorProps {
+  targetCategory?: VehicleCategoryTarget;
+  onSelectionChange?: (selectedIds: string[], isCorrect: boolean, token?: string) => void;
   className?: string;
+  onSuccessToken?: (token: string) => void;
 }
 
 export function BusBicycleImageSelector({
   targetCategory = 'bicycle',
   onSelectionChange,
   className = '',
+  onSuccessToken,
 }: BusBicycleImageSelectorProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<{ status: 'idle' | 'success' | 'incomplete'; message: string }>({
@@ -98,7 +175,46 @@ export function BusBicycleImageSelector({
   });
   const headingId = useId();
 
-  const targetCount = REAL_VEHICLE_IMAGES.filter((img) => img.category === targetCategory).length;
+  // Normalize category name
+  const normalizedCategory: 'bus' | 'bicycle' | 'car' | 'motorcycle' = useMemo(() => {
+    if (targetCategory === 'cycle') return 'bicycle';
+    if (targetCategory === 'bike') return 'motorcycle';
+    return targetCategory as 'bus' | 'bicycle' | 'car' | 'motorcycle';
+  }, [targetCategory]);
+
+  const displayCategoryLabel = useMemo(() => {
+    switch (normalizedCategory) {
+      case 'bicycle':
+        return 'Cycles / Bicycles';
+      case 'motorcycle':
+        return 'Bikes / Motorcycles';
+      case 'car':
+        return 'Cars';
+      case 'bus':
+        return 'Buses';
+      default:
+        return 'Vehicles';
+    }
+  }, [normalizedCategory]);
+
+  // Select 8 items for the visual challenge: 4 target items + 4 distractor items
+  const challengeImages = useMemo(() => {
+    const targets = ALL_VEHICLE_IMAGES.filter((img) => img.category === normalizedCategory);
+    const nonTargets = ALL_VEHICLE_IMAGES.filter((img) => img.category !== normalizedCategory);
+
+    // Pick 4 distractors (prefer distinct categories)
+    const distractors = nonTargets.slice(0, 4);
+    const combined = [...targets, ...distractors];
+
+    // Interleave stably for deterministic layout
+    return combined.sort((a, b) => a.id.localeCompare(b.id));
+  }, [normalizedCategory]);
+
+  const targetCount = challengeImages.filter((img) => img.category === normalizedCategory).length;
+
+  const generateVerificationToken = () => {
+    return `visual_vehicle_verified_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  };
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedIds);
@@ -109,24 +225,28 @@ export function BusBicycleImageSelector({
     }
     setSelectedIds(next);
 
-    // Evaluate rule: all target category items selected and no other items selected
     const selectedArray = Array.from(next);
-    const targetItems = REAL_VEHICLE_IMAGES.filter((img) => img.category === targetCategory);
+    const targetItems = challengeImages.filter((img) => img.category === normalizedCategory);
     const nonTargetSelected = selectedArray.some((sId) => {
-      const itm = REAL_VEHICLE_IMAGES.find((i) => i.id === sId);
-      return itm?.category !== targetCategory;
+      const itm = challengeImages.find((i) => i.id === sId);
+      return itm?.category !== normalizedCategory;
     });
     const allTargetSelected = targetItems.every((itm) => next.has(itm.id));
-    const isCorrect = allTargetSelected && !nonTargetSelected;
+    const isCorrect = allTargetSelected && !nonTargetSelected && selectedArray.length === targetCount;
+
+    const token = isCorrect ? generateVerificationToken() : undefined;
 
     if (onSelectionChange) {
-      onSelectionChange(selectedArray, isCorrect);
+      onSelectionChange(selectedArray, isCorrect, token);
+    }
+    if (isCorrect && token && onSuccessToken) {
+      onSuccessToken(token);
     }
 
     if (isCorrect) {
       setFeedback({
         status: 'success',
-        message: `Excellent! You selected all ${targetCategory} images accurately.`,
+        message: `Verified! You identified all ${targetCount} ${displayCategoryLabel} accurately.`,
       });
     } else {
       setFeedback({
@@ -146,24 +266,44 @@ export function BusBicycleImageSelector({
 
   const handleValidate = () => {
     const selectedArray = Array.from(selectedIds);
-    const targetItems = REAL_VEHICLE_IMAGES.filter((img) => img.category === targetCategory);
+    const targetItems = challengeImages.filter((img) => img.category === normalizedCategory);
     const nonTargetSelected = selectedArray.some((sId) => {
-      const itm = REAL_VEHICLE_IMAGES.find((i) => i.id === sId);
-      return itm?.category !== targetCategory;
+      const itm = challengeImages.find((i) => i.id === sId);
+      return itm?.category !== normalizedCategory;
     });
     const allTargetSelected = targetItems.every((itm) => selectedIds.has(itm.id));
-    const isCorrect = allTargetSelected && !nonTargetSelected;
+    const isCorrect = allTargetSelected && !nonTargetSelected && selectedArray.length === targetCount;
 
     if (isCorrect) {
+      const token = generateVerificationToken();
       setFeedback({
         status: 'success',
-        message: `Perfect! All ${targetCount} ${targetCategory} images are correctly identified.`,
+        message: `Verification Successful! All ${targetCount} ${displayCategoryLabel} correctly selected.`,
       });
+      if (onSelectionChange) {
+        onSelectionChange(selectedArray, true, token);
+      }
+      if (onSuccessToken) {
+        onSuccessToken(token);
+      }
     } else {
       setFeedback({
         status: 'incomplete',
-        message: `Please select all ${targetCategory}s (${selectedIds.size} of ${targetCount} selected so far).`,
+        message: `Please select all ${displayCategoryLabel} (${selectedIds.size} of ${targetCount} selected so far).`,
       });
+    }
+  };
+
+  const renderCategoryIcon = () => {
+    switch (normalizedCategory) {
+      case 'bus':
+        return <Bus className="w-5 h-5" />;
+      case 'car':
+        return <Car className="w-5 h-5" />;
+      case 'motorcycle':
+      case 'bicycle':
+      default:
+        return <Bike className="w-5 h-5" />;
     }
   };
 
@@ -178,14 +318,14 @@ export function BusBicycleImageSelector({
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-[#FAF8FF] text-[#7C3AED]">
-              {targetCategory === 'bus' ? <Bus className="w-5 h-5" /> : <Bike className="w-5 h-5" />}
+              {renderCategoryIcon()}
             </span>
             <h3 id={headingId} className="text-base font-bold text-gray-900 tracking-tight">
-              Visual Challenge: Select all <span className="text-[#7C3AED] capitalize">{targetCategory}s</span>
+              Visual Challenge: Select all <span className="text-[#7C3AED]">{displayCategoryLabel}</span>
             </h3>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Click or press Space/Enter on each photo featuring a {targetCategory}. Genuine licensed photographs.
+            Click on each photo featuring a {displayCategoryLabel.toLowerCase()}. Genuine high-resolution photographs.
           </p>
         </div>
 
@@ -207,7 +347,7 @@ export function BusBicycleImageSelector({
 
       {/* Responsive Grid: 2 columns mobile, 4 columns tablet & desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-5">
-        {REAL_VEHICLE_IMAGES.map((item) => {
+        {challengeImages.map((item) => {
           const isSelected = selectedIds.has(item.id);
           return (
             <div
@@ -238,7 +378,6 @@ export function BusBicycleImageSelector({
                     isSelected ? 'brightness-[0.92]' : ''
                   }`}
                   onError={(e) => {
-                    // Fallback to neutral pattern if remote image fails
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
@@ -288,7 +427,7 @@ export function BusBicycleImageSelector({
           )}
           {feedback.status === 'idle' && (
             <span className="text-gray-500 text-[11px]">
-              Note: Visual selection interface with real photographs for stateful object verification.
+              Select all {displayCategoryLabel} photos above and click Confirm to verify.
             </span>
           )}
         </div>

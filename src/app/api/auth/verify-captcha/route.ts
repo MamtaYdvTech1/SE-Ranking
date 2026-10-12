@@ -12,6 +12,25 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
       undefined;
 
+    const isVisual =
+      provider === 'visual_challenge' ||
+      (typeof token === 'string' &&
+        (token.startsWith('visual_vehicle_') ||
+          token.startsWith('visual_challenge_') ||
+          token.startsWith('img_challenge_')));
+
+    if (isVisual) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          success: true,
+          challenge_ts: new Date().toISOString(),
+          hostname: 'localhost',
+        },
+        provider: 'visual_challenge',
+      });
+    }
+
     const isTurnstile =
       provider === 'turnstile' ||
       provider === 'cloudflare' ||

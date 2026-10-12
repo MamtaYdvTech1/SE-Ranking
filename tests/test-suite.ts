@@ -2,6 +2,7 @@ import { normalizeDomain, AnalyzeRequestSchema, ProjectSchema, CompetitorSchema 
 import { MockSeoDataProvider, SeRankingProvider } from '../src/lib/seo/provider';
 
 async function runTests() {
+  process.env.NODE_ENV = 'test';
   console.log('--- RUNNING SE RANKING RESEARCH STUDIO TEST SUITE ---');
   let passed = 0;
   let failed = 0;

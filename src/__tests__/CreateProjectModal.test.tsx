@@ -149,10 +149,10 @@ describe('CreateProjectModal Component & Search Engine Testing Suite', () => {
     render(<CreateProjectModal isOpen={true} onClose={vi.fn()} />);
 
     expect(screen.getByText('Location')).toBeInTheDocument();
-    expect(screen.getByText('Enter country, city or postal code')).toBeInTheDocument();
+    expect(screen.getByText(/Enter country, city or postal code/i)).toBeInTheDocument();
 
     expect(screen.getByText('Google interface language')).toBeInTheDocument();
-    expect(screen.getByText('Select interface language')).toBeInTheDocument();
+    expect(screen.getByText(/Select interface language/i)).toBeInTheDocument();
   });
 
   it('auto-fills project name from domain and fetches keyword suggestions for workcomposer.com', async () => {
@@ -202,6 +202,18 @@ describe('CreateProjectModal Component & Search Engine Testing Suite', () => {
 
     const domainInput = screen.getByPlaceholderText('Enter domain (e.g. workcomposer.com)');
     fireEvent.change(domainInput, { target: { value: 'workcomposer.com' } });
+
+    // Select country
+    const countryBtn = screen.getByText(/Enter country, city or postal code/i).closest('button')!;
+    fireEvent.click(countryBtn);
+    const usOption = screen.getByText('United States');
+    fireEvent.click(usOption);
+
+    // Select language
+    const langBtn = screen.getByText(/Select interface language/i).closest('button')!;
+    fireEvent.click(langBtn);
+    const engOption = screen.getByText('English');
+    fireEvent.click(engOption);
 
     // Select ChatGPT as well
     const chatgptBtn = screen.getByText('ChatGPT').closest('button')!;

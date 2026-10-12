@@ -33,6 +33,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaProvider, setCaptchaProvider] = useState<'google_recaptcha' | 'visual_challenge'>('google_recaptcha');
   const [selectedLang, setSelectedLang] = useState('en');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
@@ -123,6 +124,7 @@ export default function SignUpPage() {
           password,
           confirmPassword,
           captchaToken: captchaToken || undefined,
+          captchaProvider: captchaProvider || (captchaToken?.startsWith('visual_') ? 'visual_challenge' : 'google_recaptcha'),
         }),
       });
 
@@ -359,15 +361,18 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            {/* Google reCAPTCHA v2 Widget */}
+            {/* Google reCAPTCHA v2 / Visual Challenge Widget */}
             <div className="pt-1">
               <GoogleRecaptcha
                 id="signup-google-recaptcha"
-                onVerify={(token) => {
+                onVerify={(token, provider) => {
                   setCaptchaToken(token);
+                  setCaptchaProvider(provider || 'google_recaptcha');
                   setError(null);
                 }}
-                onExpire={() => setCaptchaToken(null)}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                }}
               />
             </div>
 
