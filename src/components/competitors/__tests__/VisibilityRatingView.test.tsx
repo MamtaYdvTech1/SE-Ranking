@@ -390,4 +390,41 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.queryByRole("dialog", { name: "Export visibility data" })).not.toBeInTheDocument();
     expect(screen.getByText(/Export downloaded: visibility_rating_workcomposer.com.csv/i)).toBeInTheDocument();
   });
+
+  it("renders real Jio dataset by default with 12 Oct 2026, 2 WEEKS timeline, and 26 competitors", () => {
+    render(<VisibilityRatingView projectId="proj-jio" projectDomain="www.jio.com" />);
+
+    // Default date and timeline
+    expect(screen.getByText("12 Oct 2026")).toBeInTheDocument();
+    const twoWeeksBtn = screen.getByRole("button", { name: "2 WEEKS" });
+    expect(twoWeeksBtn).toHaveClass("text-blue-600");
+
+    // Real domains in the table
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("www.jio.com")).toBeInTheDocument();
+    expect(within(table).getByText("rechargemojo.com")).toBeInTheDocument();
+    expect(within(table).getByText("www.paisabazaar.com")).toBeInTheDocument();
+    expect(within(table).getByText("play.google.com")).toBeInTheDocument();
+    expect(within(table).getByText("paytm.com")).toBeInTheDocument();
+    expect(within(table).getByText("rechargebatteries.org")).toBeInTheDocument();
+    expect(within(table).getByText("apps.apple.com")).toBeInTheDocument();
+    expect(within(table).getByText("indiapostgdsonline.cept.gov.in")).toBeInTheDocument();
+
+    // Hover over Oct 8 tick
+    const tickOct8 = screen.getByTestId("xtick-Oct-8");
+    fireEvent.mouseEnter(tickOct8);
+
+    const tooltip = screen.getByTestId("visibility-chart-tooltip");
+    expect(tooltip).toBeInTheDocument();
+    expect(within(tooltip).getByText(/OCT-08 2026/i)).toBeInTheDocument();
+    expect(within(tooltip).getByText("VISIBILITY")).toBeInTheDocument();
+
+    // Exact competitor scores in tooltip
+    expect(within(tooltip).getByText("100")).toBeInTheDocument();
+    expect(within(tooltip).getByText("35.88")).toBeInTheDocument();
+    expect(within(tooltip).getByText("34.52")).toBeInTheDocument();
+    expect(within(tooltip).getByText("27.22")).toBeInTheDocument();
+    expect(within(tooltip).getByText("15.95")).toBeInTheDocument();
+    expect(within(tooltip).getByText("3.12")).toBeInTheDocument();
+  });
 });

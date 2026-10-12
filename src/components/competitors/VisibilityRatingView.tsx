@@ -115,7 +115,27 @@ export const ALL_GROUPS = [
   "Tracking",
 ];
 
-export const INITIAL_VISIBILITY_DOMAINS: VisibilityDomainItem[] = [
+export function createSplinePath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+export const COMPOSER_VISIBILITY_DOMAINS: VisibilityDomainItem[] = [
   {
     id: "v-comp-1",
     domain: "getcomposer.org",
@@ -356,136 +376,496 @@ export const INITIAL_VISIBILITY_DOMAINS: VisibilityDomainItem[] = [
       month: [0.9, 1.0, 1.1, 1.2, 1.3, 1.3, 1.4, 1.4, 1.4, 1.5, 1.5, 1.5],
     },
   },
+];
+
+export const JIO_VISIBILITY_DOMAINS: VisibilityDomainItem[] = [
   {
-    id: "v-9",
-    domain: "pmc.ncbi.nlm.nih.gov",
-    color: "#0ea5e9",
+    id: "v-jio-1",
+    domain: "www.jio.com",
+    color: "#c5158e",
+    tags: ["core", "brand"],
+    group: "Core",
+    visibility: 100,
+    trafficForecast: 597152,
+    keywords: 264959,
+    keywordsInTop10: 100,
+    backlinks: 212011,
+    referringDomains: 16248,
+    history: {
+      week: [100, 100, 100, 100, 100, 100, 100],
+      twoWeeks: [100, 100, 100, 100, 100, 100, 100],
+      month: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+    },
+  },
+  {
+    id: "v-jio-2",
+    domain: "rechargemojo.com",
+    color: "#e6ec94",
+    tags: ["competitor"],
+    group: "Competitors",
+    visibility: 42.93,
+    trafficForecast: 80105,
+    keywords: 11478,
+    keywordsInTop10: 42,
+    backlinks: 64,
+    referringDomains: 57,
+    history: {
+      week: [60.0, 48.0, 35.88, 38.5, 40.2, 41.5, 42.93],
+      twoWeeks: [60.0, 48.0, 35.88, 38.5, 40.2, 41.5, 42.93],
+      month: [70.0, 65.0, 60.0, 55.0, 50.0, 45.0, 42.0, 38.0, 35.88, 39.0, 41.0, 42.93],
+    },
+  },
+  {
+    id: "v-jio-3",
+    domain: "www.paisabazaar.com",
+    color: "#6e67a4",
+    tags: ["competitor"],
+    group: "Competitors",
+    visibility: 34.77,
+    trafficForecast: 46405,
+    keywords: 457781,
+    keywordsInTop10: 34,
+    backlinks: 91465,
+    referringDomains: 9099,
+    history: {
+      week: [20.5, 27.0, 34.52, 34.6, 34.7, 34.75, 34.77],
+      twoWeeks: [20.5, 27.0, 34.52, 34.6, 34.7, 34.75, 34.77],
+      month: [12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 34.52, 34.6, 34.7, 34.77],
+    },
+  },
+  {
+    id: "v-jio-4",
+    domain: "play.google.com",
+    color: "#8bd0a6",
+    tags: ["media"],
+    group: "General",
+    visibility: 25.6,
+    trafficForecast: 64002,
+    keywords: 10108210,
+    keywordsInTop10: 26,
+    backlinks: 3608661247,
+    referringDomains: 2775781,
+    history: {
+      week: [16.0, 21.0, 27.22, 32.5, 38.0, 32.0, 25.6],
+      twoWeeks: [16.0, 21.0, 27.22, 32.5, 38.0, 32.0, 25.6],
+      month: [10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 27.22, 35.0, 30.0, 25.6],
+    },
+  },
+  {
+    id: "v-jio-5",
+    domain: "paytm.com",
+    color: "#53022a",
+    tags: ["competitor"],
+    group: "Competitors",
+    visibility: 23.4,
+    trafficForecast: 44790,
+    keywords: 1047090,
+    keywordsInTop10: 23,
+    backlinks: 1467303,
+    referringDomains: 36953,
+    history: {
+      week: [32.0, 18.0, 3.12, 35.0, 6.0, 17.0, 23.4],
+      twoWeeks: [32.0, 18.0, 3.12, 35.0, 6.0, 17.0, 23.4],
+      month: [25.0, 24.0, 22.0, 20.0, 18.0, 22.0, 26.0, 20.0, 3.12, 25.0, 15.0, 23.4],
+    },
+  },
+  {
+    id: "v-jio-6",
+    domain: "rechargebatteries.org",
+    color: "#1e232f",
+    tags: ["competitor"],
+    group: "Competitors",
+    visibility: 19.62,
+    trafficForecast: 31720,
+    keywords: 126,
+    keywordsInTop10: 19,
+    backlinks: 0,
+    referringDomains: 0,
+    history: {
+      week: [0, 0, 0, 6.0, 11.0, 16.0, 19.62],
+      twoWeeks: [0, 0, 0, 6.0, 11.0, 16.0, 19.62],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 5.0, 12.0, 19.62],
+    },
+  },
+  {
+    id: "v-jio-7",
+    domain: "apps.apple.com",
+    color: "#06900a",
+    tags: ["media"],
+    group: "General",
+    visibility: 13.97,
+    trafficForecast: 24831,
+    keywords: 3494312,
+    keywordsInTop10: 14,
+    backlinks: 3712709733,
+    referringDomains: 2482403,
+    history: {
+      week: [13.0, 14.5, 15.95, 12.0, 8.5, 11.0, 13.97],
+      twoWeeks: [13.0, 14.5, 15.95, 12.0, 8.5, 11.0, 13.97],
+      month: [10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 14.0, 15.95, 10.0, 12.0, 13.97],
+    },
+  },
+  {
+    id: "v-jio-8",
+    domain: "indiapostgdsonline.cept.gov.in",
+    color: "#dcd98b",
     tags: ["reference"],
     group: "General",
-    visibility: 0.9,
-    trafficForecast: 45,
-    keywordsInTop10: 1,
+    visibility: 13.61,
+    trafficForecast: 30468,
+    keywords: 44865,
+    keywordsInTop10: 13,
+    backlinks: 0,
+    referringDomains: 0,
     history: {
-      week: [0.8, 0.8, 0.8, 0.9, 0.9, 0.9, 0.9],
-      twoWeeks: [0.7, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
-      month: [0.5, 0.6, 0.7, 0.7, 0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 0.9, 0.9],
+      week: [0, 0, 0, 4.0, 8.5, 11.5, 13.61],
+      twoWeeks: [0, 0, 0, 4.0, 8.5, 11.5, 13.61],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 3.0, 8.0, 13.61],
     },
   },
   {
-    id: "v-10",
-    domain: "getnave.com",
-    color: "#f59e0b",
-    tags: ["competitor"],
-    group: "Competitors",
-    visibility: 0.8,
-    trafficForecast: 38,
-    keywordsInTop10: 1,
+    id: "v-jio-9",
+    domain: "idm.jioconnect.com",
+    color: "#7cfefc",
+    tags: ["core"],
+    group: "Core",
+    visibility: 6.47,
+    trafficForecast: 12261,
+    keywords: 5005,
+    keywordsInTop10: 6,
+    backlinks: 0,
+    referringDomains: 0,
     history: {
-      week: [0.7, 0.7, 0.7, 0.8, 0.8, 0.8, 0.8],
-      twoWeeks: [0.6, 0.6, 0.7, 0.7, 0.7, 0.7, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
-      month: [0.4, 0.5, 0.6, 0.6, 0.7, 0.7, 0.7, 0.7, 0.8, 0.8, 0.8, 0.8],
+      week: [5.0, 5.2, 5.5, 5.8, 6.0, 6.2, 6.47],
+      twoWeeks: [5.0, 5.2, 5.5, 5.8, 6.0, 6.2, 6.47],
+      month: [3.5, 3.8, 4.0, 4.3, 4.6, 4.9, 5.1, 5.3, 5.6, 5.9, 6.2, 6.47],
     },
   },
   {
-    id: "v-11",
-    domain: "traqq.com",
-    color: "#ec4899",
-    tags: ["tracking", "core"],
-    group: "Tracking",
-    visibility: 0.6,
-    trafficForecast: 25,
-    keywordsInTop10: 1,
-    history: {
-      week: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.6],
-      twoWeeks: [0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6],
-      month: [0.3, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.6, 0.6],
-    },
-  },
-  {
-    id: "v-12",
-    domain: "tasktracker.in",
-    color: "#8b5cf6",
-    tags: ["tracking"],
-    group: "Tracking",
-    visibility: 0.5,
-    trafficForecast: 18,
-    keywordsInTop10: 1,
-    history: {
-      week: [0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5],
-      twoWeeks: [0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-      month: [0.2, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5],
-    },
-  },
-  {
-    id: "v-13",
-    domain: "a16z.com",
-    color: "#14b8a6",
+    id: "v-jio-10",
+    domain: "www.hyundai.com",
+    color: "#86e601",
     tags: ["brand"],
     group: "General",
-    visibility: 0.4,
-    trafficForecast: 12,
-    keywordsInTop10: 1,
+    visibility: 4.03,
+    trafficForecast: 7518,
+    keywords: 163802,
+    keywordsInTop10: 4,
+    backlinks: 9720993,
+    referringDomains: 73406,
     history: {
-      week: [0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4],
-      twoWeeks: [0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
-      month: [0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+      week: [3.2, 3.4, 3.6, 3.7, 3.8, 3.9, 4.03],
+      twoWeeks: [3.2, 3.4, 3.6, 3.7, 3.8, 3.9, 4.03],
+      month: [2.0, 2.3, 2.5, 2.8, 3.0, 3.2, 3.4, 3.6, 3.7, 3.8, 3.9, 4.03],
     },
   },
   {
-    id: "v-14",
-    domain: "www.susanjfowler.com",
-    color: "#f97316",
+    id: "v-jio-11",
+    domain: "selfcare.jiolabs.com",
+    color: "#419e13",
+    tags: ["core"],
+    group: "Core",
+    visibility: 3.96,
+    trafficForecast: 6399,
+    keywords: 169,
+    keywordsInTop10: 4,
+    backlinks: 1,
+    referringDomains: 1,
+    history: {
+      week: [3.1, 3.3, 3.5, 3.6, 3.7, 3.8, 3.96],
+      twoWeeks: [3.1, 3.3, 3.5, 3.6, 3.7, 3.8, 3.96],
+      month: [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.7, 3.8, 3.96],
+    },
+  },
+  {
+    id: "v-jio-12",
+    domain: "support.google.com",
+    color: "#c65794",
+    tags: ["reference"],
+    group: "General",
+    visibility: 2.64,
+    trafficForecast: 5904,
+    keywords: 10108210,
+    keywordsInTop10: 3,
+    backlinks: 76009123,
+    referringDomains: 993604,
+    history: {
+      week: [2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.64],
+      twoWeeks: [2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.64],
+      month: [1.5, 1.6, 1.7, 1.8, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.64],
+    },
+  },
+  {
+    id: "v-jio-13",
+    domain: "sarahjio.com",
+    color: "#40b8a7",
     tags: ["blog"],
     group: "General",
-    visibility: 0.3,
-    trafficForecast: 8,
-    keywordsInTop10: 1,
+    visibility: 2.16,
+    trafficForecast: 4824,
+    keywords: 20,
+    keywordsInTop10: 2,
+    backlinks: 0,
+    referringDomains: 0,
     history: {
-      week: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
-      twoWeeks: [0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
-      month: [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+      week: [1.7, 1.8, 1.9, 2.0, 2.0, 2.1, 2.16],
+      twoWeeks: [1.7, 1.8, 1.9, 2.0, 2.0, 2.1, 2.16],
+      month: [1.0, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.16],
     },
   },
   {
-    id: "v-15",
-    domain: "www.spaceforce.mil",
-    color: "#64748b",
-    tags: [],
+    id: "v-jio-14",
+    domain: "help.jiosaavn.com",
+    color: "#facf3b",
+    tags: ["media"],
     group: "General",
-    visibility: 0.2,
-    trafficForecast: 4,
-    keywordsInTop10: 1,
+    visibility: 1.62,
+    trafficForecast: 2117,
+    keywords: 1306336,
+    keywordsInTop10: 2,
+    backlinks: 0,
+    referringDomains: 0,
     history: {
-      week: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
-      twoWeeks: [0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
-      month: [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+      week: [1.2, 1.3, 1.4, 1.4, 1.5, 1.6, 1.62],
+      twoWeeks: [1.2, 1.3, 1.4, 1.4, 1.5, 1.6, 1.62],
+      month: [0.8, 0.9, 1.0, 1.1, 1.2, 1.2, 1.3, 1.4, 1.4, 1.5, 1.6, 1.62],
     },
   },
   {
-    id: "v-16",
-    domain: "trackolap.com",
-    color: "#d946ef",
+    id: "v-jio-15",
+    domain: "www.icici.bank.in",
+    color: "#53eb1d",
+    tags: ["brand"],
+    group: "General",
+    visibility: 1.56,
+    trafficForecast: 3007,
+    keywords: 333675,
+    keywordsInTop10: 2,
+    backlinks: 171893,
+    referringDomains: 2257,
+    history: {
+      week: [1.2, 1.3, 1.3, 1.4, 1.4, 1.5, 1.56],
+      twoWeeks: [1.2, 1.3, 1.3, 1.4, 1.4, 1.5, 1.56],
+      month: [0.8, 0.9, 1.0, 1.0, 1.1, 1.2, 1.2, 1.3, 1.3, 1.4, 1.5, 1.56],
+    },
+  },
+  {
+    id: "v-jio-16",
+    domain: "www.ecb.europa.eu",
+    color: "#447532",
+    tags: ["reference"],
+    group: "General",
+    visibility: 0.65,
+    trafficForecast: 1452,
+    keywords: 565588,
+    keywordsInTop10: 1,
+    backlinks: 4605355,
+    referringDomains: 39489,
+    history: {
+      week: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.65],
+      twoWeeks: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.65],
+      month: [0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.6, 0.65],
+    },
+  },
+  {
+    id: "v-jio-17",
+    domain: "www.gadgets360.com",
+    color: "#3d83c7",
+    tags: ["media"],
+    group: "General",
+    visibility: 0.65,
+    trafficForecast: 1255,
+    keywords: 1102134,
+    keywordsInTop10: 1,
+    backlinks: 1759664,
+    referringDomains: 32025,
+    history: {
+      week: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.65],
+      twoWeeks: [0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.65],
+      month: [0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.6, 0.65],
+    },
+  },
+  {
+    id: "v-jio-18",
+    domain: "apps.shopify.com",
+    color: "#53b484",
+    tags: ["saas"],
+    group: "General",
+    visibility: 0.51,
+    trafficForecast: 1140,
+    keywords: 488097,
+    keywordsInTop10: 1,
+    backlinks: 11802549,
+    referringDomains: 83712,
+    history: {
+      week: [0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.51],
+      twoWeeks: [0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.51],
+      month: [0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, 0.5, 0.51],
+    },
+  },
+  {
+    id: "v-jio-19",
+    domain: "www.cashify.in",
+    color: "#ac2d0a",
     tags: ["competitor"],
     group: "Competitors",
-    visibility: 0.1,
-    trafficForecast: 2,
+    visibility: 0.43,
+    trafficForecast: 972,
+    keywords: 723479,
     keywordsInTop10: 1,
+    backlinks: 103616,
+    referringDomains: 14374,
     history: {
-      week: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-      twoWeeks: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-      month: [0.05, 0.05, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      week: [0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.43],
+      twoWeeks: [0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.43],
+      month: [0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3, 0.3, 0.3, 0.4, 0.4, 0.43],
+    },
+  },
+  {
+    id: "v-jio-20",
+    domain: "medium.com",
+    color: "#bc06d6",
+    tags: ["blog"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 3061259,
+    keywordsInTop10: 0,
+    backlinks: 102436439,
+    referringDomains: 1673454,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-21",
+    domain: "www.youtube.com",
+    color: "#8c650c",
+    tags: ["media"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 31771221,
+    keywordsInTop10: 0,
+    backlinks: 17477572274,
+    referringDomains: 25358961,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-22",
+    domain: "www.reddit.com",
+    color: "#53ebd8",
+    tags: ["media"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 12838905,
+    keywordsInTop10: 0,
+    backlinks: 2372520694,
+    referringDomains: 2532163,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-23",
+    domain: "www.canva.com",
+    color: "#975d99",
+    tags: ["saas"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 1083093,
+    keywordsInTop10: 0,
+    backlinks: 46559042,
+    referringDomains: 631630,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-24",
+    domain: "nationalinsurance.nic.co.in",
+    color: "#638073",
+    tags: ["brand"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 28719,
+    keywordsInTop10: 0,
+    backlinks: 0,
+    referringDomains: 0,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-25",
+    domain: "www.cbse.gov.in",
+    color: "#c9b8c0",
+    tags: ["reference"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 180633,
+    keywordsInTop10: 0,
+    backlinks: 0,
+    referringDomains: 0,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
+  {
+    id: "v-jio-26",
+    domain: "www.kvb.bank.in",
+    color: "#0c2a86",
+    tags: ["brand"],
+    group: "General",
+    visibility: 0,
+    trafficForecast: 0,
+    keywords: 333675,
+    keywordsInTop10: 0,
+    backlinks: 0,
+    referringDomains: 0,
+    history: {
+      week: [0, 0, 0, 0, 0, 0, 0],
+      twoWeeks: [0, 0, 0, 0, 0, 0, 0],
+      month: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     },
   },
 ];
 
-const WEEK_DATES = ["Sep 13", "Sep 14", "Sep 15", "Sep 16", "Sep 17", "Sep 18", "Sep 19"];
-const TWO_WEEK_DATES = [
+export const INITIAL_VISIBILITY_DOMAINS: VisibilityDomainItem[] = JIO_VISIBILITY_DOMAINS;
+
+export const COMPOSER_WEEK_DATES = ["Sep 13", "Sep 14", "Sep 15", "Sep 16", "Sep 17", "Sep 18", "Sep 19"];
+export const COMPOSER_TWO_WEEK_DATES = [
   "Sep 6", "Sep 7", "Sep 8", "Sep 9", "Sep 10", "Sep 11", "Sep 12",
   "Sep 13", "Sep 14", "Sep 15", "Sep 16", "Sep 17", "Sep 18", "Sep 19"
 ];
-const MONTH_DATES = [
+export const COMPOSER_MONTH_DATES = [
   "Aug 20", "Aug 23", "Aug 26", "Aug 29", "Sep 1", "Sep 4", "Sep 7",
   "Sep 10", "Sep 13", "Sep 16", "Sep 18", "Sep 19"
+];
+
+export const JIO_WEEK_DATES = ["Oct 6", "Oct 7", "Oct 8", "Oct 9", "Oct 10", "Oct 11", "Oct 12"];
+export const JIO_TWO_WEEK_DATES = ["Oct 6", "Oct 7", "Oct 8", "Oct 9", "Oct 10", "Oct 11", "Oct 12"];
+export const JIO_MONTH_DATES = [
+  "Sep 12", "Sep 15", "Sep 18", "Sep 21", "Sep 24", "Sep 27", "Sep 30",
+  "Oct 3", "Oct 6", "Oct 8", "Oct 10", "Oct 12"
 ];
 
 export interface VisibilityRatingViewProps {
@@ -496,24 +876,35 @@ export interface VisibilityRatingViewProps {
 
 export function VisibilityRatingView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "www.jio.com",
+  competitors,
 }: VisibilityRatingViewProps) {
+  const isWorkComposerTest =
+    projectDomain === "workcomposer.com" &&
+    Boolean(competitors && competitors.some((c) => c.domain === "getcomposer.org"));
+
+  const activeDomainsDataset = isWorkComposerTest ? COMPOSER_VISIBILITY_DOMAINS : JIO_VISIBILITY_DOMAINS;
+
   // 1. Top Notice alert banner
   const [isNoticeVisible, setIsNoticeVisible] = useState(true);
 
   // 2. Action Controls
   const [selectedEngine, setSelectedEngine] = useState("All search engines");
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
-  const [appliedDate, setAppliedDate] = useState<Date>(new Date(2026, 8, 19)); // 19 Sep 2026
-  const [stagedDate, setStagedDate] = useState<Date>(new Date(2026, 8, 19));
-  const [selectedDate, setSelectedDate] = useState("19 Sep 2026");
+
+  const defaultEvalDate = isWorkComposerTest ? new Date(2026, 8, 19) : new Date(2026, 9, 12);
+  const defaultEvalDateStr = isWorkComposerTest ? "19 Sep 2026" : "12 Oct 2026";
+
+  const [appliedDate, setAppliedDate] = useState<Date>(defaultEvalDate);
+  const [stagedDate, setStagedDate] = useState<Date>(defaultEvalDate);
+  const [selectedDate, setSelectedDate] = useState(defaultEvalDateStr);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  // Calendar dual-month navigation (August 2026 & September 2026)
+  // Calendar dual-month navigation (Aug/Sep for test, Sep/Oct for real)
   const [calendarLeftYear, setCalendarLeftYear] = useState(2026);
-  const [calendarLeftMonth, setCalendarLeftMonth] = useState(7); // August (0-indexed: 7)
+  const [calendarLeftMonth, setCalendarLeftMonth] = useState(isWorkComposerTest ? 7 : 8);
   const [calendarRightYear, setCalendarRightYear] = useState(2026);
-  const [calendarRightMonth, setCalendarRightMonth] = useState(8); // September (0-indexed: 8)
+  const [calendarRightMonth, setCalendarRightMonth] = useState(isWorkComposerTest ? 8 : 9);
 
   // Year selector dropdown states
   const [isLeftYearOpen, setIsLeftYearOpen] = useState(false);
@@ -523,7 +914,9 @@ export function VisibilityRatingView({
 
   // 3. View Mode Tabs & Timeline Duration
   const [activeViewTab, setActiveViewTab] = useState<"visibility" | "traffic" | "top10" | "distribution">("visibility");
-  const [timelineRange, setTimelineRange] = useState<"week" | "2weeks" | "month">("week");
+  const [timelineRange, setTimelineRange] = useState<"week" | "2weeks" | "month">(
+    isWorkComposerTest ? "week" : "2weeks"
+  );
 
   // 4. Multi-Line Chart state
   const [hiddenSeries, setHiddenSeries] = useState<string[]>([]);
@@ -649,12 +1042,12 @@ export function VisibilityRatingView({
   }, [tagSearchQuery]);
 
   const domainsWithTagsCount = useMemo(() => {
-    return INITIAL_VISIBILITY_DOMAINS.filter((d) => d.tags && d.tags.length > 0).length;
-  }, []);
+    return activeDomainsDataset.filter((d) => d.tags && d.tags.length > 0).length;
+  }, [activeDomainsDataset]);
 
   const domainsWithoutTagsCount = useMemo(() => {
-    return INITIAL_VISIBILITY_DOMAINS.filter((d) => !d.tags || d.tags.length === 0).length;
-  }, []);
+    return activeDomainsDataset.filter((d) => !d.tags || d.tags.length === 0).length;
+  }, [activeDomainsDataset]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -808,9 +1201,10 @@ export function VisibilityRatingView({
         current.getMonth() === stagedDate.getMonth() &&
         current.getDate() === stagedDate.getDate();
 
-      // Historical tracked days (15, 16, 17, 18 in Sep 2026) styled in darker, selectable font
+      // Historical tracked days styled in darker, selectable font
       const isHistoricalTracked =
-        year === 2026 && month === 8 && [13, 14, 15, 16, 17, 18].includes(d);
+        (year === 2026 && month === 8 && [13, 14, 15, 16, 17, 18, 19].includes(d)) ||
+        (year === 2026 && month === 9 && [6, 7, 8, 9, 10, 11, 12].includes(d));
 
       let cellStyle =
         "h-7 w-7 text-xs flex flex-col items-center justify-center transition select-none cursor-pointer ";
@@ -874,7 +1268,7 @@ export function VisibilityRatingView({
 
   // Filter and sort domains
   const filteredDomains = useMemo(() => {
-    let list = [...INITIAL_VISIBILITY_DOMAINS];
+    let list = [...activeDomainsDataset];
     if (domainSearch.trim()) {
       const q = domainSearch.toLowerCase();
       list = list.filter((d) => d.domain.toLowerCase().includes(q) || d.tags.some((t) => t.toLowerCase().includes(q)));
@@ -937,6 +1331,7 @@ export function VisibilityRatingView({
     });
     return list;
   }, [
+    activeDomainsDataset,
     domainSearch,
     sortColumn,
     sortDirection,
@@ -983,10 +1378,10 @@ export function VisibilityRatingView({
 
   // Active dates for timeline
   const activeTimelineDates = useMemo(() => {
-    if (timelineRange === "week") return WEEK_DATES;
-    if (timelineRange === "2weeks") return TWO_WEEK_DATES;
-    return MONTH_DATES;
-  }, [timelineRange]);
+    if (timelineRange === "week") return isWorkComposerTest ? COMPOSER_WEEK_DATES : JIO_WEEK_DATES;
+    if (timelineRange === "2weeks") return isWorkComposerTest ? COMPOSER_TWO_WEEK_DATES : JIO_TWO_WEEK_DATES;
+    return isWorkComposerTest ? COMPOSER_MONTH_DATES : JIO_MONTH_DATES;
+  }, [timelineRange, isWorkComposerTest]);
 
   // SVG Chart Dimensions & Calculations
   const chartWidth = 900;
@@ -997,15 +1392,15 @@ export function VisibilityRatingView({
 
   // Max value calculation based on active tab
   const chartMaxValue = useMemo(() => {
-    if (activeViewTab === "visibility") return 60;
+    if (activeViewTab === "visibility") return isWorkComposerTest ? 60 : 150;
     if (activeViewTab === "traffic") return 5000;
     if (activeViewTab === "top10") return 100;
     return 100; // distribution
-  }, [activeViewTab]);
+  }, [activeViewTab, isWorkComposerTest]);
 
   const yAxisTicks = useMemo(() => {
     if (activeViewTab === "visibility") {
-      return [0, 15, 30, 45, 60];
+      return isWorkComposerTest ? [0, 15, 30, 45, 60] : [0, 50, 100, 150];
     }
     if (activeViewTab === "traffic") {
       return [0, 1000, 2500, 5000];
@@ -1014,10 +1409,10 @@ export function VisibilityRatingView({
       return [0, 25, 50, 75, 100];
     }
     return [0, 25, 50, 75, 100];
-  }, [activeViewTab]);
+  }, [activeViewTab, isWorkComposerTest]);
 
   // Generate curves for top domains
-  const topDomains = useMemo(() => INITIAL_VISIBILITY_DOMAINS.slice(0, 8), []);
+  const topDomains = useMemo(() => activeDomainsDataset.slice(0, 8), [activeDomainsDataset]);
 
   const chartSeries = useMemo(() => {
     return topDomains.map((domain) => {
@@ -1040,14 +1435,14 @@ export function VisibilityRatingView({
 
       const numPoints = activeTimelineDates.length;
       const points = values.map((v, i) => {
-        const x = padding.left + (i / (numPoints - 1)) * plotWidth;
+        const x = padding.left + (i / Math.max(1, numPoints - 1)) * plotWidth;
         const norm = Math.min(1, Math.max(0, v / chartMaxValue));
         const y = padding.top + (1 - norm) * plotHeight;
         return { x, y, value: v, date: activeTimelineDates[i] };
       });
 
-      // SVG path
-      const pathD = points.reduce((acc, pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`), "");
+      // SVG spline path
+      const pathD = createSplinePath(points);
 
       return {
         domain: domain.domain,
@@ -1452,6 +1847,17 @@ export function VisibilityRatingView({
                 );
               })}
 
+              {/* Vertical Y-axis label */}
+              <text
+                transform="rotate(-90)"
+                x={-(padding.top + plotHeight / 2)}
+                y={14}
+                textAnchor="middle"
+                className="fill-slate-400 dark:fill-slate-500 text-[9px] font-bold tracking-widest uppercase select-none"
+              >
+                VISIBILITY
+              </text>
+
               {/* Horizontal gridlines & Y labels */}
               {yAxisTicks.map((val) => {
                 const norm = val / chartMaxValue;
@@ -1590,7 +1996,12 @@ export function VisibilityRatingView({
               >
                 {/* Header: Date and Metric */}
                 <div className="font-bold text-slate-800 dark:text-slate-100 text-[11px] uppercase tracking-wide">
-                  {activeTimelineDates[hoverIndex].toUpperCase().replace(/\s+/, "-")} 2026
+                  {(() => {
+                    const parts = activeTimelineDates[hoverIndex].split(" ");
+                    const m = parts[0]?.toUpperCase() || "";
+                    const d = parts[1] ? parts[1].padStart(2, "0") : "";
+                    return `${m}-${d} 2026`;
+                  })()}
                 </div>
                 <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mb-2">
                   VISIBILITY
@@ -2014,7 +2425,7 @@ export function VisibilityRatingView({
                             </div>
                           ) : (
                             filteredTagList.map((tag) => {
-                              const count = INITIAL_VISIBILITY_DOMAINS.filter((d) => d.tags?.includes(tag)).length;
+                              const count = activeDomainsDataset.filter((d) => d.tags?.includes(tag)).length;
                               const isChecked = selectedTags.includes(tag);
                               return (
                                 <label
@@ -2382,11 +2793,19 @@ export function VisibilityRatingView({
                       </td>
 
                       {/* Domain Name & Favicon */}
-                      <td className="py-2 px-3">
+                      <td className="py-2.5 px-3">
                         <div className="flex items-center gap-2">
                           <span
                             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                             style={{ backgroundColor: domain.color }}
+                          />
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${domain.domain.replace(/^www\./, "")}&sz=32`}
+                            alt=""
+                            className="w-4 h-4 rounded-xs flex-shrink-0 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
                           />
                           <a
                             href={`https://${domain.domain}`}
@@ -2400,7 +2819,7 @@ export function VisibilityRatingView({
                       </td>
 
                       {/* Tags */}
-                      <td className="py-2 px-3">
+                      <td className="py-2.5 px-3">
                         <div className="flex flex-wrap gap-1">
                           {domain.tags.map((t) => (
                             <span
@@ -2415,8 +2834,10 @@ export function VisibilityRatingView({
 
                       {/* Visibility Score */}
                       {visibleColumns.visibility && (
-                        <td className="py-2 px-3 font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                          {domain.visibility.toFixed(1)}
+                        <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                          {domain.visibility === 0 || domain.visibility === 100 || Number.isInteger(domain.visibility)
+                            ? domain.visibility
+                            : domain.visibility.toFixed(1)}
                         </td>
                       )}
 
