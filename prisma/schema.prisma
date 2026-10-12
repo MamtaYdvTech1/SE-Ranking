@@ -1,0 +1,692 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String?
+  firstName       String?
+  lastName        String?
+  passwordHash    String?
+  avatarUrl       String?
+  role            String         @default("OWNER") // OWNER, ADMIN, MEMBER, CLIENT
+  status          String         @default("active") // active, suspended, pending
+  googleSubjectId String?
+  locale          String?
+  emailVerified   Boolean?       @default(false)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  lastLoginAt     DateTime?
+
+  projects        Project[]
+  sessions        Session[]
+  tasks           Task[]
+  notifications   Notification[]
+  locations       Location[]
+  activityLogs    ActivityLog[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ProjectGroup {
+  id        String    @id @default(cuid())
+  name      String
+  color     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+}
+
+model Project {
+  id                  String               @id @default(cuid())
+  name                String
+  websiteUrl          String?
+  normalizedUrl       String?
+  domain              String
+  domainType          String               @default("exact_domain")
+  groupId             String?
+  group               ProjectGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  projectColor        String?
+  accessLevel         String               @default("OWNER")
+  status              String               @default("Active") // Active, Paused, Archived
+  weeklyReport        Boolean              @default(false)
+  websiteAudit        Boolean              @default(true)
+  backlinkReport      Boolean              @default(false)
+  brandName           String?
+  protocol            String               @default("https://")
+  country             String               @default("India")
+  countryCode         String               @default("in")
+  primaryLocation     String?
+  languageCode        String               @default("en")
+  timezone            String               @default("UTC")
+  defaultSearchEngine String               @default("google")
+  defaultDevice       String               @default("desktop")
+  rankingFrequency    String               @default("Daily") // Daily, Weekly, Manual
+  lastRankingCheckAt  DateTime?
+  isArchived          Boolean              @default(false)
+  deletedAt           DateTime?
+  deletedBy           String?
+  createdBy           String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  userId              String?
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  searchEngines       SearchEngineConfig[]
+  keywords            Keyword[]
+  projectCompetitors  ProjectCompetitor[]
+  auditIssues         AuditIssue[]
+  auditPages          AuditPage[]
+  tasks               Task[]
+  backlinks           Backlink[]
+  reports             Report[]
+  notes               Note[]
+  locations           Location[]
+  gbpPosts            GbpPost[]
+  reviews             Review[]
+  integrations        ProjectIntegration[]
+  analyses            Analysis[]
+  socialBrands        SocialBrand[]
+  rankingHistory      RankingHistory[]
+  competitorRankings  CompetitorRanking[]
+  aiSearchRecords     AiSearchRecord[]
+}
+
+model SearchEngineConfig {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  engine       String   @default("google") // google, bing, yahoo, yandex, google-ai
+  country      String   @default("India")
+  countryCode  String   @default("in")
+  language     String   @default("English")
+  languageCode String   @default("en")
+  device       String   @default("desktop") // desktop, mobile
+  location     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Keyword {
+  id                  String    @id @default(cuid())
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  keywordText         String
+  searchEngine        String    @default("google")
+  countryCode         String    @default("us")
+  language            String    @default("en")
+  device              String    @default("desktop")
+  targetUrl           String?
+  searchIntent        String?   // Commercial, Informational, Navigational, Transactional
+  monthlySearchVolume Int?      @default(0)
+  keywordDifficulty   Int?      @default(0)
+  cpcUsd              Float?    @default(0.0)
+  isActive            Boolean   @default(true)
+  currentPosition     Int?
+  previousPosition    Int?
+  positionChange      Int?
+  bestPosition        Int?
+  worstPosition       Int?
+  rankedUrl           String?
+  serpFeatures        String?   // JSON array string
+  groupId             String?
+  groupName           String?
+  tags                String?   // JSON array string
+  deletedAt           DateTime?
+  deletedBy           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  rankingHistory      RankingHistory[]
+  competitorRankings  CompetitorRanking[]
+}
+
+model ProjectCompetitor {
+  id                  String    @id @default(cuid())
+  projectId           String
+  project             Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name                String
+  domain              String
+  visibilityScore     Float?    @default(0)
+  avgPosition         Float?    @default(0)
+  commonKeywordsCount Int?      @default(0)
+  totalKeywords       Int?      @default(0)
+  organicTraffic      String?
+  notes               String?
+  isActive            Boolean   @default(true)
+  deletedAt           DateTime?
+  deletedBy           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  competitorRankings  CompetitorRanking[]
+}
+
+model RankingHistory {
+  id               String   @id @default(cuid())
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  keywordId        String
+  keyword          Keyword  @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  searchEngine     String   @default("google")
+  country          String   @default("in")
+  language         String   @default("en")
+  device           String   @default("desktop")
+  position         Int?     // 1-100, null if not found (>100)
+  previousPosition Int?
+  positionChange   Int?     @default(0)
+  searchVolume     Int?     @default(0)
+  url              String?
+  serpFeatures     String?  // JSON array string
+  checkedAt        DateTime @default(now())
+
+  @@index([projectId, checkedAt])
+  @@index([keywordId, checkedAt])
+  @@index([searchEngine])
+}
+
+model CompetitorRanking {
+  id               String            @id @default(cuid())
+  projectId        String
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  competitorId     String
+  competitor       ProjectCompetitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  keywordId        String
+  keyword          Keyword           @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  searchEngine     String            @default("google")
+  position         Int?
+  previousPosition Int?
+  positionChange   Int?              @default(0)
+  url              String?
+  checkedAt        DateTime          @default(now())
+
+  @@index([competitorId, checkedAt])
+  @@index([keywordId])
+  @@index([projectId])
+}
+
+model AuditPage {
+  id                 String    @id @default(cuid())
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url                String
+  statusCode         Int       @default(200)
+  loadTimeMs         Int?
+  title              String?
+  titleLength        Int?
+  metaDescription    String?
+  descriptionLength  Int?
+  h1Count            Int       @default(0)
+  h1Text             String?
+  h2Count            Int       @default(0)
+  canonicalUrl       String?
+  isIndexable        Boolean   @default(true)
+  robotsDirectives   String?
+  inSitemap          Boolean   @default(false)
+  depth              Int       @default(0)
+  internalLinksCount Int       @default(0)
+  externalLinksCount Int       @default(0)
+  brokenLinksCount   Int       @default(0)
+  imagesCount        Int       @default(0)
+  imagesMissingAlt   Int       @default(0)
+  issuesCount        Int       @default(0)
+  crawledAt          DateTime  @default(now())
+
+  @@index([projectId, url])
+}
+
+model AiSearchRecord {
+  id               String   @id @default(cuid())
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  query            String
+  engine           String   // chatgpt, google-ai-overview, google-ai-mode
+  domain           String
+  mentioned        Boolean  @default(false)
+  citedUrl         String?
+  citationPosition Int?
+  mentionStatus    String   @default("Not Mentioned") // Mentioned, Cited, Not Mentioned
+  visibilityScore  Float    @default(0)
+  snippet          String?
+  checkedAt        DateTime @default(now())
+
+  @@index([projectId, checkedAt])
+  @@index([engine])
+}
+
+model Location {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name           String?
+  countryCode    String    @default("us")
+  region         String?
+  city           String?
+  postalCode     String?
+  address        String?
+  phone          String?
+  latitude       Float?
+  longitude      Float?
+  language       String    @default("en")
+  timezone       String    @default("UTC")
+  category       String?
+  isGbpConnected Boolean   @default(false)
+  gbpLocationId  String?
+  rating         Float?
+  reviewsCount   Int?      @default(0)
+  status         String    @default("Active")
+  deletedAt      DateTime?
+  deletedBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  posts          GbpPost[]
+  reviews        Review[]
+}
+
+model GbpPost {
+  id           String    @id @default(cuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  locationId   String?
+  location     Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  title        String?
+  text         String
+  type         String    @default("Update") // Offer, Event, Update
+  status       String    @default("Published") // Draft, Scheduled, Published
+  ctaText      String?
+  ctaUrl       String?
+  mediaUrl     String?
+  couponCode   String?
+  startDate    DateTime?
+  endDate      DateTime?
+  scheduledFor DateTime?
+  publishedAt  DateTime? @default(now())
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  source     String    @default("Google") // Google, Facebook, Tripadvisor, etc.
+  author     String
+  rating     Int?
+  text       String
+  reply      String?
+  status     String    @default("Not read") // Read, Not read, Answered, Needs attention
+  language   String    @default("en")
+  reviewDate DateTime  @default(now())
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model ProjectIntegration {
+  id           String    @id @default(cuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  provider     String    // ga4, gsc, gbp, seranking
+  accountEmail String?
+  accountName  String?
+  status       String    @default("disconnected") // connected, disconnected, error
+  config       String?   // JSON string of properties / tokens
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model AuditIssue {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ruleId         String
+  title          String
+  category       String    // Crawlability, Performance, Content, Links, Security
+  severity       String    // Error, Warning, Notice
+  url            String
+  description    String
+  recommendation String
+  status         String    @default("Open") // Open, Resolved, Ignored
+  deletedAt      DateTime?
+  foundAt        DateTime  @default(now())
+}
+
+model Task {
+  id               String    @id @default(cuid())
+  projectId        String
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  priority         String    @default("Medium") // High, Medium, Low
+  status           String    @default("Todo")   // Todo, InProgress, Review, Done
+  assignedToUserId String?
+  assignedToUser   User?     @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  assignedToName   String?
+  dueDate          DateTime?
+  deletedAt        DateTime?
+  deletedBy        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  title     String
+  message   String
+  type      String   @default("info") // info, warning, success, error
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Backlink {
+  id            String    @id @default(cuid())
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceUrl     String
+  targetUrl     String
+  anchorText    String?
+  domainTrust   Int?      @default(50)
+  pageTrust     Int?      @default(50)
+  isDoFollow    Boolean   @default(true)
+  isLost        Boolean   @default(false)
+  firstSeenDate DateTime  @default(now())
+  lastSeenDate  DateTime  @default(now())
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Report {
+  id              String    @id @default(cuid())
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name            String
+  type            String    @default("Overview") // Overview, Rankings, Audit, Competitor
+  schedule        String?   // "Weekly", "Monthly", or null
+  recipients      String?   // JSON array or comma separated
+  format          String    @default("PDF") // PDF, CSV, Excel
+  status          String    @default("Ready")
+  lastGeneratedAt DateTime?
+  deletedAt       DateTime?
+  deletedBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Note {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  color     String    @default("yellow")
+  deletedAt DateTime?
+  deletedBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName   String?
+  action     String
+  entityType String
+  entityId   String
+  details    String?
+  ipAddress  String   @default("127.0.0.1")
+  createdAt  DateTime @default(now())
+}
+
+model Analysis {
+  id             String           @id @default(cuid())
+  projectId      String?
+  project        Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  domain         String
+  scope          String           @default("*.domain.com/*")
+  brandName      String?
+  country        String           @default("India")
+  countryCode    String           @default("in")
+  searchType     String           @default("ai-search") // "ai-search" or "google-search"
+  aiPresence     Float?
+  brandPresence  Float?
+  domainPresence Float?
+  avgPosition    Float?
+  traffic        Int?
+  mentions       Int?
+  links          Int?
+  citationShare  Float?
+  status         String           @default("completed")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  competitors    Competitor[]
+  engines        AnalysisEngine[]
+  prompts        Prompt[]
+  citations      Citation[]
+}
+
+model Competitor {
+  id             String   @id @default(cuid())
+  analysisId     String
+  analysis       Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  domain         String
+  brandName      String?
+  aiPresence     Float?
+  domainPresence Float?
+  brandPresence  Float?
+  avgPosition    Float?
+  shareOfVoice   Float?
+  createdAt      DateTime @default(now())
+}
+
+model AnalysisEngine {
+  id           String   @id @default(cuid())
+  analysisId   String
+  analysis     Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  engineId     String   // ai-overview, ai-mode, chatgpt, gemini, perplexity
+  name         String
+  mentions     Int      @default(0)
+  linkPresence Float    @default(0)
+  presence     Float    @default(0)
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+}
+
+model Prompt {
+  id          String    @id @default(cuid())
+  analysisId  String
+  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  prompt      String
+  topic       String
+  engine      String    // ai-overview, ai-mode, chatgpt, gemini, perplexity
+  mention     Boolean   @default(false)
+  link        Boolean   @default(false)
+  ads         Boolean   @default(false)
+  competitors String?   // JSON string
+  fullAnswer  String?
+  answerDate  DateTime?
+  visibility  String    @default("Visible")
+  createdAt   DateTime  @default(now())
+}
+
+model Citation {
+  id             String   @id @default(cuid())
+  analysisId     String
+  analysis       Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  domain         String
+  url            String
+  citationShare  Float?
+  visibility     Float?
+  topics         String?
+  domainTrust    Int?
+  pageTrust      Int?
+  organicTraffic Int?
+  createdAt      DateTime @default(now())
+}
+
+model ApiUsage {
+  id          String   @id @default(cuid())
+  endpoint    String
+  creditsUsed Int      @default(1)
+  status      String   @default("success")
+  createdAt   DateTime @default(now())
+}
+
+model SocialBrand {
+  id              String        @id @default(cuid())
+  projectId       String?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name            String
+  workspaceName   String?
+  platforms       String        // JSON array string e.g. ["Facebook", "Instagram", "LinkedIn"]
+  workspacesCount Int           @default(1)
+  postsCount      Int           @default(0)
+  status          String        @default("Active") // Active, Paused, Archived
+  posts           SocialPost[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model SocialPost {
+  id            String       @id @default(cuid())
+  brandId       String
+  brand         SocialBrand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  platform      String       // Facebook, Instagram, LinkedIn, YouTube, X, TikTok, Pinterest, Threads, Google Business
+  title         String?
+  caption       String
+  mediaUrl      String?
+  status        String       @default("Scheduled") // Draft, InReview, Scheduled, Published
+  scheduledFor  DateTime?
+  likes         Int          @default(0)
+  comments      Int          @default(0)
+  shares        Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model GoogleAccount {
+  id           String   @id @default(cuid())
+  googleId     String   @unique
+  email        String
+  name         String?
+  picture      String?
+  accessToken  String?
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  projectId   String?
+  type        String    // "RANK_CHECK", "SITE_AUDIT", "BACKLINK_SYNC", "AI_PROMPT_CHECK", "REPORT_GENERATION", "KEYWORD_RESEARCH"
+  payload     String?   // JSON payload
+  status      String    @default("queued") // "queued", "running", "completed", "failed", "cancelled"
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  logs        JobLog[]
+
+  @@index([status])
+  @@index([projectId])
+  @@index([type])
+}
+
+model JobLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  level     String   @default("info") // "info", "warn", "error"
+  message   String
+  metadata  String?  // JSON string
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+}
+
+model OnpagePage {
+  id            String        @id @default(cuid())
+  projectId     String?
+  url           String
+  targetKeyword String?
+  score         Int           @default(0) // Calculated 0 - 100
+  title         String?
+  description   String?
+  h1            String?
+  contentLength Int           @default(0)
+  loadTimeMs    Int           @default(0)
+  issuesCount   Int           @default(0)
+  status        String        @default("Completed") // "Pending", "Processing", "Completed", "Failed"
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  issues        OnpageIssue[]
+
+  @@index([url])
+  @@index([projectId])
+}
+
+model OnpageIssue {
+  id             String     @id @default(cuid())
+  pageId         String
+  page           OnpagePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  category       String     // "Content", "Meta", "Structure", "Links", "Performance"
+  severity       String     // "Error", "Warning", "Notice"
+  title          String
+  description    String
+  recommendation String
+  createdAt      DateTime   @default(now())
+
+  @@index([pageId])
+}
+
+model ContentBrief {
+  id                   String   @id @default(cuid())
+  projectId            String?
+  targetKeyword        String
+  searchIntent         String   @default("Informational") // Informational, Commercial, Navigational, Transactional
+  recommendedWordCount Int      @default(1500)
+  recommendedHeadings  String?  // JSON array string
+  targetKeywords       String?  // JSON array string
+  suggestedQuestions   String?  // JSON array string
+  competitorUrls       String?  // JSON array string
+  contentDraft         String?  // Generated markdown/text
+  score                Int      @default(0)
+  status               String   @default("Draft")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([targetKeyword])
+  @@index([projectId])
+}

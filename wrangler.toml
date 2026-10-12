@@ -1,0 +1,24 @@
+# ==============================================================================
+# Cloudflare Pages & Workers Deployment Configuration
+# SE Ranking Studio
+# ==============================================================================
+
+name = "se-ranking-studio"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Pages / Workers static assets directory
+pages_build_output_dir = ".next"
+
+# Global Environment Variables
+[vars]
+SEO_PROVIDER_MODE = "real"
+CLOUDFLARE_ACCOUNT_ID = "b931ec11684be14cf8699f21f964e3e2"
+CLOUDFLARE_R2_BUCKET_NAME = "seranking"
+NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+
+# Cloudflare R2 Object Storage Binding
+[[r2_buckets]]
+binding = "R2_SERANKING"
+bucket_name = "seranking"
+preview_bucket_name = "seranking-preview"

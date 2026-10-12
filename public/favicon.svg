@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="seRankingCircleGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+  </defs>
+  <!-- Perfect Circle Background -->
+  <circle cx="32" cy="32" r="32" fill="url(#seRankingCircleGrad)"/>
+  <!-- SE Ranking White Mark Centered -->
+  <g transform="translate(16.5, 14.5) scale(1.05)">
+    <path d="M19.2618 8.02075L14.6489 12.6337C13.7654 13.5172 12.5667 14.0138 11.3171 14.0138H0L12.6275 1.38638C12.8748 1.139 13.2103 1 13.5604 1H18.6116C19.1841 1 19.6482 1.46412 19.6482 2.03662V7.08779C19.6482 7.43789 19.5092 7.77338 19.2618 8.02075Z" fill="#FFFFFF"/>
+    <path d="M11.1871 29.8199V24.2221C11.1871 23.6496 10.723 23.1855 10.1505 23.1855H4.55273L11.7097 16.0286C12.5931 15.1451 13.7919 14.6484 15.0415 14.6484H26.3585L11.1871 29.8199Z" fill="#FFFFFF"/>
+  </g>
+</svg>

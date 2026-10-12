@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <rect width="794" height="1123" fill="#FFFFFF"/>
+  
+  <!-- Left Side Geometric Facets -->
+  <g id="left-polygon-cluster">
+    <polygon points="0,520 80,570 0,620" fill="#B91C1C" opacity="0.95"/>
+    <polygon points="80,570 145,550 115,615" fill="#E11D48"/>
+    <polygon points="0,620 80,570 115,615" fill="#C2410C"/>
+    <polygon points="0,620 115,615 65,680" fill="#EA580C"/>
+    <polygon points="115,615 145,550 190,620" fill="#FB923C"/>
+    <polygon points="115,615 190,620 160,670" fill="#F59E0B"/>
+    <polygon points="65,680 115,615 160,670" fill="#EA580C"/>
+    <polygon points="0,620 65,680 0,720" fill="#C2410C"/>
+    <polygon points="65,680 160,670 115,735" fill="#F97316"/>
+    <polygon points="0,720 65,680 115,735" fill="#B91C1C"/>
+    <polygon points="0,720 115,735 45,780" fill="#991B1B"/>
+    <polygon points="115,735 160,670 200,720" fill="#FBBF24"/>
+    <polygon points="115,735 200,720 165,775" fill="#F59E0B"/>
+    <polygon points="45,780 115,735 165,775" fill="#EA580C"/>
+    <polygon points="0,720 45,780 0,840" fill="#7F1D1D"/>
+    <polygon points="0,840 45,780 90,835" fill="#991B1B"/>
+    <polygon points="45,780 165,775 90,835" fill="#C2410C"/>
+    <polygon points="90,835 165,775 140,840" fill="#F59E0B"/>
+    <polygon points="0,840 90,835 0,900" fill="#881337"/>
+  </g>
+
+  <!-- Small floating accent fragments -->
+  <polygon points="560,560 575,548 572,568" fill="#F59E0B" opacity="0.8"/>
+  <polygon points="550,600 565,612 548,615" fill="#EA580C" opacity="0.8"/>
+  <polygon points="705,510 720,498 718,518" fill="#0D9488" opacity="0.85"/>
+
+  <!-- Right Side Mosaic Geometric Cluster -->
+  <g id="right-polygon-cluster">
+    <!-- Upper Teal & Cyan Group -->
+    <polygon points="794,490 730,550 794,590" fill="#0D9488"/>
+    <polygon points="730,550 680,610 750,630" fill="#14B8A6"/>
+    <polygon points="730,550 750,630 794,590" fill="#06B6D4"/>
+    <polygon points="750,630 794,590 794,670" fill="#0284C7"/>
+    <polygon points="680,610 635,665 710,685" fill="#0F766E"/>
+    <polygon points="680,610 710,685 750,630" fill="#0D9488"/>
+    <polygon points="710,685 750,630 794,670" fill="#0369A1"/>
+    <polygon points="710,685 794,670 794,745" fill="#075985"/>
+
+    <!-- Central Warm Gold & Amber Group -->
+    <polygon points="635,665 590,710 660,735" fill="#F59E0B"/>
+    <polygon points="635,665 660,735 710,685" fill="#D97706"/>
+    <polygon points="660,735 710,685 735,760" fill="#155E75"/>
+    <polygon points="710,685 794,745 735,760" fill="#0C4A6E"/>
+    <polygon points="735,760 794,745 794,820" fill="#082F49"/>
+
+    <polygon points="590,710 540,750 615,785" fill="#FBBF24"/>
+    <polygon points="590,710 615,785 660,735" fill="#F59E0B"/>
+    <polygon points="615,785 660,735 690,810" fill="#EA580C"/>
+    <polygon points="660,735 735,760 690,810" fill="#C2410C"/>
+    <polygon points="735,760 794,820 755,835" fill="#164E63"/>
+    <polygon points="735,760 755,835 690,810" fill="#1E3A8A"/>
+
+    <!-- Lower Orange, Ruby, Navy & Cyan Group -->
+    <polygon points="540,750 500,800 570,830" fill="#FDE047"/>
+    <polygon points="540,750 570,830 615,785" fill="#F59E0B"/>
+    <polygon points="570,830 615,785 640,865" fill="#F97316"/>
+    <polygon points="615,785 690,810 640,865" fill="#EA580C"/>
+    <polygon points="690,810 755,835 715,890" fill="#991B1B"/>
+    <polygon points="690,810 715,890 640,865" fill="#C2410C"/>
+    <polygon points="755,835 794,820 794,895" fill="#0F172A"/>
+    <polygon points="755,835 794,895 765,905" fill="#1E293B"/>
+    <polygon points="755,835 765,905 715,890" fill="#831843"/>
+
+    <!-- Bottom Edge Facets -->
+    <polygon points="570,830 640,865 595,920" fill="#F97316"/>
+    <polygon points="640,865 715,890 670,945" fill="#B91C1C"/>
+    <polygon points="640,865 670,945 595,920" fill="#EA580C"/>
+    <polygon points="715,890 765,905 730,965" fill="#991B1B"/>
+    <polygon points="715,890 730,965 670,945" fill="#BE123C"/>
+    <polygon points="765,905 794,895 794,970" fill="#0284C7"/>
+    <polygon points="765,905 794,970 750,980" fill="#0369A1"/>
+    <polygon points="765,905 750,980 730,965" fill="#0F766E"/>
+
+    <!-- Lowest Bottom-Right Triangles -->
+    <polygon points="595,920 670,945 620,1000" fill="#C2410C"/>
+    <polygon points="670,945 730,965 685,1015" fill="#991B1B"/>
+    <polygon points="670,945 685,1015 620,1000" fill="#B91C1C"/>
+    <polygon points="730,965 750,980 710,1030" fill="#0D9488"/>
+    <polygon points="730,965 710,1030 685,1015" fill="#155E75"/>
+    <polygon points="750,980 794,970 794,1040" fill="#0284C7"/>
+    <polygon points="750,980 794,1040 740,1045" fill="#0369A1"/>
+    <polygon points="750,980 740,1045 710,1030" fill="#0F766E"/>
+  </g>
+</svg>
