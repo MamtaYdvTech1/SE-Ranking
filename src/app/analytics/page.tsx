@@ -41,6 +41,7 @@ import {
 } from 'recharts';
 import { SeoPotentialView } from '@/components/analytics/SeoPotentialView';
 import { SnippetsAnalyticsView } from '@/components/analytics/SnippetsAnalyticsView';
+import { SearchPerformanceChart } from '@/components/analytics/SearchPerformanceChart';
 import { GoogleAccountChooserModal, GoogleAccountProfile } from '@/components/auth/GoogleAccountChooserModal';
 
 function GoogleAnalyticsIcon() {
@@ -132,7 +133,7 @@ function AnalyticsPageContent() {
     return projects[0] || null;
   }, [activeProject, projects]);
 
-  const targetDomain = targetProject?.domain || targetProject?.websiteUrl || targetProject?.name || 'amazon.in';
+  const targetDomain = targetProject?.domain || (targetProject as any)?.websiteUrl || targetProject?.name || 'amazon.in';
   const cleanDomain = useMemo(() => {
     return (targetDomain || 'amazon.in')
       .replace(/^https?:\/\//i, '')
@@ -316,7 +317,7 @@ function AnalyticsPageContent() {
 
   useEffect(() => {
     if (cleanDomain) {
-      setGaProperty(`${cleanDomain} (GA4-${Math.abs(cleanDomain.split('').reduce((acc, c) => acc + c.charCodeAt(0), 10000000))})`);
+      setGaProperty(`${cleanDomain} (GA4-${Math.abs(cleanDomain.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 10000000))})`);
       setGscSite(`sc-domain:${cleanDomain}`);
       setMatomoUrl(`https://analytics.${cleanDomain}`);
     }
@@ -1114,38 +1115,15 @@ function AnalyticsPageContent() {
                   </div>
                 </div>
 
-                {/* Performance Chart Card */}
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                    <h3 className="font-bold text-sm text-gray-900">Search performance over time</h3>
-                    <div className="flex items-center gap-4 text-xs font-semibold">
-                      <span className="flex items-center gap-1.5 text-[#7C3AED]">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Clicks
-                      </span>
-                      <span className="flex items-center gap-1.5 text-purple-600">
-                        <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Impressions
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-44 flex items-center justify-center">
-                    <svg className="w-full h-full" viewBox="0 0 600 120" fill="none">
-                      <line x1="20" y1="100" x2="580" y2="100" stroke="#E2E8F0" strokeWidth="1" />
-                      <path
-                        d="M 20 85 Q 120 40 220 70 T 400 35 T 580 50"
-                        fill="none"
-                        stroke="#3B82F6"
-                        strokeWidth="2.5"
-                      />
-                      <path
-                        d="M 20 60 Q 140 20 260 55 T 440 25 T 580 30"
-                        fill="none"
-                        stroke="#9333EA"
-                        strokeWidth="2"
-                        strokeDasharray="4 4"
-                      />
-                    </svg>
-                  </div>
-                </div>
+                {/* Performance Chart Card (100% Dynamic with Interactive Hover Flow) */}
+                <SearchPerformanceChart
+                  trendData={analyticsData?.trend}
+                  totalClicks={analyticsData?.summary?.totalClicks}
+                  totalImpressions={analyticsData?.summary?.totalImpressions}
+                  avgCtr={analyticsData?.summary?.avgCtr}
+                  avgPosition={analyticsData?.summary?.avgPosition}
+                  domain={cleanDomain}
+                />
 
                 {/* Top Queries Table */}
                 <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden">

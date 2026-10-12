@@ -112,8 +112,8 @@ const INITIAL_TASKS: TaskItem[] = [
     priority: 'Medium',
     description:
       'High-quality backlinks boost the website’s trust and improve rankings, increase referral traffic, and also improve brand awareness. Use the Backlink Checker to get a full picture of your backlink profile. Check your Domain Trust score to know your authority. Analyze the number and quality of referring domains and backlinks you have. Typically, the greater amount of high-quality referral domains a website has, the greater the likelihood it has of reaching the top of Google. Go to the Backlinks section to analyze your backlinks using over 15 parameters, including the Domain Trust score, target URL, anchor texts, backlink toxicity, and others.',
-    actionUrl: '/backlinks',
-    actionText: 'Backlink Checker',
+    actionUrl: '/backlinks-monitor',
+    actionText: 'Backlink Monitor',
     status: 'todo',
     commentsCount: 0,
   },

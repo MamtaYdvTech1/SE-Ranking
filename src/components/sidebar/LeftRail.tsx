@@ -134,24 +134,9 @@ export function LeftRail() {
   const railItems = allRailItems;
 
   return (
-    <aside className="w-[66px] bg-[#130E26] text-[#E2E8F0] flex flex-col justify-between py-2 border-r border-[#261C40] select-none shrink-0 z-30">
-      {/* Top Logo when TopHeader is hidden in onboarding/no-projects state */}
-      {isNoProjectsState && (
-        <div className="flex items-center justify-center pt-1 pb-3 mb-1 border-b border-[#261C40] shrink-0">
-          <Link
-            href="/admin.dashboard.html"
-            className="w-10 h-10 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] flex items-center justify-center text-white shadow-xs transition-all group cursor-pointer"
-            title="SE Ranking Home"
-          >
-            <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </Link>
-        </div>
-      )}
-
+    <aside className="w-[66px] bg-[#182230] text-[#E2E8F0] flex flex-col justify-between py-2 border-r border-[#263445] select-none shrink-0 z-30">
       {/* Top Navigation Items */}
-      <div className="flex flex-col items-center gap-1.5 overflow-y-auto no-scrollbar flex-1">
+      <div className="flex flex-col items-center gap-1.5 overflow-y-auto no-scrollbar flex-1 pt-1">
         {railItems.map((item) => {
           let isActive = false;
           if (item.label === 'AI Search') {
@@ -180,17 +165,17 @@ export function LeftRail() {
               title={item.label}
               className={`w-[60px] min-h-[54px] py-1.5 px-0.5 flex flex-col items-center justify-center rounded-xl transition-all duration-150 relative group text-center cursor-pointer ${
                 isActive
-                  ? 'bg-[#7C3AED] text-white font-bold shadow-md shadow-[#7C3AED]/40'
-                  : 'hover:bg-[#7C3AED]/20 hover:text-white text-[#CBD5E1]'
+                  ? 'bg-[#38465B] text-white font-semibold shadow-xs'
+                  : 'hover:bg-white/10 hover:text-white text-[#CBD5E1]'
               }`}
             >
-              {/* Arrow Notch pointing to secondary sidebar when active */}
+              {/* Arrow Notch pointing into secondary sidebar when active */}
               {isMounted &&
                 isActive &&
                 !isMuted &&
                 !pathname.startsWith('/reports') &&
                 !pathname.startsWith('/admin.reports') && (
-                  <div className="absolute -right-[1px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-r-[6px] border-r-[#181330]" />
+                  <div className="absolute -right-[6px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[6px] border-l-[#38465B] z-40 pointer-events-none" />
                 )}
 
               <div className="relative flex items-center justify-center">
@@ -256,7 +241,7 @@ export function LeftRail() {
               .toUpperCase()
           : user?.email
           ? user.email.slice(0, 2).toUpperCase()
-          : 'SV';
+          : 'BY';
 
         return (
           <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-[#1a293e]">

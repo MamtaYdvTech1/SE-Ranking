@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -738,6 +738,26 @@ function RankingsPageContent() {
   const domain = currentProject?.domain || 'in.pinterest.com';
   const effectiveProjectName = currentProject?.name || (domain.startsWith('http') ? domain : `https://${domain}/`);
   const effectiveDomain = domain;
+
+  const dynamicKeywordPlaceholder = useMemo(() => {
+    const clean = (effectiveDomain || '')
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .replace(/\/.*$/, '')
+      .toLowerCase();
+
+    if (clean.includes('jio')) {
+      return 'jio website login\njio website recharge\njio web browser\njio website\njio web series';
+    }
+    if (clean.includes('pinterest')) {
+      return 'pinterest ideas\npinterest wallpaper\npinterest login\npinterest download\npinterest home decor';
+    }
+    if (clean.includes('amazon')) {
+      return 'amazon online shopping\namazon deals of the day\namazon customer care\namazon prime video\namazon mobile recharge';
+    }
+    const brand = clean.split('.')[0] || 'brand';
+    return `${brand} login\n${brand} online\n${brand} download\n${brand} features\n${brand} pricing`;
+  }, [effectiveDomain]);
 
   // Active view tab: supports detailed, summary, and historical
   const tabParam = searchParams?.get('tab');
@@ -2524,7 +2544,7 @@ function RankingsPageContent() {
                             We discovered <strong>62</strong> backlinks for your domain. Analyze new and lost backlinks, and track what matters most.{' '}
                             <button
                               type="button"
-                              onClick={() => router.push('/backlinks')}
+                              onClick={() => router.push('/backlinks-monitor')}
                               className="text-[#5F31EC] hover:underline font-semibold cursor-pointer"
                             >
                               View details
@@ -6065,7 +6085,7 @@ function RankingsPageContent() {
                 <textarea
                   rows={6}
                   required
-                  placeholder={`work composer\nemployee tracking software\ntime tracking software\nremote team management\nactivity monitoring`}
+                  placeholder={dynamicKeywordPlaceholder}
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-hidden focus:border-[#00A86B] font-mono leading-relaxed"

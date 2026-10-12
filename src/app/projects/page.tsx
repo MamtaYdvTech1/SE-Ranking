@@ -854,7 +854,7 @@ function ProjectsDashboardPageContent() {
         const val = pAny.refDomainsCount !== undefined && pAny.refDomainsCount !== null ? pAny.refDomainsCount : 0;
         return (
           <Link
-            href="/backlinks"
+            href="/backlinks-monitor?tab=domains"
             onClick={(e) => {
               e.stopPropagation();
               setActiveProject(p);
@@ -875,7 +875,7 @@ function ProjectsDashboardPageContent() {
         const val = pAny.backlinksCount !== undefined && pAny.backlinksCount !== null ? pAny.backlinksCount : 0;
         return (
           <Link
-            href="/backlinks"
+            href="/backlinks-monitor?tab=backlinks"
             onClick={(e) => {
               e.stopPropagation();
               setActiveProject(p);
@@ -1805,7 +1805,7 @@ function ProjectsDashboardPageContent() {
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-white hover:bg-gray-50 text-[#1E2532] font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer uppercase tracking-wider self-start sm:self-center relative z-10"
             >
-              <Plus className="w-4 h-4 stroke-[3] text-[#7C3AED]" />
+              <Plus className="w-4 h-4 stroke-[3] text-[#0062FF]" />
               <span>ADD WEBSITE</span>
             </button>
           </div>
@@ -1830,10 +1830,10 @@ function ProjectsDashboardPageContent() {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#7C3AED] hover:underline cursor-pointer text-left"
+                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0062FF] hover:underline cursor-pointer text-left"
               >
                 <span>Learn more</span>
-                <svg className="w-4 h-4 text-[#7C3AED]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-[#0062FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="4" width="20" height="16" rx="4" />
                   <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" />
                 </svg>
@@ -1854,7 +1854,7 @@ function ProjectsDashboardPageContent() {
               </div>
               <Link
                 href="/research/competitive-research"
-                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#7C3AED] hover:underline cursor-pointer text-left"
+                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0062FF] hover:underline cursor-pointer text-left"
               >
                 <span>Learn more</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -1869,12 +1869,12 @@ function ProjectsDashboardPageContent() {
                 </div>
                 <h3 className="text-base font-bold text-gray-900 mb-2">Website Audit</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  Check 130 website parameters and get tips on how to fix all of the found issues
+                  Check 180 website parameters and get tips on how to fix all of the found issues
                 </p>
               </div>
               <Link
                 href="/website-audit"
-                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#7C3AED] hover:underline cursor-pointer text-left"
+                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0062FF] hover:underline cursor-pointer text-left"
               >
                 <span>Learn more</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -3731,7 +3731,7 @@ function ProjectsDashboardPageContent() {
                 type="button"
                 onClick={() => {
                   setActiveProject(menuAnchor.project);
-                  router.push('/backlinks');
+                  router.push('/backlinks-monitor');
                   setMenuAnchor(null);
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-left hover:bg-[#F4F6F8] text-[#171B24] transition-colors cursor-pointer group"

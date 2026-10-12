@@ -37,21 +37,12 @@ export async function verifyRecaptcha(
     };
   }
 
-  // Support verified visual vehicle challenge tokens and test tokens
-  if (
-    token.startsWith('visual_vehicle_') ||
-    token.startsWith('visual_challenge_') ||
-    token.startsWith('img_challenge_') ||
-    token.startsWith('recaptcha_dev_') ||
-    token.startsWith('cf_turnstile_') ||
-    token === 'recaptcha_test_pass' ||
-    token.startsWith('recaptcha_mock_') ||
-    (process.env.NODE_ENV !== 'production' && token.length > 0 && token.startsWith('test_'))
-  ) {
+  // In unit test environment only, permit test-harness passing token
+  if (process.env.NODE_ENV === 'test' && token === 'recaptcha_test_pass') {
     return {
       success: true,
       challenge_ts: new Date().toISOString(),
-      hostname: 'localhost',
+      hostname: 'test.local',
       provider: 'google_recaptcha',
     };
   }

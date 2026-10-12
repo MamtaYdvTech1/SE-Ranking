@@ -1,1 +1,5 @@
-export { default } from '../backlinks/page';
+import { redirect } from 'next/navigation';
+
+export default function BacklinkCheckerProjectAdminAlias() {
+  redirect('/backlinks-monitor');
+}

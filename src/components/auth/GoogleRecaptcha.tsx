@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Loader2, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export type RecaptchaStatus = 'loading' | 'ready' | 'verified' | 'expired' | 'error';
 
@@ -11,6 +11,7 @@ interface GoogleRecaptchaProps {
   onExpire?: () => void;
   className?: string;
   id?: string;
+  theme?: 'light' | 'dark';
 }
 
 declare global {
@@ -18,39 +19,43 @@ declare global {
     grecaptcha?: {
       render: (
         container: HTMLElement | string,
-        options: {
+        parameters: {
           sitekey: string;
-          callback: (token: string) => void;
-          'error-callback'?: () => void;
-          'expired-callback'?: () => void;
           theme?: 'light' | 'dark';
           size?: 'normal' | 'compact';
+          tabindex?: number;
+          callback?: (response: string) => void;
+          'expired-callback'?: () => void;
+          'error-callback'?: () => void;
         }
       ) => number;
       reset: (widgetId?: number) => void;
+      getResponse: (widgetId?: number) => string;
       ready: (callback: () => void) => void;
     };
-    __onGoogleRecaptchaLoad?: () => void;
+    onRecaptchaApiLoaded?: () => void;
   }
 }
-
-const DEFAULT_RECAPTCHA_SITE_KEY = '6LeM0ugtAAAAAI2KNBe5VmDfNzN2xbKwJPcnUqAS';
 
 export function GoogleRecaptcha({
   onVerify,
   onError,
   onExpire,
   className = '',
-  id = 'google-recaptcha-container',
+  id = 'google-recaptcha-widget',
+  theme = 'light',
 }: GoogleRecaptchaProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<number | null>(null);
+  const isRenderedRef = useRef(false);
 
   const [status, setStatus] = useState<RecaptchaStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const siteKey =
-    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || DEFAULT_RECAPTCHA_SITE_KEY;
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+    process.env.RECAPTCHA_SITE_KEY ||
+    '6LeM0ugtAAAAAI2KNBe5VmDfNzN2xbKwJPcnUqAS';
 
   const onVerifyRef = useRef(onVerify);
   onVerifyRef.current = onVerify;
@@ -62,179 +67,184 @@ export function GoogleRecaptcha({
   onExpireRef.current = onExpire;
 
   const renderWidget = useCallback(() => {
-    if (!mountRef.current) return;
-    if (widgetIdRef.current !== null) return;
+    if (!containerRef.current || !window.grecaptcha?.render) return;
+    if (isRenderedRef.current) return;
 
-    if (!window.grecaptcha || typeof window.grecaptcha.render !== 'function') {
-      return;
-    }
-
-    if (mountRef.current.childElementCount > 0) {
-      setStatus('ready');
+    if (!siteKey || siteKey.trim().length === 0) {
+      setStatus('error');
+      const err = 'Google reCAPTCHA site key is missing. Authentication is restricted.';
+      setErrorMessage(err);
+      onErrorRef.current?.(err);
       return;
     }
 
     try {
-      const widgetId = window.grecaptcha.render(mountRef.current, {
-        sitekey: siteKey,
-        theme: 'light',
-        size: 'normal',
+      containerRef.current.innerHTML = '';
+      const wId = window.grecaptcha.render(containerRef.current, {
+        sitekey: siteKey.trim(),
+        theme,
         callback: (token: string) => {
           setStatus('verified');
           setErrorMessage(null);
           onVerifyRef.current?.(token);
         },
+        'expired-callback': () => {
+          setStatus('expired');
+          setErrorMessage('Verification expired. Please check the box again.');
+          onExpireRef.current?.();
+        },
         'error-callback': () => {
-          const err = 'Google reCAPTCHA verification error. Please retry.';
           setStatus('error');
+          const err = 'reCAPTCHA network or challenge error. Please refresh and try again.';
           setErrorMessage(err);
           onErrorRef.current?.(err);
         },
-        'expired-callback': () => {
-          setStatus('expired');
-          onExpireRef.current?.();
-        },
       });
 
-      widgetIdRef.current = widgetId;
+      widgetIdRef.current = wId;
+      isRenderedRef.current = true;
       setStatus('ready');
-      setErrorMessage(null);
-    } catch (err: any) {
-      if (err?.message?.includes?.('already been rendered')) {
+    } catch (e: any) {
+      console.error('Failed to render Google reCAPTCHA widget:', e);
+      // If already rendered inside this container, ignore duplicate render warning
+      if (e?.message && e.message.includes('has already been rendered')) {
+        isRenderedRef.current = true;
         setStatus('ready');
-        return;
+      } else {
+        setStatus('error');
+        setErrorMessage('Failed to initialize Google reCAPTCHA widget.');
+        onErrorRef.current?.('Failed to initialize Google reCAPTCHA widget.');
       }
-      console.warn('[reCAPTCHA render notice]:', err);
-      setStatus('error');
-      setErrorMessage(err?.message || 'Failed to render Google reCAPTCHA widget.');
-      onErrorRef.current?.(err?.message || 'Render failed');
     }
-  }, [siteKey]);
+  }, [siteKey, theme]);
 
   useEffect(() => {
     let isMounted = true;
-    let fallbackTimeout: NodeJS.Timeout;
 
-    if (!siteKey) {
+    // Fail closed if configuration is completely absent
+    if (!siteKey || siteKey.trim().length === 0) {
       setStatus('error');
-      setErrorMessage('Google reCAPTCHA site key is not configured.');
-      onErrorRef.current?.('Missing site key');
+      setErrorMessage('Google reCAPTCHA configuration missing. Authentication failed closed.');
+      onErrorRef.current?.('Google reCAPTCHA configuration missing.');
       return;
     }
 
-    window.__onGoogleRecaptchaLoad = () => {
-      if (isMounted) {
+    const scriptId = 'google-recaptcha-official-v2-script';
+
+    const handleScriptReady = () => {
+      if (!isMounted) return;
+      if (window.grecaptcha?.ready) {
+        window.grecaptcha.ready(() => {
+          if (isMounted) renderWidget();
+        });
+      } else {
         renderWidget();
       }
     };
 
-    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-      window.grecaptcha.ready(() => {
-        if (isMounted) renderWidget();
-      });
+    if (window.grecaptcha?.render) {
+      handleScriptReady();
     } else {
-      const scriptId = 'google-recaptcha-v2-api-script';
-      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-
-      if (!script) {
-        script = document.createElement('script');
+      let existingScript = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!existingScript) {
+        const script = document.createElement('script');
         script.id = scriptId;
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=__onGoogleRecaptchaLoad&render=explicit';
+        script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
         script.async = true;
         script.defer = true;
+        script.onload = () => handleScriptReady();
         script.onerror = () => {
           if (isMounted) {
             setStatus('error');
-            setErrorMessage('Could not load Google reCAPTCHA script. Please check your network connection.');
-            onErrorRef.current?.('Script load error');
+            setErrorMessage('Could not load Google reCAPTCHA verification service.');
+            onErrorRef.current?.('Failed to load Google reCAPTCHA script.');
           }
         };
         document.head.appendChild(script);
       } else {
-        if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
-          window.grecaptcha.ready(() => {
-            if (isMounted) renderWidget();
-          });
-        }
-      }
-
-      fallbackTimeout = setTimeout(() => {
-        if (isMounted && widgetIdRef.current === null) {
-          if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-            renderWidget();
-          } else {
-            setStatus('error');
-            setErrorMessage('Google reCAPTCHA connection timed out. Please click retry.');
+        existingScript.addEventListener('load', handleScriptReady);
+        const checkInterval = setInterval(() => {
+          if (window.grecaptcha?.render) {
+            clearInterval(checkInterval);
+            handleScriptReady();
           }
-        }
-      }, 5000);
+        }, 200);
+        setTimeout(() => clearInterval(checkInterval), 5000);
+      }
     }
 
     return () => {
       isMounted = false;
-      clearTimeout(fallbackTimeout);
     };
   }, [siteKey, renderWidget]);
 
-  const handleRetry = () => {
-    setErrorMessage(null);
+  const handleManualReset = useCallback(() => {
     if (widgetIdRef.current !== null && window.grecaptcha?.reset) {
       try {
         window.grecaptcha.reset(widgetIdRef.current);
         setStatus('ready');
-        return;
-      } catch {
-        // Fallback
+        setErrorMessage(null);
+        onExpireRef.current?.();
+      } catch (e) {
+        console.error('reCAPTCHA manual reset error:', e);
       }
     }
-    setStatus('loading');
-    widgetIdRef.current = null;
-    if (mountRef.current) {
-      mountRef.current.innerHTML = '';
-    }
-    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-      renderWidget();
-    }
-  };
+  }, []);
 
   return (
-    <div className={`w-full flex flex-col items-center justify-center my-1.5 ${className}`}>
-      {/* Loading state indicator */}
+    <div
+      id={id}
+      className={`w-full flex flex-col items-center justify-center my-2 select-none min-h-[78px] ${className}`}
+      data-testid="google-recaptcha-container"
+    >
+      {/* Loading state indicator before official widget appears */}
       {status === 'loading' && (
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 py-3 min-h-[74px] w-full">
-          <Loader2 className="w-4 h-4 animate-spin text-[#7C3AED]" />
-          <span>Connecting Google reCAPTCHA...</span>
+        <div className="w-[304px] h-[78px] bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center gap-2 text-xs text-gray-500 shadow-2xs">
+          <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+          <span>Loading Google reCAPTCHA...</span>
         </div>
       )}
 
-      {/* Error state notice */}
-      {status === 'error' && (
-        <div className="w-full max-w-[320px] p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between my-1">
-          <span className="truncate">{errorMessage || 'Google reCAPTCHA connection issue.'}</span>
+      {/* Official Google reCAPTCHA iframe mount container */}
+      <div
+        ref={containerRef}
+        className={`w-[304px] min-h-[78px] flex items-center justify-center ${
+          status === 'loading' ? 'hidden' : 'block'
+        }`}
+        data-testid="google-recaptcha-mount"
+      />
+
+      {/* Error state alert banner */}
+      {status === 'error' && errorMessage && (
+        <div className="mt-2 w-[304px] p-2 bg-red-50 border border-red-200 rounded-md text-[11px] text-red-700 flex items-start gap-1.5 leading-snug">
+          <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span>{errorMessage}</span>
+            <button
+              type="button"
+              onClick={handleManualReset}
+              className="mt-1 flex items-center gap-1 font-semibold text-red-800 hover:underline cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Retry verification</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Expired state alert */}
+      {status === 'expired' && (
+        <div className="mt-1.5 w-[304px] p-1.5 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-800 flex items-center justify-between">
+          <span>Verification expired. Please re-verify.</span>
           <button
             type="button"
-            onClick={handleRetry}
-            className="text-[#7C3AED] hover:underline font-semibold flex items-center gap-1 cursor-pointer ml-2 shrink-0"
+            onClick={handleManualReset}
+            className="text-amber-900 font-bold hover:underline cursor-pointer"
           >
-            <RefreshCw className="w-3 h-3" />
-            Retry
+            Refresh
           </button>
         </div>
       )}
-
-      {/* Expired state notice */}
-      {status === 'expired' && (
-        <p className="text-[11px] text-amber-700 font-medium text-center my-1">
-          Verification expired. Please check the reCAPTCHA box again.
-        </p>
-      )}
-
-      {/* Genuine official Google reCAPTCHA v2 widget container */}
-      <div
-        id={id}
-        ref={mountRef}
-        className={`flex justify-center items-center min-h-[74px] max-w-full overflow-hidden ${status === 'error' ? 'hidden' : 'block'}`}
-      />
     </div>
   );
 }

@@ -599,11 +599,12 @@ function ProjectOverviewPageContent() {
 
   const handleOpenSettingsTab = (tab: 'general' | 'engines' | 'keywords' | 'prompts' | 'competitors' | 'statistics') => {
     if (tab === 'engines') {
-      router.push('/admin.site.wizard.html?site_id=12990854&source=po_airt_widget_add_ai_se#/engines?site_id=12990854&se_type=google_ai_overview');
+      setIsAiEngineModalOpen(true);
       return;
     }
     if (tab === 'general') {
-      router.push('/admin.site.wizard.html?site_id=12990854&back_url=/detailed#/?site_id=12990854');
+      setSettingsInitialTab('general');
+      setIsSettingsOpen(true);
       return;
     }
     setSettingsInitialTab(tab);
@@ -1192,10 +1193,21 @@ function ProjectOverviewPageContent() {
                 <span className="text-gray-300">|</span>
                 <span className="text-gray-600 font-medium">Brand: {displayBrand}</span>
                 <span className="text-gray-300">|</span>
-                <span className="text-gray-500 font-medium">1 AI engines · 10 prompts</span>
+                <span className="text-gray-500 font-medium">
+                  {Object.values(aiEnginesConfig).filter(Boolean).length} AI engines · {Math.max(10, Object.values(aiEnginesConfig).filter(Boolean).length * 8)} prompts
+                </span>
                 <span className="text-gray-300">|</span>
                 <span className="text-gray-500 font-medium">3 Oct - 5 Oct, 2026</span>
-              </div>
+              </div>,
+              <button
+                type="button"
+                onClick={() => setIsAiEngineModalOpen(true)}
+                className="px-2.5 py-1 text-xs text-[#0B69FF] hover:bg-blue-100/70 rounded font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                title="Configure and manage AI engines"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Manage AI Engines</span>
+              </button>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3.5">
@@ -1203,11 +1215,15 @@ function ProjectOverviewPageContent() {
               <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-2.5 shadow-2xs flex flex-col justify-between">
                 <div>
                   <div className="text-xs font-bold text-gray-700">Mention presence</div>
-                  <div className="text-3xl font-black text-[#0B69FF] mt-2">0%</div>
+                  <div className="text-3xl font-black text-[#0B69FF] mt-2">
+                    {Object.values(aiEnginesConfig).filter(Boolean).length > 0 ? (Object.values(aiEnginesConfig).filter(Boolean).length >= 4 ? '74%' : '58%') : '0%'}
+                  </div>
                   <div className="text-xs text-gray-500 mt-1">AI answer mentioning brand</div>
                 </div>
                 <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
-                  Top 3 presence: <strong className="text-gray-600 font-bold">0%</strong>
+                  Top 3 presence: <strong className="text-gray-600 font-bold">
+                    {Object.values(aiEnginesConfig).filter(Boolean).length > 0 ? (Object.values(aiEnginesConfig).filter(Boolean).length >= 4 ? '62%' : '44%') : '0%'}
+                  </strong>
                 </div>
               </div>
 
@@ -1215,32 +1231,64 @@ function ProjectOverviewPageContent() {
               <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-2.5 shadow-2xs flex flex-col justify-between">
                 <div>
                   <div className="text-xs font-bold text-gray-700">Link presence</div>
-                  <div className="text-3xl font-black text-[#0B69FF] mt-2">0%</div>
+                  <div className="text-3xl font-black text-[#0B69FF] mt-2">
+                    {Object.values(aiEnginesConfig).filter(Boolean).length > 0 ? (Object.values(aiEnginesConfig).filter(Boolean).length >= 4 ? '56%' : '38%') : '0%'}
+                  </div>
                   <div className="text-xs text-gray-500 mt-1">AI answer with link to site</div>
                 </div>
                 <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
-                  Top 3 presence: <strong className="text-gray-600 font-bold">0%</strong>
+                  Top 3 presence: <strong className="text-gray-600 font-bold">
+                    {Object.values(aiEnginesConfig).filter(Boolean).length > 0 ? (Object.values(aiEnginesConfig).filter(Boolean).length >= 4 ? '48%' : '30%') : '0%'}
+                  </strong>
                 </div>
               </div>
 
               {/* Card 3: AI Overview presence */}
-              <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-3 shadow-2xs flex flex-col justify-between">
-                <div>
-                  <div className="text-xs font-bold text-gray-700">AI Overview presence</div>
-                  <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                    Google AI Overview hasn't been added to this project. Please visit project settings to include the AIO search system.
-                  </p>
+              {aiEnginesConfig.googleAiOverview ? (
+                <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-2.5 shadow-2xs flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                        <GoogleAiOverviewIcon size={16} />
+                        <span>AI Overview presence</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Active
+                      </span>
+                    </div>
+                    <div className="text-3xl font-black text-[#0B69FF] mt-2">64%</div>
+                    <div className="text-xs text-gray-500 mt-1">AI answer citing domain in Google SERPs</div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Top 3 presence: <strong className="text-gray-600 font-bold">51%</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAiEngineModalOpen(true)}
+                      className="text-xs text-[#0B69FF] hover:underline font-semibold cursor-pointer"
+                    >
+                      Configure Engines
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSettingsTab('engines')}
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 uppercase tracking-wider transition-colors cursor-pointer shadow-2xs"
-                  >
-                    Track AI Overview
-                  </button>
+              ) : (
+                <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-3 shadow-2xs flex flex-col justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-gray-700">AI Overview presence</div>
+                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                      Google AI Overview hasn't been added to this project. Please configure to include the AIO search system.
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setIsAiEngineModalOpen(true)}
+                      className="px-3.5 py-1.5 border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 uppercase tracking-wider transition-colors cursor-pointer shadow-2xs flex items-center gap-1.5"
+                    >
+                      <span>Track AI Overview</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         );
@@ -2492,8 +2540,7 @@ function ProjectOverviewPageContent() {
                       <span className="w-3.5 h-3.5 rounded-full border border-gray-300 text-[10px] text-gray-400 flex items-center justify-center font-serif cursor-help" title="Total backlinks pointing to this website">i</span>
                     </div>
                     <Link
-                      href="/admin.backlink_checker_project.site_id-12990854.html#/backlinks/?from=projects"
-                      target="_blank"
+                      href="/backlinks-monitor?tab=backlinks"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
                       85
@@ -2507,8 +2554,7 @@ function ProjectOverviewPageContent() {
                       <span className="w-3.5 h-3.5 rounded-full border border-gray-300 text-[10px] text-gray-400 flex items-center justify-center font-serif cursor-help" title="Total unique referring domains linking to this site">i</span>
                     </div>
                     <Link
-                      href="/admin.backlink_checker_project.site_id-12990854.html#/domains/?from=projects"
-                      target="_blank"
+                      href="/backlinks-monitor?tab=domains"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
                       60
@@ -2522,8 +2568,7 @@ function ProjectOverviewPageContent() {
                       <span className="w-3.5 h-3.5 rounded-full border border-gray-300 text-[10px] text-gray-400 flex items-center justify-center font-serif cursor-help" title="Domain authority score on a 0-100 scale">i</span>
                     </div>
                     <Link
-                      href="/admin.backlink_checker_project.site_id-12990854.html#/overview/?from=projects"
-                      target="_blank"
+                      href="/backlinks-monitor"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
                       11
@@ -2537,8 +2582,7 @@ function ProjectOverviewPageContent() {
                       <span className="w-3.5 h-3.5 rounded-full border border-gray-300 text-[10px] text-gray-400 flex items-center justify-center font-serif cursor-help" title="Page authority score on a 0-100 scale">i</span>
                     </div>
                     <Link
-                      href="/admin.backlink_checker_project.site_id-12990854.html#/overview/?from=projects"
-                      target="_blank"
+                      href="/backlinks-monitor"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
                       3
@@ -2893,8 +2937,7 @@ function ProjectOverviewPageContent() {
                 {/* View Full Report Button under chart matching Screenshot 2 */}
                 <div className="pt-3">
                   <Link
-                    href="/admin.backlink_checker_project.site_id-12990854.html?from=projects"
-                    target="_blank"
+                    href="/backlinks-monitor"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 bg-white text-[#171B24] text-xs font-semibold rounded shadow-2xs transition-colors cursor-pointer uppercase"
                   >
                     <span>View full report</span>
@@ -3484,7 +3527,7 @@ function ProjectOverviewPageContent() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {contentScoreRows.map((row, idx) => (
+                      {contentScoreRows.map((row: any, idx: number) => (
                         <tr key={idx} className="hover:bg-gray-50 transition-colors">
                           <td className="py-2.5 pr-2 max-w-[220px]">
                             <a
@@ -3922,7 +3965,7 @@ function ProjectOverviewPageContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {highPotentialKeywords.map((k) => (
+                  {highPotentialKeywords.map((k: any) => (
                     <tr key={k.keyword} className="hover:bg-blue-50/40 transition-colors">
                       <td className="py-2.5 px-3 font-semibold text-gray-900">{k.keyword}</td>
                       <td className="py-2.5 px-3 text-center font-bold text-[#0B69FF]">{k.volume}</td>

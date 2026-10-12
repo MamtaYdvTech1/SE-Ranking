@@ -125,14 +125,14 @@ function SubItem({
       onClick={onClick}
       className={`group flex items-center justify-between py-2 pl-5 pr-3 rounded-lg transition-all duration-150 text-[13px] font-medium cursor-pointer select-none ${
         isActive
-          ? 'bg-[#583594] text-white font-bold shadow-sm border border-[#8B5CF6]/80'
-          : 'text-[#CBD5E1] hover:text-white hover:bg-[#2B2150]'
+          ? 'bg-[#2E3C4F] text-white font-bold shadow-xs border border-[#0062FF]/70'
+          : 'text-[#CBD5E1] hover:text-white hover:bg-[#283547]'
       }`}
     >
       <div className="flex items-center gap-2 truncate min-w-0">
         <span
           className={`font-bold text-base select-none shrink-0 leading-none transition-colors ${
-            isActive ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'
+            isActive ? 'text-[#0062FF]' : 'text-gray-400 group-hover:text-white'
           }`}
         >
           ·
@@ -1203,37 +1203,47 @@ function SecondarySidebarInner() {
 
   return (
     <>
-      <aside className="w-[245px] bg-[#16122B] text-[#E2E8F0] flex flex-col justify-between border-r border-[#261C42] select-none shrink-0 text-[14px] z-30 relative overflow-visible">
+      <aside className="w-[245px] bg-[#222D3B] text-[#E2E8F0] flex flex-col justify-between border-r border-[#2C3848] select-none shrink-0 text-[14px] z-30 relative overflow-visible">
         <div className="flex flex-col h-full">
           {/* Header row matching screenshot */}
-          <div className="h-11 px-3.5 flex items-center justify-between border-b border-[#261C42] text-white bg-[#16122B]">
+          <div className="h-11 px-3.5 flex items-center justify-between border-b border-[#2C3848] text-white bg-[#222D3B]">
             <span className="text-[15px] font-bold text-white tracking-wide">
               {getSectionTitle()}
             </span>
             <button
-              onClick={() => setIsSidebarCollapsed(true)}
-              className="w-6 h-6 rounded-full bg-[#241C42] text-[#CBD5E1] hover:text-white hover:bg-[#342760] flex items-center justify-center border border-[#3E2E66] transition-colors cursor-pointer"
-              title="Collapse sidebar"
+              onClick={() => {
+                if (effectiveSection === 'backlinks') {
+                  router.push('/projects');
+                } else {
+                  setIsSidebarCollapsed(true);
+                }
+              }}
+              className="w-6 h-6 rounded-full bg-[#182230] text-[#CBD5E1] hover:text-white hover:bg-[#2C3848] flex items-center justify-center border border-[#38465B] transition-colors cursor-pointer"
+              title={effectiveSection === 'backlinks' ? 'Close Backlinks' : 'Collapse navigation'}
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              {effectiveSection === 'backlinks' ? (
+                <X className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <ChevronLeft className="w-3.5 h-3.5" />
+              )}
             </button>
           </div>
 
           {/* Project Selector Card (Visible ONLY on Projects mode matching screenshot) */}
           {effectiveSection === 'projects' && (
-            (pathname === '/admin.dashboard.html' || pathname.startsWith('/admin.dashboard')) ? (
-              <div className="p-2.5 border-b border-[#261C42]">
+            (pathname === '/projects' || pathname === '/admin.dashboard.html' || pathname.startsWith('/admin.dashboard') || pathname === '/' || projects.length === 0) ? (
+              <div className="p-2.5 border-b border-[#2C3848]">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg px-3 py-2 flex items-center justify-center gap-2 font-bold text-xs shadow-xs transition-colors cursor-pointer uppercase tracking-wider"
+                  className="w-full bg-white hover:bg-gray-50 text-[#0062FF] rounded-lg px-3 py-2 flex items-center justify-center gap-2 font-bold text-xs shadow-xs transition-colors cursor-pointer uppercase tracking-wider border border-transparent"
                 >
-                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <Plus className="w-3.5 h-3.5 stroke-[3] text-[#0062FF]" />
                   <span>CREATE PROJECT</span>
                 </button>
               </div>
             ) : (
-            <div ref={projectDropdownRef} className="p-2.5 relative border-b border-[#261C42] overflow-visible z-40">
+            <div ref={projectDropdownRef} className="p-2.5 relative border-b border-[#2C3848] overflow-visible z-40">
               <div
                 onClick={() => {
                   const nextState = !isProjectDropdownOpen;
@@ -1695,161 +1705,31 @@ function SecondarySidebarInner() {
                 </div>
               </div>
             ) : effectiveSection === 'backlinks' ? (
-              /* Backlinks Mode Menu - Complete SE Ranking Backlinks Suite */
-              <div className="space-y-0.5">
-                {/* 1. Backlink Checker (Collapsible) */}
-                <div>
-                  <div
-                    onClick={(e) => toggleSection('backlink_checker', e)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
-                      pathname === '/backlinks' || pathname.startsWith('/admin.backlink_checker')
-                        ? 'bg-[#394757] text-white font-semibold shadow-xs'
-                        : 'text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]'
-                    }`}
-                  >
-                    <Link
-                      href="/backlinks"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-2.5 flex-1 min-w-0"
-                    >
-                      <BacklinkCheckerIcon className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors shrink-0" />
-                      <span className="truncate">Backlink Checker</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => toggleSection('backlink_checker', e)}
-                      className="p-1 rounded hover:bg-white/10 text-[#8C98A9] group-hover:text-white transition-all cursor-pointer shrink-0 ml-1"
-                    >
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                          expandedSections.backlink_checker !== false ? 'rotate-180' : 'rotate-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  {expandedSections.backlink_checker !== false && (
-                    <div className="space-y-0.5 mt-0.5 py-0.5 text-[13px] animate-in fade-in duration-150">
-                      <SubItem
-                        href="/backlinks?tab=overview"
-                        label="Overview"
-                        isActive={currentTab === 'overview' || (!currentTab && pathname === '/backlinks')}
-                      />
-                      <SubItem
-                        href="/backlinks?tab=referring-domains"
-                        label="Referring Domains"
-                        isActive={currentTab === 'referring-domains'}
-                      />
-                      <SubItem
-                        href="/backlinks?tab=backlinks"
-                        label="Backlinks"
-                        isActive={currentTab === 'backlinks'}
-                      />
-                      <SubItem
-                        href="/backlinks?tab=anchors"
-                        label="Anchor Texts"
-                        isActive={currentTab === 'anchors'}
-                      />
-                      <SubItem
-                        href="/backlinks?tab=pages"
-                        label="Pages"
-                        isActive={currentTab === 'pages'}
-                      />
-                      <SubItem
-                        href="/backlinks?tab=ips"
-                        label="IPs / Subnets"
-                        isActive={currentTab === 'ips'}
-                      />
-                    </div>
-                  )}
-                </div>
+              /* Backlinks Mode Menu - Exactly matching User Screenshot */
+              <div className="space-y-1 py-1">
+                <Link
+                  href="/backlinks"
+                  className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
+                    pathname === '/backlinks' || pathname.startsWith('/admin.backlink_checker')
+                      ? 'bg-[#394757] text-white font-semibold shadow-xs'
+                      : 'text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]'
+                  }`}
+                >
+                  <Link2 className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors shrink-0" />
+                  <span className="truncate">Backlink Checker</span>
+                </Link>
 
-                {/* 2. Backlink Gap Analyzer (Collapsible) */}
-                <div>
-                  <div
-                    onClick={(e) => toggleSection('backlink_gap', e)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
-                      pathname.startsWith('/admin.backlinks') || pathname.startsWith('/backlinks/gap-analyzer')
-                        ? 'bg-[#394757] text-white font-semibold shadow-xs'
-                        : 'text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]'
-                    }`}
-                  >
-                    <Link
-                      href="/admin.backlinks.builder.html#/"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-2.5 flex-1 min-w-0"
-                    >
-                      <BacklinkGapAnalyzerIcon className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors shrink-0" />
-                      <span className="truncate">Backlink Gap Analyzer</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => toggleSection('backlink_gap', e)}
-                      className="p-1 rounded hover:bg-white/10 text-[#8C98A9] group-hover:text-white transition-all cursor-pointer shrink-0 ml-1"
-                    >
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                          expandedSections.backlink_gap !== false ? 'rotate-180' : 'rotate-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  {expandedSections.backlink_gap !== false && (
-                    <div className="space-y-0.5 mt-0.5 py-0.5 text-[13px] animate-in fade-in duration-150">
-                      <SubItem
-                        href="/admin.backlinks.builder.html#/matrix"
-                        label="Comparison Matrix"
-                      />
-                      <SubItem
-                        href="/admin.backlinks.builder.html#/opportunities"
-                        label="Unused Opportunities"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Backlink Monitor (Collapsible) */}
-                <div>
-                  <div
-                    onClick={(e) => toggleSection('backlink_monitor', e)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
-                      pathname.startsWith('/backlinks-monitor')
-                        ? 'bg-[#394757] text-white font-semibold shadow-xs'
-                        : 'text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]'
-                    }`}
-                  >
-                    <Link
-                      href="/backlinks-monitor"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-2.5 flex-1 min-w-0"
-                    >
-                      <ChainLink className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors shrink-0" />
-                      <span className="truncate">Backlink Monitor</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={(e) => toggleSection('backlink_monitor', e)}
-                      className="p-1 rounded hover:bg-white/10 text-[#8C98A9] group-hover:text-white transition-all cursor-pointer shrink-0 ml-1"
-                    >
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                          expandedSections.backlink_monitor ? 'rotate-180' : 'rotate-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  {expandedSections.backlink_monitor && (
-                    <div className="space-y-0.5 mt-0.5 py-0.5 text-[13px] animate-in fade-in duration-150">
-                      <SubItem
-                        href="/backlinks-monitor?tab=backlinks"
-                        label="Monitored Backlinks"
-                      />
-                      <SubItem
-                        href="/backlinks-monitor?tab=disavow"
-                        label="Disavow File Tool"
-                      />
-                    </div>
-                  )}
-                </div>
+                <Link
+                  href="/admin.backlinks.builder.html#/"
+                  className={`group flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
+                    pathname.startsWith('/admin.backlinks') || pathname.startsWith('/backlinks/gap-analyzer')
+                      ? 'bg-[#394757] text-white font-semibold shadow-xs'
+                      : 'text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]'
+                  }`}
+                >
+                  <BacklinkGapAnalyzerIcon className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors shrink-0" />
+                  <span className="truncate">Backlink Gap Analyzer</span>
+                </Link>
               </div>
             ) : effectiveSection === 'api' ? (
               /* API Mode Menu matching SE Ranking Developer Suite */
@@ -2392,26 +2272,26 @@ function SecondarySidebarInner() {
                   href="/projects"
                   className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
                     isAllProjectsActive
-                      ? 'bg-[#2B2150] text-white font-bold shadow-xs border-l-2 border-[#8B5CF6]'
-                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#2B2150]'
+                      ? 'bg-[#283547] text-white font-bold shadow-xs border-l-2 border-[#0062FF]'
+                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
                   }`}
                 >
-                  <Home className={`w-4 h-4 shrink-0 transition-colors ${isAllProjectsActive ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'}`} />
+                  <Home className={`w-4 h-4 shrink-0 transition-colors ${isAllProjectsActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
                   <span className="truncate">All Projects</span>
                 </Link>
 
-                {/* Other project tools - dimmed when on admin dashboard */}
-                <div className={pathname === '/admin.dashboard.html' || pathname.startsWith('/admin.dashboard') ? 'opacity-40 pointer-events-none select-none space-y-0.5' : 'space-y-0.5'}>
+                {/* Other project tools - all real and working */}
+                <div className="space-y-0.5">
                 {/* 2. Project Overview */}
                 <Link
                   href="/project-overview"
                   className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
                     isProjectOverviewActive
-                      ? 'bg-[#2B2150] text-white font-bold shadow-xs border-l-2 border-[#8B5CF6]'
-                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#2B2150]'
+                      ? 'bg-[#283547] text-white font-bold shadow-xs border-l-2 border-[#0062FF]'
+                      : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
                   }`}
                 >
-                  <LayoutGrid className={`w-4 h-4 shrink-0 transition-colors ${isProjectOverviewActive ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'}`} />
+                  <LayoutGrid className={`w-4 h-4 shrink-0 transition-colors ${isProjectOverviewActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
                   <span className="truncate">Project Overview</span>
                 </Link>
 
@@ -2421,8 +2301,8 @@ function SecondarySidebarInner() {
                     onClick={(e) => toggleSection('rankings', e)}
                     className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
                       isRankingsPath
-                        ? 'bg-[#2B2150] text-white font-bold shadow-xs'
-                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#2B2150]'
+                        ? 'bg-[#283547] text-white font-bold shadow-xs'
+                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
                     }`}
                   >
                     <Link
@@ -2433,14 +2313,14 @@ function SecondarySidebarInner() {
                       }}
                       className="flex items-center gap-2.5 flex-1 min-w-0"
                     >
-                      <BarChart2 className={`w-4 h-4 shrink-0 transition-colors ${isRankingsPath ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'}`} />
+                      <BarChart2 className={`w-4 h-4 shrink-0 transition-colors ${isRankingsPath ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
                       <span className="truncate font-semibold">Rankings</span>
                     </Link>
                     <button
                       type="button"
                       onClick={(e) => toggleSection('rankings', e)}
                       className={`p-1 rounded hover:bg-white/10 transition-all cursor-pointer shrink-0 ml-1 ${
-                        isRankingsPath ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'
+                        isRankingsPath ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'
                       }`}
                       title="Toggle Rankings menu"
                     >
@@ -2481,8 +2361,8 @@ function SecondarySidebarInner() {
                     onClick={(e) => toggleSection('analytics', e)}
                     className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
                       isAnalyticsPath
-                        ? 'bg-[#2B2150] text-white font-bold shadow-xs'
-                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#2B2150]'
+                        ? 'bg-[#283547] text-white font-bold shadow-xs'
+                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
                     }`}
                   >
                     <Link
@@ -2493,14 +2373,14 @@ function SecondarySidebarInner() {
                       }}
                       className="flex items-center gap-2.5 flex-1 min-w-0"
                     >
-                      <Activity className={`w-4 h-4 shrink-0 transition-colors ${isAnalyticsPath ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'}`} />
+                      <Activity className={`w-4 h-4 shrink-0 transition-colors ${isAnalyticsPath ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
                       <span className="truncate font-semibold">Analytics &amp; Traffic</span>
                     </Link>
                     <button
                       type="button"
                       onClick={(e) => toggleSection('analytics', e)}
                       className={`p-1 rounded hover:bg-white/10 transition-all cursor-pointer shrink-0 ml-1 ${
-                        isAnalyticsPath ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'
+                        isAnalyticsPath ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'
                       }`}
                       title="Toggle Analytics & Traffic menu"
                     >
@@ -2553,8 +2433,8 @@ function SecondarySidebarInner() {
                     onClick={(e) => toggleSection('competitors', e)}
                     className={`group flex items-center justify-between px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer select-none ${
                       isCompetitorsPath
-                        ? 'bg-[#2B2150] text-white font-bold shadow-xs'
-                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#2B2150]'
+                        ? 'bg-[#283547] text-white font-bold shadow-xs'
+                        : 'text-[#E2E8F0] hover:text-white hover:bg-[#283547]'
                     }`}
                   >
                     <Link
@@ -2565,7 +2445,7 @@ function SecondarySidebarInner() {
                       }}
                       className="flex items-center gap-2.5 flex-1 min-w-0"
                     >
-                      <Users className={`w-4 h-4 shrink-0 transition-colors ${isCompetitorsPath ? 'text-white' : 'text-[#A78BFA] group-hover:text-white'}`} />
+                      <Users className={`w-4 h-4 shrink-0 transition-colors ${isCompetitorsPath ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
                       <span className="truncate font-semibold">My Competitors</span>
                     </Link>
                     <button
@@ -2686,18 +2566,6 @@ function SecondarySidebarInner() {
                   <span className="truncate">Insights</span>
                 </Link>
 
-                {/* 8. Backlink Checker */}
-                <Link
-                  href="/backlinks"
-                  className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
-                    isBacklinkCheckerActive
-                      ? 'bg-[#283547] text-white font-semibold shadow-xs'
-                      : 'text-[#C4C9D3] hover:text-white hover:bg-[#253040]'
-                  }`}
-                >
-                  <Link2 className={`w-4 h-4 shrink-0 transition-colors ${isBacklinkCheckerActive ? 'text-white' : 'text-[#8C98A9] group-hover:text-white'}`} />
-                  <span className="truncate">Backlink Checker</span>
-                </Link>
 
                 {/* 9. Marketing Plan */}
                 <Link

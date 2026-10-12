@@ -9,4 +9,5 @@ export { GscTrendChart } from "./GscTrendChart";
 export { GscQueryTable } from "./GscQueryTable";
 export { GscQueryDetailDrawer } from "./GscQueryDetailDrawer";
 export { GscPerformanceWorkspace } from "./GscPerformanceWorkspace";
+export { SearchPerformanceChart } from "./SearchPerformanceChart";
 export { AnalyticsWorkspace as default } from "./AnalyticsWorkspace";

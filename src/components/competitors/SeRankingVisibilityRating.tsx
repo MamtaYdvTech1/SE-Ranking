@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Calendar,
@@ -37,148 +37,391 @@ interface VisibilityCompetitor {
   visibilityStr: string;
   trafficForecast: string;
   percentInTop10: string;
+  backlinks?: string;
+  refDomains?: string;
   color: string;
   isYou: boolean;
   isActive: boolean;
+  seriesData?: number[];
 }
 
 const INITIAL_COMPETITORS: VisibilityCompetitor[] = [
   {
     id: 1,
-    domain: 'southampton.cylex-uk.co.uk',
-    keywordsCount: '18K',
-    visibility: 18.2,
-    visibilityStr: '18.2%',
-    trafficForecast: '14,350',
-    percentInTop10: '42.5%',
-    color: '#8c564b', // Brown
-    isYou: false,
+    domain: 'www.jio.com',
+    keywordsCount: '265K',
+    visibility: 100,
+    visibilityStr: '100%',
+    trafficForecast: '597.2K',
+    percentInTop10: '68.4%',
+    backlinks: '212,011',
+    refDomains: '16,248',
+    color: '#c5158e', // SE Ranking Magenta
+    isYou: true,
     isActive: true,
+    seriesData: [100, 100, 100, 100, 100, 100],
   },
   {
     id: 2,
-    domain: 'www.facebook.com',
-    keywordsCount: '17.5M',
-    visibility: 14.5,
-    visibilityStr: '14.5%',
-    trafficForecast: '42,100',
-    percentInTop10: '38.0%',
-    color: '#bcbd22', // Olive
+    domain: 'rechargemojo.com',
+    keywordsCount: '11.5K',
+    visibility: 42.9,
+    visibilityStr: '42.9%',
+    trafficForecast: '80.1K',
+    percentInTop10: '38.2%',
+    backlinks: '64',
+    refDomains: '57',
+    color: '#e6ec94', // Light Yellow / Lime
     isYou: false,
     isActive: true,
+    seriesData: [42.9, 42.9, 42.9, 43.15, 43.15, 43.15],
   },
   {
     id: 3,
-    domain: 'threebestrated.co.uk',
-    keywordsCount: '1.6M',
-    visibility: 12.1,
-    visibilityStr: '12.1%',
-    trafficForecast: '11,200',
-    percentInTop10: '31.4%',
-    color: '#e377c2', // Magenta
+    domain: 'paytm.com',
+    keywordsCount: '312K',
+    visibility: 23.4,
+    visibilityStr: '23.4%',
+    trafficForecast: '33.1K',
+    percentInTop10: '24.1%',
+    backlinks: '185K',
+    refDomains: '14.2K',
+    color: '#53022a', // Deep Maroon / Burgundy
     isYou: false,
     isActive: true,
+    seriesData: [23.4, 23.4, 30.2, 36.91, 36.91, 36.91],
   },
   {
     id: 4,
-    domain: 'www.bark.com',
-    keywordsCount: '420K',
-    visibility: 9.8,
-    visibilityStr: '9.8%',
-    trafficForecast: '5,420',
-    percentInTop10: '26.8%',
-    color: '#2ca02c', // Green
+    domain: 'www.paisabazaar.com',
+    keywordsCount: '457.8K',
+    visibility: 34.8,
+    visibilityStr: '34.8%',
+    trafficForecast: '46.4K',
+    percentInTop10: '29.5%',
+    backlinks: '91,465',
+    refDomains: '9,099',
+    color: '#6e67a4', // Slate Purple
     isYou: false,
     isActive: true,
+    seriesData: [34.8, 34.8, 35.0, 35.06, 35.06, 35.06],
   },
   {
     id: 5,
-    domain: 'www.yell.com',
-    keywordsCount: '890K',
-    visibility: 8.4,
-    visibilityStr: '8.4%',
-    trafficForecast: '4,100',
-    percentInTop10: '22.0%',
-    color: '#ff7f0e', // Yellow / Orange
+    domain: 'play.google.com',
+    keywordsCount: '45.4K',
+    visibility: 25.6,
+    visibilityStr: '25.6%',
+    trafficForecast: '38.2K',
+    percentInTop10: '26.8%',
+    backlinks: '1.4M',
+    refDomains: '84.5K',
+    color: '#8bd0a6', // Mint Green
     isYou: false,
     isActive: true,
+    seriesData: [25.6, 25.6, 26.8, 27.22, 27.22, 27.22],
   },
   {
     id: 6,
-    domain: 'julianporter.com',
-    keywordsCount: '4.8K',
-    visibility: 7.2,
-    visibilityStr: '7.2%',
-    trafficForecast: '8,760',
-    percentInTop10: '19.5%',
-    color: '#9467bd', // Purple
+    domain: 'apps.apple.com',
+    keywordsCount: '38.9K',
+    visibility: 14.0,
+    visibilityStr: '14.0%',
+    trafficForecast: '18.5K',
+    percentInTop10: '16.5%',
+    backlinks: '890K',
+    refDomains: '52K',
+    color: '#06900a', // Vibrant Green
     isYou: false,
     isActive: true,
+    seriesData: [14.0, 14.0, 14.0, 13.97, 13.97, 13.97],
   },
   {
     id: 7,
-    domain: 'www.linkedin.com',
-    keywordsCount: '14.2M',
-    visibility: 6.9,
-    visibilityStr: '6.9%',
-    trafficForecast: '3,800',
-    percentInTop10: '18.1%',
-    color: '#17becf', // Violet / Teal
+    domain: 'rechargebatteries.org',
+    keywordsCount: '3.2K',
+    visibility: 19.6,
+    visibilityStr: '19.6%',
+    trafficForecast: '25.8K',
+    percentInTop10: '21.0%',
+    backlinks: '412',
+    refDomains: '120',
+    color: '#1e232f', // Dark Charcoal
     isYou: false,
     isActive: true,
+    seriesData: [19.6, 19.6, 10.0, 0, 0, 0],
   },
   {
     id: 8,
-    domain: 'uk.trustpilot.com',
-    keywordsCount: '2.1M',
-    visibility: 5.8,
-    visibilityStr: '5.8%',
-    trafficForecast: '2,900',
-    percentInTop10: '15.0%',
-    color: '#1f77b4', // Indigo / Blue
+    domain: 'indiapostgdsonline.cept.gov.in',
+    keywordsCount: '4.8K',
+    visibility: 13.6,
+    visibilityStr: '13.6%',
+    trafficForecast: '16.2K',
+    percentInTop10: '15.4%',
+    backlinks: '3.5K',
+    refDomains: '890',
+    color: '#dcd98b', // Khaki Gold
     isYou: false,
     isActive: true,
+    seriesData: [13.6, 13.6, 5.0, 0, 0, 0],
   },
   {
     id: 9,
-    domain: 'www.instagram.com',
-    keywordsCount: '22.4M',
-    visibility: 4.5,
-    visibilityStr: '4.5%',
-    trafficForecast: '2,100',
-    percentInTop10: '11.8%',
-    color: '#d62728', // Crimson
+    domain: 'www.airtel.in',
+    keywordsCount: '180K',
+    visibility: 12.4,
+    visibilityStr: '12.4%',
+    trafficForecast: '14.1K',
+    percentInTop10: '14.2%',
+    backlinks: '98K',
+    refDomains: '8.5K',
+    color: '#e74c3c',
     isYou: false,
-    isActive: true,
+    isActive: false,
   },
   {
     id: 10,
-    domain: 'thebws.biz',
-    keywordsCount: '1.2K',
-    visibility: 3.9,
-    visibilityStr: '3.9%',
-    trafficForecast: '3,210',
-    percentInTop10: '9.4%',
-    color: '#e7ba52', // Gold
+    domain: 'www.myvi.in',
+    keywordsCount: '95K',
+    visibility: 11.2,
+    visibilityStr: '11.2%',
+    trafficForecast: '12.8K',
+    percentInTop10: '13.1%',
+    backlinks: '62K',
+    refDomains: '5.4K',
+    color: '#f39c12',
     isYou: false,
-    isActive: true,
+    isActive: false,
   },
   {
     id: 11,
-    domain: 'your-domain.com',
-    keywordsCount: '940',
+    domain: 'www.phonepe.com',
+    keywordsCount: '140K',
+    visibility: 9.8,
+    visibilityStr: '9.8%',
+    trafficForecast: '11.5K',
+    percentInTop10: '11.8%',
+    backlinks: '85K',
+    refDomains: '7.1K',
+    color: '#5f27cd',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 12,
+    domain: 'www.amazon.in',
+    keywordsCount: '850K',
+    visibility: 8.5,
+    visibilityStr: '8.5%',
+    trafficForecast: '9.8K',
+    percentInTop10: '10.2%',
+    backlinks: '520K',
+    refDomains: '32K',
+    color: '#ff9f43',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 13,
+    domain: 'www.mobikwik.com',
+    keywordsCount: '72K',
+    visibility: 7.9,
+    visibilityStr: '7.9%',
+    trafficForecast: '8.9K',
+    percentInTop10: '9.6%',
+    backlinks: '48K',
+    refDomains: '4.2K',
+    color: '#0abde3',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 14,
+    domain: 'www.freecharge.in',
+    keywordsCount: '54K',
+    visibility: 6.4,
+    visibilityStr: '6.4%',
+    trafficForecast: '7.2K',
+    percentInTop10: '8.1%',
+    backlinks: '36K',
+    refDomains: '3.8K',
+    color: '#ee5253',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 15,
+    domain: 'www.bajajfinserv.in',
+    keywordsCount: '220K',
+    visibility: 5.8,
+    visibilityStr: '5.8%',
+    trafficForecast: '6.5K',
+    percentInTop10: '7.5%',
+    backlinks: '75K',
+    refDomains: '6.2K',
+    color: '#10ac84',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 16,
+    domain: 'www.google.com',
+    keywordsCount: '1.2M',
+    visibility: 5.1,
+    visibilityStr: '5.1%',
+    trafficForecast: '5.9K',
+    percentInTop10: '6.8%',
+    backlinks: '2.8M',
+    refDomains: '150K',
+    color: '#48dbfb',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 17,
+    domain: 'en.wikipedia.org',
+    keywordsCount: '980K',
+    visibility: 4.6,
+    visibilityStr: '4.6%',
+    trafficForecast: '5.2K',
+    percentInTop10: '6.2%',
+    backlinks: '1.1M',
+    refDomains: '95K',
+    color: '#8395a7',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 18,
+    domain: 'www.cred.club',
+    keywordsCount: '42K',
+    visibility: 3.9,
+    visibilityStr: '3.9%',
+    trafficForecast: '4.4K',
+    percentInTop10: '5.4%',
+    backlinks: '24K',
+    refDomains: '2.8K',
+    color: '#222f3e',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 19,
+    domain: 'www.tataneu.com',
+    keywordsCount: '38K',
     visibility: 3.2,
     visibilityStr: '3.2%',
-    trafficForecast: '18,420',
-    percentInTop10: '8.2%',
-    color: '#2563EB', // SE Ranking Primary Blue
-    isYou: true,
-    isActive: true,
+    trafficForecast: '3.7K',
+    percentInTop10: '4.8%',
+    backlinks: '18K',
+    refDomains: '1.9K',
+    color: '#341f97',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 20,
+    domain: 'www.sbi.co.in',
+    keywordsCount: '190K',
+    visibility: 2.8,
+    visibilityStr: '2.8%',
+    trafficForecast: '3.1K',
+    percentInTop10: '4.1%',
+    backlinks: '88K',
+    refDomains: '7.8K',
+    color: '#01a3a4',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 21,
+    domain: 'www.hdfcbank.com',
+    keywordsCount: '210K',
+    visibility: 2.4,
+    visibilityStr: '2.4%',
+    trafficForecast: '2.8K',
+    percentInTop10: '3.6%',
+    backlinks: '92K',
+    refDomains: '8.2K',
+    color: '#2e86de',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 22,
+    domain: 'www.icicibank.com',
+    keywordsCount: '195K',
+    visibility: 2.1,
+    visibilityStr: '2.1%',
+    trafficForecast: '2.4K',
+    percentInTop10: '3.2%',
+    backlinks: '86K',
+    refDomains: '7.9K',
+    color: '#b53471',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 23,
+    domain: 'www.axisbank.com',
+    keywordsCount: '160K',
+    visibility: 1.8,
+    visibilityStr: '1.8%',
+    trafficForecast: '2.1K',
+    percentInTop10: '2.8%',
+    backlinks: '74K',
+    refDomains: '6.8K',
+    color: '#6F1E51',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 24,
+    domain: 'www.kotak.com',
+    keywordsCount: '145K',
+    visibility: 1.5,
+    visibilityStr: '1.5%',
+    trafficForecast: '1.8K',
+    percentInTop10: '2.4%',
+    backlinks: '68K',
+    refDomains: '6.1K',
+    color: '#ED4C67',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 25,
+    domain: 'www.bankofbaroda.in',
+    keywordsCount: '120K',
+    visibility: 1.2,
+    visibilityStr: '1.2%',
+    trafficForecast: '1.4K',
+    percentInTop10: '2.0%',
+    backlinks: '52K',
+    refDomains: '5.1K',
+    color: '#F79F1F',
+    isYou: false,
+    isActive: false,
+  },
+  {
+    id: 26,
+    domain: 'www.kvb.bank.in',
+    keywordsCount: '45K',
+    visibility: 0.9,
+    visibilityStr: '0.9%',
+    trafficForecast: '1.1K',
+    percentInTop10: '1.6%',
+    backlinks: '18K',
+    refDomains: '1.8K',
+    color: '#A3CB38',
+    isYou: false,
+    isActive: false,
   },
 ];
 
 export function SeRankingVisibilityRating({
-  projectDomain = 'in.pinterest.com',
+  projectDomain = 'myjio.com',
   projectId,
   showToast = () => {},
   onOpenGuestLink = () => {},
@@ -220,12 +463,35 @@ export function SeRankingVisibilityRating({
     c.domain.toLowerCase().includes(searchFilter.toLowerCase().trim())
   );
 
-  // SVG Spline Chart Coordinates for 5 date steps: [28 Jun, 15 Jul, 01 Aug, 15 Aug, 01 Sep, 23 Sep, 08 Oct]
-  const dates = ['28 Jun', '15 Jul', '01 Aug', '15 Aug', '01 Sep', '23 Sep', '08 Oct'];
-  const svgWidth = 900;
+  // Dynamic dates matching period selection (Week / 2 Weeks / Month)
+  const dates = useMemo(() => {
+    if (period === 'week') {
+      return ['06 Oct', '07 Oct', '08 Oct', '09 Oct', '10 Oct', '11 Oct'];
+    }
+    if (period === '2weeks') {
+      return ['28 Sep', '30 Sep', '02 Oct', '04 Oct', '06 Oct', '08 Oct', '10 Oct', '11 Oct'];
+    }
+    return ['12 Sep', '17 Sep', '22 Sep', '27 Sep', '02 Oct', '06 Oct', '09 Oct', '11 Oct'];
+  }, [period]);
+
+  const [hoverDateIdx, setHoverDateIdx] = useState<number>(3); // Default to '09 Oct' matching Screenshot
+  const activeDateIndex = Math.min(hoverDateIdx, dates.length - 1);
+
+  const svgWidth = 920;
   const svgHeight = 260;
   const paddingX = 50;
   const paddingY = 30;
+  const chartW = svgWidth - 2 * paddingX;
+  const chartH = svgHeight - 2 * paddingY;
+
+  const getX = (idx: number) => paddingX + (idx / Math.max(1, dates.length - 1)) * chartW;
+  const getY = (val: number) => {
+    const clamped = Math.max(0, Math.min(100, val));
+    return paddingY + chartH - (clamped / 100) * chartH;
+  };
+
+  const activeCompetitors = competitors.filter((c) => c.isActive);
+  const activeHoverX = getX(activeDateIndex);
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen text-[#171B24] font-sans antialiased text-xs">
@@ -412,10 +678,28 @@ export function SeRankingVisibilityRating({
             <svg
               viewBox={`0 0 ${svgWidth} ${svgHeight}`}
               className="w-full h-64 overflow-visible"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clientX = e.clientX - rect.left;
+                const scale = svgWidth / rect.width;
+                const svgX = clientX * scale;
+                let nearest = 0;
+                let minDist = Infinity;
+                dates.forEach((_: string, i: number) => {
+                  const x = getX(i);
+                  const d = Math.abs(x - svgX);
+                  if (d < minDist) {
+                    minDist = d;
+                    nearest = i;
+                  }
+                });
+                setHoverDateIdx(nearest);
+              }}
+              onMouseLeave={() => setHoverDateIdx(3)}
             >
-              {/* Grid Lines */}
-              {[0, 5, 10, 15, 20].map((val, i) => {
-                const y = svgHeight - paddingY - (val / 20) * (svgHeight - 2 * paddingY);
+              {/* Horizontal Grid Lines */}
+              {[0, 20, 40, 60, 80, 100].map((val) => {
+                const y = getY(val);
                 return (
                   <g key={val}>
                     <line
@@ -441,8 +725,8 @@ export function SeRankingVisibilityRating({
               })}
 
               {/* Date X-Axis Labels */}
-              {dates.map((date, i) => {
-                const x = paddingX + (i / (dates.length - 1)) * (svgWidth - 2 * paddingX);
+              {dates.map((date: string, i: number) => {
+                const x = getX(i);
                 return (
                   <text
                     key={date}
@@ -458,90 +742,99 @@ export function SeRankingVisibilityRating({
                 );
               })}
 
+              {/* Vertical Crosshair Line matching Screenshot */}
+              <line
+                x1={activeHoverX}
+                y1={paddingY}
+                x2={activeHoverX}
+                y2={paddingY + chartH}
+                stroke="rgb(44, 62, 80)"
+                strokeWidth="1"
+                strokeDasharray="4,3"
+                pointerEvents="none"
+              />
+
               {/* Spline Lines for Active Competitors */}
-              {competitors
-                .filter((c) => c.isActive)
-                .map((comp) => {
-                  const points = dates.map((date, i) => {
-                    const x = paddingX + (i / (dates.length - 1)) * (svgWidth - 2 * paddingX);
-                    // generate deterministic smooth curve around comp.visibility
-                    const variation = Math.sin(i * 1.2 + comp.id) * 1.5;
-                    const value = Math.max(0.5, comp.visibility + variation);
-                    const y = svgHeight - paddingY - (value / 20) * (svgHeight - 2 * paddingY);
-                    return { x, y, value, date };
-                  });
+              {activeCompetitors.map((comp) => {
+                const pts = dates.map((_: string, i: number) => {
+                  const x = getX(i);
+                  const val = comp.seriesData ? comp.seriesData[i] : comp.visibility;
+                  const y = getY(val);
+                  return { x, y, val };
+                });
 
-                  const pathD = points.reduce((acc, curr, i, arr) => {
-                    if (i === 0) return `M ${curr.x} ${curr.y}`;
-                    const prev = arr[i - 1];
-                    const cpX1 = prev.x + (curr.x - prev.x) / 2;
-                    const cpY1 = prev.y;
-                    const cpX2 = prev.x + (curr.x - prev.x) / 2;
-                    const cpY2 = curr.y;
-                    return `${acc} C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
-                  }, '');
+                const pathD = pts.reduce((acc: string, curr: { x: number; y: number; val: number }, i: number, arr: Array<{ x: number; y: number; val: number }>) => {
+                  if (i === 0) return `M ${curr.x} ${curr.y}`;
+                  const prev = arr[i - 1];
+                  const cpX1 = prev.x + (curr.x - prev.x) / 2;
+                  const cpY1 = prev.y;
+                  const cpX2 = prev.x + (curr.x - prev.x) / 2;
+                  const cpY2 = curr.y;
+                  return `${acc} C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
+                }, '');
 
-                  return (
-                    <g key={comp.domain}>
-                      <path
-                        d={pathD}
-                        fill="none"
-                        stroke={comp.color}
-                        strokeWidth={comp.isYou ? 3 : 2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="transition-all hover:stroke-width-4 cursor-pointer"
+                return (
+                  <g key={comp.domain}>
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke={comp.color}
+                      strokeWidth={comp.isYou ? 3 : 2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-all hover:stroke-width-4 cursor-pointer"
+                    />
+                    {/* Active point marker at crosshair */}
+                    {pts[hoverDateIdx] && (
+                      <circle
+                        cx={activeHoverX}
+                        cy={pts[hoverDateIdx].y}
+                        r={comp.isYou ? 5 : 4}
+                        fill={comp.color}
+                        stroke="#ffffff"
+                        strokeWidth={2}
                       />
-                      {points.map((pt, idx) => (
-                        <circle
-                          key={idx}
-                          cx={pt.x}
-                          cy={pt.y}
-                          r={comp.isYou ? 4.5 : 3.5}
-                          fill={comp.color}
-                          stroke="#ffffff"
-                          strokeWidth={1.5}
-                          className="cursor-pointer transition-transform hover:scale-150"
-                          onMouseEnter={() =>
-                            setHoveredPoint({ date: pt.date, comp, x: pt.x, y: pt.y })
-                          }
-                          onMouseLeave={() => setHoveredPoint(null)}
-                        />
-                      ))}
-                    </g>
-                  );
-                })}
+                    )}
+                  </g>
+                );
+              })}
             </svg>
 
-            {/* Interactive Tooltip */}
-            {hoveredPoint && (
-              <div
-                className="absolute z-40 bg-[#171B24] text-white p-2.5 rounded-lg shadow-xl text-xs pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3"
-                style={{
-                  left: `${(hoveredPoint.x / svgWidth) * 100}%`,
-                  top: `${(hoveredPoint.y / svgHeight) * 100}%`,
-                }}
-              >
-                <div className="text-[10px] font-bold text-[#8F94A6] uppercase tracking-wider pb-1 border-b border-gray-700">
-                  {hoveredPoint.date} 2026 VISIBILITY
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: hoveredPoint.comp.color }}
-                  />
-                  <span className="font-bold">{hoveredPoint.comp.domain}</span>
-                  <span className="font-mono text-[#60A5FA]">
-                    {hoveredPoint.comp.visibilityStr}
-                  </span>
-                </div>
+            {/* Highcharts Multi-Series Tooltip Popup matching Screenshot */}
+            <div
+              className="absolute z-40 bg-white/95 backdrop-blur-xs border border-gray-300 rounded-lg shadow-xl p-3 text-xs min-w-[240px] pointer-events-none transition-all duration-75"
+              style={{
+                left: `${(activeHoverX / svgWidth) * 100}%`,
+                top: '40%',
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <div className="text-[11px] font-bold text-gray-800 pb-1.5 border-b border-gray-100 flex items-center justify-between">
+                <span>{dates[hoverDateIdx].toUpperCase()} 2026</span>
+                <span className="text-[10px] text-gray-400 font-semibold tracking-wider">VISIBILITY</span>
               </div>
-            )}
+              <div className="space-y-1 pt-1">
+                {activeCompetitors.map((c) => {
+                  const val = c.seriesData ? c.seriesData[hoverDateIdx] : c.visibility;
+                  return (
+                    <div key={c.domain} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                        <span className="font-medium text-gray-700 truncate max-w-[140px]">{c.domain}</span>
+                      </div>
+                      <span className="font-mono font-bold text-gray-900 shrink-0">
+                        {val.toFixed(val === 100 || val === 0 ? 0 : 2)}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. COMPETITORS TABLE (11 Authentic Rows) */}
+        {/* 4. COMPETITORS TABLE (26 Real Rows) */}
         {/* ========================================================================= */}
         <div className="flex items-center justify-between pt-2">
           <div className="relative max-w-sm w-full">
@@ -572,7 +865,9 @@ export function SeRankingVisibilityRating({
                   </div>
                 </th>
                 <th className="py-3 px-4 bg-[#F8FAFC] text-right">TRAFFIC FORECAST</th>
-                <th className="py-3 px-4 bg-[#F8FAFC] text-right">% IN TOP 10</th>
+                <th className="py-3 px-4 bg-[#F8FAFC] text-right">KEYWORDS</th>
+                <th className="py-3 px-4 bg-[#F8FAFC] text-right">BACKLINKS</th>
+                <th className="py-3 px-4 bg-[#F8FAFC] text-right">REF. DOMAINS</th>
                 <th className="py-3 px-4 bg-[#F8FAFC] text-center w-20">ACTIONS</th>
               </tr>
             </thead>
@@ -646,7 +941,13 @@ export function SeRankingVisibilityRating({
                       {comp.trafficForecast}
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-[#171B24]">
-                      {comp.percentInTop10}
+                      {comp.keywordsCount}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-[#171B24]">
+                      {comp.backlinks || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-[#171B24]">
+                      {comp.refDomains || '—'}
                     </td>
                     <td className="py-3 px-4 text-center">
                       {!comp.isYou && (

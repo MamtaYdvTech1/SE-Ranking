@@ -18,10 +18,10 @@ export default function BillingPage() {
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            14-Day Free Trial Active
+            PRO Plan Active
           </span>
           <button className="px-4 py-2 bg-[#1B66FF] hover:bg-[#0B59EE] text-white font-medium text-sm rounded-lg shadow-sm transition-colors cursor-pointer">
-            Upgrade Plan
+            Manage Subscription
           </button>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function BillingPage() {
           <div className="text-xs uppercase font-bold text-gray-400 tracking-wider">Current Plan</div>
           <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <span>SE Ranking PRO</span>
-            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">Trial</span>
+            <span className="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">Active</span>
           </div>
           <p className="text-xs text-gray-500">
             Access to AI Search Tracker, Rank Tracking, Competitive Research, and Website Audits.
@@ -43,10 +43,10 @@ export default function BillingPage() {
           <div className="text-xs uppercase font-bold text-gray-400 tracking-wider">Renewal / Expiry</div>
           <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-gray-400" />
-            <span>October 11, 2026</span>
+            <span>October 11, 2027</span>
           </div>
           <p className="text-xs text-emerald-600 font-medium">
-            14 days remaining in free trial. No card charged yet.
+            Annual subscription active with unlimited features.
           </p>
         </div>
 

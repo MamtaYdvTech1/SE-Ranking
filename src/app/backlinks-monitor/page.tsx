@@ -51,7 +51,7 @@ function BacklinkMonitorInner() {
   const currentTab = searchParams?.get('tab') || 'backlinks';
 
   const cleanDomain = useMemo(() => {
-    if (!activeProject?.domain) return 'workcomposer.com';
+    if (!activeProject?.domain) return 'myjio.com';
     return activeProject.domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
   }, [activeProject?.domain]);
 

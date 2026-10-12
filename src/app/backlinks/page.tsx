@@ -35,6 +35,10 @@ import {
 } from 'recharts';
 import { useApp } from '@/components/providers/AppProviders';
 import { CountryFlag } from '@/components/ui/CountryFlag';
+import {
+  SeRankingBacklinksOverallChart,
+  SeRankingNewLostBarChart,
+} from '@/components/backlinks/SeRankingBacklinksCharts';
 
 // ==========================================
 // DATA TYPES
@@ -95,95 +99,95 @@ interface IpItem {
 // DATASETS MATCHING EXACT SCREENSHOTS
 // ==========================================
 
-// OVERVIEW TAB: Overall History Chart Data (28 Jun - 23 Sep)
+// OVERVIEW TAB: Overall History Chart Data (12 Jul - 06 Oct)
 const OVERALL_CHART_DATA = [
-  { date: '28 Jun', refDomains: 43.1, backlinks: 73.0, dt: 21, pt: 6 },
-  { date: '05 Jul', refDomains: 43.0, backlinks: 73.0, dt: 21, pt: 6 },
-  { date: '12 Jul', refDomains: 43.0, backlinks: 72.8, dt: 21, pt: 6 },
-  { date: '19 Jul', refDomains: 42.4, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '26 Jul', refDomains: 41.7, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '02 Aug', refDomains: 41.6, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '09 Aug', refDomains: 41.6, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '16 Aug', refDomains: 41.6, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '23 Aug', refDomains: 41.6, backlinks: 72.5, dt: 21, pt: 6 },
-  { date: '30 Aug', refDomains: 41.6, backlinks: 72.4, dt: 21, pt: 6 },
-  { date: '06 Sep', refDomains: 40.8, backlinks: 65.0, dt: 21, pt: 6 },
-  { date: '13 Sep', refDomains: 40.8, backlinks: 65.0, dt: 21, pt: 6 },
-  { date: '20 Sep', refDomains: 40.8, backlinks: 65.0, dt: 21, pt: 6 },
-  { date: '23 Sep', refDomains: 40.8, backlinks: 65.0, dt: 21, pt: 6 },
+  { date: '12 Jul', range: '06 Jul 2026 - 12 Jul 2026', refDomains: 68, backlinks: 94, dt: 11, pt: 3, organic: 0 },
+  { date: '19 Jul', range: '13 Jul 2026 - 19 Jul 2026', refDomains: 65, backlinks: 93, dt: 11, pt: 3, organic: 0 },
+  { date: '26 Jul', range: '20 Jul 2026 - 26 Jul 2026', refDomains: 63, backlinks: 92, dt: 11, pt: 3, organic: 0 },
+  { date: '02 Aug', range: '27 Jul 2026 - 02 Aug 2026', refDomains: 63, backlinks: 91, dt: 11, pt: 3, organic: 0 },
+  { date: '09 Aug', range: '03 Aug 2026 - 09 Aug 2026', refDomains: 63, backlinks: 91, dt: 11, pt: 3, organic: 0 },
+  { date: '16 Aug', range: '10 Aug 2026 - 16 Aug 2026', refDomains: 63, backlinks: 91, dt: 11, pt: 3, organic: 0 },
+  { date: '23 Aug', range: '17 Aug 2026 - 23 Aug 2026', refDomains: 63, backlinks: 91, dt: 11, pt: 3, organic: 0 },
+  { date: '30 Aug', range: '24 Aug 2026 - 30 Aug 2026', refDomains: 63, backlinks: 90, dt: 11, pt: 3, organic: 0 },
+  { date: '06 Sep', range: '31 Aug 2026 - 06 Sep 2026', refDomains: 63, backlinks: 89, dt: 11, pt: 3, organic: 0 },
+  { date: '13 Sep', range: '07 Sep 2026 - 13 Sep 2026', refDomains: 62, backlinks: 87, dt: 11, pt: 3, organic: 0 },
+  { date: '20 Sep', range: '14 Sep 2026 - 20 Sep 2026', refDomains: 61, backlinks: 85, dt: 11, pt: 3, organic: 0 },
+  { date: '27 Sep', range: '21 Sep 2026 - 27 Sep 2026', refDomains: 60, backlinks: 85, dt: 11, pt: 3, organic: 0 },
+  { date: '04 Oct', range: '28 Sep 2026 - 04 Oct 2026', refDomains: 60, backlinks: 85, dt: 11, pt: 3, organic: 0 },
+  { date: '06 Oct', range: '05 Oct 2026 - 06 Oct 2026', refDomains: 60, backlinks: 85, dt: 11, pt: 3, organic: 0 },
 ];
 
 // OVERVIEW TAB: New & Lost Referring Domains Bar Chart Data
 const NEW_LOST_DOMAINS_DATA = [
-  { date: '28 Jun', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '05 Jul', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '12 Jul', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '19 Jul', newCount: 0.0, lostCount: -0.8, change: -0.8 },
-  { date: '26 Jul', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '02 Aug', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '09 Aug', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '16 Aug', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '23 Aug', newCount: 0.6, lostCount: -0.8, change: -0.2 },
-  { date: '30 Aug', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '06 Sep', newCount: 0.0, lostCount: -0.8, change: -0.8 },
-  { date: '13 Sep', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '20 Sep', newCount: 0.1, lostCount: -0.1, change: 0 },
-  { date: '23 Sep', newCount: 0.1, lostCount: -0.1, change: 0 },
+  { date: '12 Jul', range: '06 Jul 2026 - 12 Jul 2026', newCount: 0, lostCount: -2.0, change: -2.0 },
+  { date: '19 Jul', range: '13 Jul 2026 - 19 Jul 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '26 Jul', range: '20 Jul 2026 - 26 Jul 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '02 Aug', range: '27 Jul 2026 - 02 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '09 Aug', range: '03 Aug 2026 - 09 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '16 Aug', range: '10 Aug 2026 - 16 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '23 Aug', range: '17 Aug 2026 - 23 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '30 Aug', range: '24 Aug 2026 - 30 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '06 Sep', range: '31 Aug 2026 - 06 Sep 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '13 Sep', range: '07 Sep 2026 - 13 Sep 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '20 Sep', range: '14 Sep 2026 - 20 Sep 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '27 Sep', range: '21 Sep 2026 - 27 Sep 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '04 Oct', range: '28 Sep 2026 - 04 Oct 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '06 Oct', range: '05 Oct 2026 - 06 Oct 2026', newCount: 0, lostCount: 0, change: 0 },
 ];
 
 // OVERVIEW TAB: New & Lost Backlinks Bar Chart Data
 const NEW_LOST_BACKLINKS_DATA = [
-  { date: '28 Jun', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '05 Jul', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '12 Jul', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '19 Jul', newCount: 0.0, lostCount: -1.8, change: -1.8 },
-  { date: '26 Jul', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '02 Aug', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '09 Aug', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '16 Aug', newCount: 0.4, lostCount: -0.2, change: 0.2 },
-  { date: '23 Aug', newCount: 0.4, lostCount: -0.2, change: 0.2 },
-  { date: '30 Aug', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '06 Sep', newCount: 0.7, lostCount: -2.8, change: -2.1 },
-  { date: '13 Sep', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '20 Sep', newCount: 0.2, lostCount: -0.2, change: 0 },
-  { date: '23 Sep', newCount: 0.2, lostCount: -0.2, change: 0 },
+  { date: '12 Jul', range: '06 Jul 2026 - 12 Jul 2026', newCount: 0, lostCount: -2.0, change: -2.0 },
+  { date: '19 Jul', range: '13 Jul 2026 - 19 Jul 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '26 Jul', range: '20 Jul 2026 - 26 Jul 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '02 Aug', range: '27 Jul 2026 - 02 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '09 Aug', range: '03 Aug 2026 - 09 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '16 Aug', range: '10 Aug 2026 - 16 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '23 Aug', range: '17 Aug 2026 - 23 Aug 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '30 Aug', range: '24 Aug 2026 - 30 Aug 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '06 Sep', range: '31 Aug 2026 - 06 Sep 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '13 Sep', range: '07 Sep 2026 - 13 Sep 2026', newCount: 0, lostCount: -2.0, change: -2.0 },
+  { date: '20 Sep', range: '14 Sep 2026 - 20 Sep 2026', newCount: 0, lostCount: -2.0, change: -2.0 },
+  { date: '27 Sep', range: '21 Sep 2026 - 27 Sep 2026', newCount: 0, lostCount: -1.0, change: -1.0 },
+  { date: '04 Oct', range: '28 Sep 2026 - 04 Oct 2026', newCount: 0, lostCount: 0, change: 0 },
+  { date: '06 Oct', range: '05 Oct 2026 - 06 Oct 2026', newCount: 0, lostCount: 0, change: 0 },
 ];
 
-// OVERVIEW TAB: Top backlink anchors generator
-export const getTopAnchorsForDomain = (domain: string = 'jio.com') => [
-  { anchor: domain, backlinks: 40, percent: 64.5 },
-  { anchor: 'Website', backlinks: 14, percent: 22.6 },
-  { anchor: `https://${domain}/`, backlinks: 3, percent: 4.8 },
-  { anchor: `visit ${domain} for latest info`, backlinks: 2, percent: 3.2 },
-  { anchor: `portal: ${domain}`, backlinks: 1, percent: 1.6 },
-  { anchor: domain.split('.')[0].toUpperCase(), backlinks: 1, percent: 1.6 },
-  { anchor: `https://www.${domain}`, backlinks: 1, percent: 1.6 },
+// OVERVIEW TAB: Top backlink anchors generator (from real dump: 8 rows)
+export const getTopAnchorsForDomain = (domain: string = 'myjio.com') => [
+  { anchor: 'myjio.com', backlinks: 66, percent: 77.6 },
+  { anchor: 'WWW.myjio.com', backlinks: 12, percent: 14.1 },
+  { anchor: 'MyJio', backlinks: 2, percent: 2.4 },
+  { anchor: 'https://myjio.com', backlinks: 1, percent: 1.2 },
+  { anchor: 'My Jio App', backlinks: 1, percent: 1.2 },
+  { anchor: 'Kakumani Venkata Kalyana Saswi', backlinks: 1, percent: 1.2 },
+  { anchor: 'No text', backlinks: 1, percent: 1.2, isNoText: true },
+  { anchor: 'Jio', backlinks: 1, percent: 1.2 },
 ];
 
-// OVERVIEW TAB: Domains by Domain Trust (10 tiers)
+// OVERVIEW TAB: Domains by Domain Trust (10 tiers matching exact real dump)
 const OVERVIEW_DOMAINS_BY_DT = [
-  { range: '0-9', refDomains: 8, percent: 16.67 },
-  { range: '10-19', refDomains: 2, percent: 4.17 },
-  { range: '20-29', refDomains: 1, percent: 2.08 },
-  { range: '30-39', refDomains: 2, percent: 4.17 },
-  { range: '40-49', refDomains: 5, percent: 10.42 },
-  { range: '50-59', refDomains: 17, percent: 35.42 },
-  { range: '60-69', refDomains: 9, percent: 18.75 },
-  { range: '70-79', refDomains: 0, percent: 0.00 },
-  { range: '80-89', refDomains: 3, percent: 6.25 },
-  { range: '90-100', refDomains: 1, percent: 2.08 },
+  { range: '0-9', refDomains: 7, percent: 11.67 },
+  { range: '10-19', refDomains: 3, percent: 5.00 },
+  { range: '20-29', refDomains: 1, percent: 1.67 },
+  { range: '30-39', refDomains: 1, percent: 1.67 },
+  { range: '40-49', refDomains: 4, percent: 6.67 },
+  { range: '50-59', refDomains: 28, percent: 46.67 },
+  { range: '60-69', refDomains: 12, percent: 20.00 },
+  { range: '70-79', refDomains: 3, percent: 5.00 },
+  { range: '80-89', refDomains: 1, percent: 1.67 },
+  { range: '90-100', refDomains: 0, percent: 0.00 },
 ];
 
-// OVERVIEW TAB: Countries
+// OVERVIEW TAB: Countries (matching exact real dump)
 const OVERVIEW_COUNTRIES = [
-  { flag: '🇲🇩', country: 'Moldova', refDomains: 12, percent: 29.3 },
-  { flag: '🇫🇷', country: 'France', refDomains: 9, percent: 22.0 },
-  { flag: '🇦🇹', country: 'Austria', refDomains: 9, percent: 22.0 },
-  { flag: '🇷🇴', country: 'Romania', refDomains: 4, percent: 9.8 },
-  { flag: '🇸🇬', country: 'Singapore', refDomains: 3, percent: 7.3 },
-  { flag: '🇺🇸', country: 'USA', refDomains: 2, percent: 4.9 },
-  { flag: '🇩🇪', country: 'Germany', refDomains: 1, percent: 2.4 },
-  { flag: '🇬🇧', country: 'United Kingdom', refDomains: 1, percent: 2.4 },
+  { flag: '🇲🇩', country: 'Moldova', refDomains: 17, percent: 34.7 },
+  { flag: '🇺🇸', country: 'USA', refDomains: 12, percent: 24.5 },
+  { flag: '🇦🇹', country: 'Austria', refDomains: 11, percent: 22.4 },
+  { flag: '🇷🇴', country: 'Romania', refDomains: 4, percent: 8.2 },
+  { flag: '🇫🇮', country: 'Finland', refDomains: 2, percent: 4.1 },
+  { flag: '🇸🇬', country: 'Singapore', refDomains: 2, percent: 4.1 },
+  { flag: '🇩🇪', country: 'Germany', refDomains: 1, percent: 2.0 },
 ];
 
 const INITIAL_BACKLINKS_ROWS: BacklinkRowItem[] = [
@@ -784,7 +788,7 @@ function BacklinkCheckerContent() {
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>(initialTab);
 
   const cleanProjectDomain = useMemo(() => {
-    if (!activeProject?.domain) return 'jio.com';
+    if (!activeProject?.domain) return 'myjio.com';
     return activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
   }, [activeProject?.domain]);
 
@@ -1053,343 +1057,230 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 1: OVERVIEW (MATCHING SCREENSHOT 1) */}
+          {/* TAB 1: OVERVIEW (MATCHING REAL SCREENSHOTS & HIGHCHARTS DUMP) */}
           {/* ======================================================== */}
           {activeSubTab === 'overview' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              {/* Row 1: 4 Top Metric Cards (Exact match to Screenshot 1) */}
+              {/* Row 1: 4 Top Metric Cards (Exact match to SE Ranking myjio.com dump) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Card 1: Domain Trust & Page Trust */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs space-y-3">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-3">
                   <div>
                     <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                      <span>DOMAIN TRUST</span>
-                      <span className="text-gray-400">ⓘ</span>
+                      <span>Domain Trust</span>
+                      <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                     </div>
                     <div className="text-2xl font-black text-gray-900 mt-1">
-                      {backlinksData?.domainTrust ?? 3} <span className="text-xs text-gray-400 font-normal">/ 100</span>
+                      {backlinksData?.domainTrust ?? 11} <span className="text-xs text-gray-400 font-normal">/100</span>
                     </div>
                   </div>
                   <div className="pt-2 border-t border-gray-100">
                     <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                      <span>PAGE TRUST</span>
-                      <span className="text-gray-400">ⓘ</span>
+                      <span>Page Trust</span>
+                      <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                     </div>
                     <div className="text-2xl font-black text-gray-900 mt-1">
-                      {backlinksData?.pageTrust ?? 1} <span className="text-xs text-gray-400 font-normal">/ 100</span>
+                      {backlinksData?.pageTrust ?? 3} <span className="text-xs text-gray-400 font-normal">/100</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Card 2: Referring Domains */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs space-y-2">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-2">
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>REFERRING DOMAINS</span>
-                    <span className="text-gray-400">ⓘ</span>
+                    <span>Referring Domains</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                   </div>
-                  <div className="text-3xl font-black text-[#7C3AED]">
-                    {backlinksData?.referringDomains ?? 48}
+                  <div className="text-3xl font-black text-[#1976D2]">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSubTab('referring-domains')}
+                      className="hover:underline cursor-pointer"
+                    >
+                      {backlinksData?.referringDomains ?? 60}
+                    </button>
                   </div>
                   <div className="text-[11px] text-gray-500 pt-1 space-y-1">
-                    <div>Referring domains analyzed: <strong className="text-gray-700">{backlinksData?.referringDomains ?? 48} ⓘ</strong></div>
-                    <div>New in last 30 days: <strong className="text-[#7C3AED]">{backlinksData?.newBacklinksLast30Days ?? 1}</strong></div>
-                    <div>Lost in last 30 days: <strong className="text-rose-500">{backlinksData?.lostBacklinksLast30Days ?? 4}</strong></div>
-                    <div>Broken: <strong className="text-gray-700">0</strong></div>
+                    <div className="flex items-center gap-1">
+                      <span>Referring domains analyzed: {backlinksData?.referringDomains ?? 60}</span>
+                      <span className="text-gray-400">ⓘ</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>New in last 30 days:</span>
+                      <span className="text-gray-400 font-medium">0</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Lost in last 30 days:</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('referring-domains')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        3
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Broken:</span>
+                      <span className="text-gray-400 font-medium">0</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Card 3: Backlinks */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs space-y-2">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-2">
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>BACKLINKS</span>
-                    <span className="text-gray-400">ⓘ</span>
+                    <span>Backlinks</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                   </div>
-                  <div className="text-3xl font-black text-[#7C3AED]">
-                    {backlinksData?.totalBacklinks ?? 65}
+                  <div className="text-3xl font-black text-[#1976D2]">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSubTab('backlinks')}
+                      className="hover:underline cursor-pointer"
+                    >
+                      {backlinksData?.totalBacklinks ?? 85}
+                    </button>
                   </div>
                   <div className="text-[11px] text-gray-500 pt-1 space-y-1">
-                    <div>Backlinks analyzed: <strong className="text-gray-700">{backlinksData?.totalBacklinks ?? 65} ⓘ</strong></div>
-                    <div>New in last 30 days: <strong className="text-[#7C3AED]">{backlinksData?.newBacklinksLast30Days ?? 4}</strong></div>
-                    <div>Lost in last 30 days: <strong className="text-rose-500">{backlinksData?.lostBacklinksLast30Days ?? 8}</strong></div>
-                    <div>Broken: <strong className="text-gray-700">0</strong></div>
-                  </div>
-                </div>
-
-                {/* Card 4: Backlinks Toxicity Score */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between space-y-3">
-                  <div>
-                    <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                      <span>BACKLINKS TOXICITY SCORE</span>
+                    <div className="flex items-center gap-1">
+                      <span>Backlinks analyzed: {backlinksData?.totalBacklinks ?? 85}</span>
                       <span className="text-gray-400">ⓘ</span>
                     </div>
-                    <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-                      Identify harmful links that hurt your site&apos;s SEO and clean up your backlink profile
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => alert('Starting toxic backlink scanner...')}
-                    className="w-full py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-xs rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    FIND TOXIC LINKS
-                  </button>
-                </div>
-              </div>
-
-              {/* Row 2: Large Overall Line Chart Card (Screenshot 1) */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
-                  <span className="font-bold text-sm text-gray-900">Overall</span>
-
-                  <div className="flex items-center gap-3 text-xs">
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500">
-                      <span>PERIOD:</span>
-                      {(['7D', '1M', '3M', '6M', '12M'] as const).map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setOverallPeriod(p)}
-                          className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                            overallPeriod === p
-                              ? 'text-[#7C3AED] font-black border-b-2 border-[#7C3AED]'
-                              : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between">
+                      <span>New in last 30 days:</span>
+                      <span className="text-gray-400 font-medium">0</span>
                     </div>
-
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 border border-gray-200 rounded px-2 py-0.5 bg-gray-50 cursor-pointer">
-                      <span>GROUP BY: <strong className="text-gray-800">WEEKS</strong></span>
-                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                    <div className="flex items-center justify-between">
+                      <span>Lost in last 30 days:</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('backlinks')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        4
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Broken:</span>
+                      <span className="text-gray-400 font-medium">0</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Y-axis Labels Row */}
-                <div className="flex items-center justify-between text-[11px] font-semibold">
-                  <span className="text-[#00BCD4]">Total referring domains</span>
-                  <span className="text-[#22C55E]">Total backlinks</span>
-                </div>
-
-                {/* Recharts Curve matching Screenshot 1 */}
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={OVERALL_CHART_DATA}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#888' }} />
-                      <YAxis
-                        yAxisId="left"
-                        domain={[40.5, 43.5]}
-                        tick={{ fontSize: 10, fill: '#00BCD4' }}
-                        tickFormatter={(v) => String(Number(v).toFixed(1))}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        domain={[50, 90]}
-                        tick={{ fontSize: 10, fill: '#22C55E' }}
-                        tickFormatter={(v) => String(Math.round(v))}
-                      />
-                      <Tooltip
-                        contentStyle={{ fontSize: '11px', borderRadius: '8px' }}
-                      />
-                      {showTotalRefDomains && (
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="refDomains"
-                          name="Total referring domains"
-                          stroke="#00BCD4"
-                          strokeWidth={2.5}
-                          dot={false}
-                        />
-                      )}
-                      {showTotalBacklinks && (
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="backlinks"
-                          name="Total backlinks"
-                          stroke="#22C55E"
-                          strokeWidth={2.5}
-                          dot={false}
-                        />
-                      )}
-                      {showDomainTrust && (
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="dt"
-                          name="Domain Trust"
-                          stroke="#F97316"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      )}
-                      {showPageTrust && (
-                        <Line
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey="pt"
-                          name="Page Trust"
-                          stroke="#EAB308"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Checkbox Legend matching Screenshot 1 */}
-                <div className="flex flex-wrap items-center gap-5 text-xs text-gray-700 pt-2 border-t border-gray-100">
-                  <label className="flex items-center gap-1.5 cursor-pointer font-medium">
-                    <input
-                      type="checkbox"
-                      checked={showTotalRefDomains}
-                      onChange={(e) => setShowTotalRefDomains(e.target.checked)}
-                      className="rounded text-[#00BCD4]"
-                    />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#00BCD4] inline-block" />
-                    <span>Total referring domains</span>
-                  </label>
-
-                  <label className="flex items-center gap-1.5 cursor-pointer font-medium">
-                    <input
-                      type="checkbox"
-                      checked={showTotalBacklinks}
-                      onChange={(e) => setShowTotalBacklinks(e.target.checked)}
-                      className="rounded text-[#22C55E]"
-                    />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] inline-block" />
-                    <span>Total backlinks</span>
-                  </label>
-
-                  <label className="flex items-center gap-1.5 cursor-pointer font-medium text-gray-500">
-                    <input
-                      type="checkbox"
-                      checked={showDomainTrust}
-                      onChange={(e) => setShowDomainTrust(e.target.checked)}
-                      className="rounded text-amber-500"
-                    />
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                    <span>Domain Trust</span>
-                  </label>
-
-                  <label className="flex items-center gap-1.5 cursor-pointer font-medium text-gray-500">
-                    <input
-                      type="checkbox"
-                      checked={showPageTrust}
-                      onChange={(e) => setShowPageTrust(e.target.checked)}
-                      className="rounded text-yellow-500"
-                    />
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block" />
-                    <span>Page Trust</span>
-                  </label>
+                {/* Card 4: Backlinks Toxicity Score (Exact match to real dump) */}
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-2">
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                    <span>Backlinks Toxicity Score</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
+                  </div>
+                  <div className="text-xl font-bold" style={{ color: 'rgb(231, 76, 60)' }}>
+                    High toxicity
+                  </div>
+                  <div className="text-[11px] pt-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">High</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('backlinks')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        1
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Medium</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('backlinks')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        55
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Low</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('backlinks')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        26
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Non-toxic</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('backlinks')}
+                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
+                      >
+                        3
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Row 3: Two Side-by-Side Bar Charts (Screenshot 1) */}
+              {/* Row 2: Highcharts Spline Overall Dynamics Chart with Crosshair & Tooltips */}
+              <SeRankingBacklinksOverallChart data={OVERALL_CHART_DATA} />
+
+              {/* Row 3: Two Side-by-Side Dual-Bar Charts with Change Line */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Left Chart: New & lost referring domains */}
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                    <span className="font-bold text-xs text-gray-900">New &amp; lost referring domains</span>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                      <span>PERIOD: 7D 1M <strong>3M</strong> 6M 12M</span>
-                      <span className="border px-1.5 py-0.5 rounded bg-gray-50">WEEKS ⌄</span>
-                    </div>
-                  </div>
-
-                  <div className="h-44 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={NEW_LOST_DOMAINS_DATA} stackOffset="sign">
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888' }} />
-                        <YAxis tick={{ fontSize: 9, fill: '#888' }} domain={[-1.2, 1.2]} />
-                        <Tooltip contentStyle={{ fontSize: '10px' }} />
-                        <Bar dataKey="newCount" fill="#22C55E" name="New" />
-                        <Bar dataKey="lostCount" fill="#EF4444" name="Lost" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[11px] text-gray-500 pt-1">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#22C55E]" /> New
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Lost
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-gray-700" /> Change
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Chart: New & lost backlinks */}
-                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                    <span className="font-bold text-xs text-gray-900">New &amp; lost backlinks</span>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                      <span>PERIOD: 7D 1M <strong>3M</strong> 6M 12M</span>
-                      <span className="border px-1.5 py-0.5 rounded bg-gray-50">WEEKS ⌄</span>
-                    </div>
-                  </div>
-
-                  <div className="h-44 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={NEW_LOST_BACKLINKS_DATA} stackOffset="sign">
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                        <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888' }} />
-                        <YAxis tick={{ fontSize: 9, fill: '#888' }} domain={[-4, 8]} />
-                        <Tooltip contentStyle={{ fontSize: '10px' }} />
-                        <Bar dataKey="newCount" fill="#22C55E" name="New" />
-                        <Bar dataKey="lostCount" fill="#EF4444" name="Lost" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[11px] text-gray-500 pt-1">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#22C55E]" /> New
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Lost
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-gray-700" /> Change
-                    </span>
-                  </div>
-                </div>
+                <SeRankingNewLostBarChart
+                  title="New & lost referring domains"
+                  data={NEW_LOST_DOMAINS_DATA}
+                  defaultHoverIndex={11}
+                />
+                <SeRankingNewLostBarChart
+                  title="New & lost backlinks"
+                  data={NEW_LOST_BACKLINKS_DATA}
+                  defaultHoverIndex={10}
+                />
               </div>
 
-              {/* Row 4: 3 Summary Tables (Screenshot 1) */}
+              {/* Row 4: 3 Summary Rating Tables (Exact match to real dump) */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Table 1: Top backlink anchors */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs flex flex-col justify-between min-h-[395px]">
                   <div>
-                    <div className="text-xs font-bold text-gray-900 mb-3 flex items-center justify-between">
-                      <span>Top backlink anchors ⓘ</span>
+                    <div className="text-xs font-bold text-[#2E2E30] mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span>Top backlink anchors</span>
+                        <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
+                      </div>
                     </div>
                     <table className="w-full text-left text-xs">
-                      <thead className="text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
+                      <thead className="text-[11px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                         <tr>
-                          <th className="pb-1.5 font-semibold">Anchor text</th>
-                          <th className="pb-1.5 text-center font-semibold">Backlinks</th>
-                          <th className="pb-1.5 text-right font-semibold">%</th>
+                          <th className="pb-2 font-semibold text-left" style={{ width: '55.5%' }}>Anchor text</th>
+                          <th className="pb-2 text-right font-semibold" style={{ width: '27%' }}>Backlinks</th>
+                          <th className="pb-2 text-right font-semibold">%</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {getTopAnchorsForDomain(cleanProjectDomain).map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50">
-                            <td className="py-1.5 text-gray-800 font-medium truncate max-w-[140px]">
+                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                            <td
+                              className={`py-2 truncate max-w-[150px] ${
+                                r.isNoText ? 'text-[#7C7D7E]' : 'text-[#2E2E30] font-medium'
+                              }`}
+                            >
                               {r.anchor}
                             </td>
-                            <td className="py-1.5 text-center text-[#7C3AED] font-semibold">
-                              {r.backlinks}
+                            <td className="py-2 text-right font-semibold">
+                              <button
+                                type="button"
+                                onClick={() => setActiveSubTab('anchor-texts')}
+                                className="text-[#1976D2] hover:underline cursor-pointer"
+                              >
+                                {r.backlinks}
+                              </button>
                             </td>
-                            <td className="py-1.5 text-right text-gray-500">
+                            <td
+                              className={`py-2 text-right ${
+                                r.isNoText ? 'text-[#7C7D7E]' : 'text-[#2E2E30]'
+                              }`}
+                            >
                               {r.percent.toFixed(1)}
                             </td>
                           </tr>
@@ -1399,38 +1290,49 @@ function BacklinkCheckerContent() {
                   </div>
                   <div className="pt-3 border-t border-gray-100 mt-2">
                     <button
+                      type="button"
                       onClick={() => setActiveSubTab('anchor-texts')}
-                      className="w-full py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      className="w-full py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      VIEW FULL REPORT
+                      <span>View full report</span>
+                      <span className="material-icons notranslate text-[16px]">keyboard_arrow_down</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Table 2: Domains by Domain Trust */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs flex flex-col justify-between min-h-[395px]">
                   <div>
-                    <div className="text-xs font-bold text-gray-900 mb-3 flex items-center justify-between">
-                      <span>Domains by Domain Trust ⓘ</span>
+                    <div className="text-xs font-bold text-[#2E2E30] mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span>Domains by Domain Trust</span>
+                        <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
+                      </div>
                     </div>
                     <table className="w-full text-left text-xs">
-                      <thead className="text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
+                      <thead className="text-[11px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                         <tr>
-                          <th className="pb-1.5 font-semibold">Domain Trust</th>
-                          <th className="pb-1.5 text-center font-semibold">Ref.domains</th>
-                          <th className="pb-1.5 text-right font-semibold">%</th>
+                          <th className="pb-2 font-semibold text-left" style={{ width: '55.5%' }}>Domain Trust</th>
+                          <th className="pb-2 text-right font-semibold" style={{ width: '27%' }}>Ref.domains</th>
+                          <th className="pb-2 text-right font-semibold">%</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {OVERVIEW_DOMAINS_BY_DT.map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50">
-                            <td className="py-1.5 text-gray-800 font-medium">
+                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="py-2 text-[#2E2E30] font-medium">
                               {r.range}
                             </td>
-                            <td className="py-1.5 text-center text-[#7C3AED] font-semibold">
-                              {r.refDomains}
+                            <td className="py-2 text-right font-semibold">
+                              <button
+                                type="button"
+                                onClick={() => setActiveSubTab('referring-domains')}
+                                className="text-[#1976D2] hover:underline cursor-pointer"
+                              >
+                                {r.refDomains}
+                              </button>
                             </td>
-                            <td className="py-1.5 text-right text-gray-500">
+                            <td className="py-2 text-right text-[#2E2E30]">
                               {r.percent.toFixed(2)}
                             </td>
                           </tr>
@@ -1440,39 +1342,50 @@ function BacklinkCheckerContent() {
                   </div>
                   <div className="pt-3 border-t border-gray-100 mt-2">
                     <button
+                      type="button"
                       onClick={() => setActiveSubTab('referring-domains')}
-                      className="w-full py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      className="w-full py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      VIEW FULL REPORT
+                      <span>View full report</span>
+                      <span className="material-icons notranslate text-[16px]">keyboard_arrow_down</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Table 3: Countries */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs flex flex-col justify-between min-h-[395px]">
                   <div>
-                    <div className="text-xs font-bold text-gray-900 mb-3 flex items-center justify-between">
-                      <span>Countries ⓘ</span>
+                    <div className="text-xs font-bold text-[#2E2E30] mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span>Countries</span>
+                        <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
+                      </div>
                     </div>
                     <table className="w-full text-left text-xs">
-                      <thead className="text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
+                      <thead className="text-[11px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                         <tr>
-                          <th className="pb-1.5 font-semibold">Country</th>
-                          <th className="pb-1.5 text-center font-semibold">Ref.domains</th>
-                          <th className="pb-1.5 text-right font-semibold">%</th>
+                          <th className="pb-2 font-semibold text-left" style={{ width: '55.5%' }}>Country</th>
+                          <th className="pb-2 text-right font-semibold" style={{ width: '27%' }}>Ref.domains</th>
+                          <th className="pb-2 text-right font-semibold">%</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {OVERVIEW_COUNTRIES.map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50">
-                            <td className="py-1.5 text-gray-800 font-medium flex items-center gap-1.5">
+                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="py-2 text-[#2E2E30] font-medium flex items-center gap-2">
                               <CountryFlag name={r.country} />
                               <span className="truncate max-w-[120px]">{r.country}</span>
                             </td>
-                            <td className="py-1.5 text-center text-gray-900 font-semibold">
-                              {r.refDomains}
+                            <td className="py-2 text-right font-semibold">
+                              <button
+                                type="button"
+                                onClick={() => setActiveSubTab('referring-domains')}
+                                className="text-[#1976D2] hover:underline cursor-pointer"
+                              >
+                                {r.refDomains}
+                              </button>
                             </td>
-                            <td className="py-1.5 text-right text-gray-500">
+                            <td className="py-2 text-right text-[#2E2E30]">
                               {r.percent.toFixed(1)}
                             </td>
                           </tr>
@@ -1482,10 +1395,12 @@ function BacklinkCheckerContent() {
                   </div>
                   <div className="pt-3 border-t border-gray-100 mt-2">
                     <button
+                      type="button"
                       onClick={() => setActiveSubTab('ips')}
-                      className="w-full py-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      className="w-full py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      VIEW FULL REPORT
+                      <span>View full report</span>
+                      <span className="material-icons notranslate text-[16px]">keyboard_arrow_down</span>
                     </button>
                   </div>
                 </div>

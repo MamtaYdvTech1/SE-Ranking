@@ -3264,7 +3264,7 @@ export function AddedCompetitorsView({
                                     {rankItem ? (
                                       <span
                                         className={`inline-flex items-center justify-center gap-1 min-w-[28px] ${
-                                          rankItem.position <= 10
+                                          rankItem.position !== undefined && rankItem.position <= 10
                                             ? "bg-emerald-50 text-emerald-800 border border-emerald-300/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold px-2 py-0.5 rounded text-xs"
                                             : "text-slate-800 dark:text-slate-200 font-semibold"
                                         }`}

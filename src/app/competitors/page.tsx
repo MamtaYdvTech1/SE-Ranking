@@ -854,7 +854,7 @@ function CompetitorsPageContent() {
                         <tr className="bg-[#F5F3FF]">
                           <td className="py-3.5 px-4 font-bold text-gray-900 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
-                            <span>workcomposer.com (Your website)</span>
+                            <span>{domain} (Your website)</span>
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <span className="bg-blue-100 text-[#5B21B6] text-[10px] font-bold px-2 py-0.5 rounded-full">

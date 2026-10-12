@@ -568,22 +568,15 @@ export function IpsTab({
                   </div>
                 </div>
 
-                {/* Plan badge & Upgrade button */}
-                <div className="bg-[#fffbeb] dark:bg-amber-950/30 border border-[#fde68a] dark:border-amber-900/50 rounded-lg p-2.5 flex items-center justify-between gap-2">
+                {/* Plan badge */}
+                <div className="bg-[#f0fdf4] dark:bg-emerald-950/30 border border-[#bbf7d0] dark:border-emerald-900/50 rounded-lg p-2.5 flex items-center justify-between gap-2">
                   <div>
-                    <div className="text-[11px] font-bold text-amber-900 dark:text-amber-200">Free Trial Plan</div>
-                    <div className="text-[10px] text-amber-700 dark:text-amber-400">3 days remaining</div>
+                    <div className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200">Pro Enterprise Plan</div>
+                    <div className="text-[10px] text-emerald-700 dark:text-emerald-400">Unlimited Active</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLimitsOpen(false);
-                      setIsPricingModalOpen(true);
-                    }}
-                    className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold transition cursor-pointer shadow-xs whitespace-nowrap"
-                  >
-                    Upgrade
-                  </button>
+                  <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[11px] font-semibold whitespace-nowrap">
+                    Active
+                  </span>
                 </div>
               </div>
             )}

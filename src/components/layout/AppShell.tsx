@@ -111,8 +111,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname === '/';
 
   const hideSecondarySidebar =
-    !hasCreatedProject ||
-    projects.length === 0 ||
     pathname === '/reports/print' ||
     pathname.startsWith('/admin.reports.print') ||
     pathname.startsWith('/admin.site.wizard') ||
@@ -121,13 +119,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // When creating a project (modal open or standalone wizard), hide header, sidebar, and footer
   const isProjectCreationActive = isAddWebsiteModalOpen || isStandaloneAdmin;
 
-  const shouldHideTopHeader =
-    isProjectCreationActive ||
-    (isDashboardOrProjects && (!hasCreatedProject || projects.length === 0));
+  const shouldHideTopHeader = isProjectCreationActive;
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F4F6F9] text-gray-900">
-      {/* Main Top Header (hidden when creating project or when no projects exist on dashboard) */}
+      {/* Main Top Header */}
       {!shouldHideTopHeader && (
         <div className="w-full shrink-0 z-50">
           <TopHeader />
@@ -136,16 +132,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main App Workspace */}
       <div className="flex-1 flex overflow-hidden lg:overflow-visible relative">
-        {/* Desktop Left Icon Rail (hidden when creating project) */}
+        {/* Left Icon Rail */}
         {!isProjectCreationActive && (
-          <div className="hidden lg:flex shrink-0 z-40">
+          <div className="flex shrink-0 z-40">
             <LeftRail />
           </div>
         )}
 
-        {/* Desktop Secondary Navigation Sidebar (Shown across all tabs) */}
+        {/* Secondary Navigation Sidebar */}
         {!isProjectCreationActive && !hideSecondarySidebar && (
-          <div className="hidden lg:flex shrink-0 relative z-30">
+          <div className="flex shrink-0 relative z-30">
             <React.Suspense fallback={null}>
               <SecondarySidebar />
             </React.Suspense>
