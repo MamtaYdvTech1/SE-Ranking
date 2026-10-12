@@ -54,9 +54,9 @@ export function GoogleRecaptcha({
 
   const siteKey =
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
-    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY.startsWith('6Le5qOst')
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY.startsWith('6LeM0ugt')
       ? process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
-      : '6Le5qOstAAAAANpDAySWoDVfz-OrmwSVlQtHsF7v';
+      : '6LeM0ugtAAAAAI2KNBe5VmDfNzN2xbKwJPcnUqAS';
 
   const onVerifyRef = useRef(onVerify);
   onVerifyRef.current = onVerify;

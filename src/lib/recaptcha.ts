@@ -12,14 +12,14 @@ export interface RecaptchaVerificationResult {
   provider: 'google_recaptcha';
 }
 
-const DEFAULT_RECAPTCHA_SECRET_KEY = '6Le5qOstAAAAAChtwfJepF8dyxs-q-IccxxRjnB5';
+const DEFAULT_RECAPTCHA_SECRET_KEY = '6LeM0ugtAAAAALH_V49LKgPLlGjHabUUdqwJseq9';
 
 export async function verifyRecaptcha(
   token?: string,
   remoteIp?: string
 ): Promise<RecaptchaVerificationResult> {
   const secretKey =
-    process.env.RECAPTCHA_SECRET_KEY && process.env.RECAPTCHA_SECRET_KEY.startsWith('6Le5qOst')
+    process.env.RECAPTCHA_SECRET_KEY && process.env.RECAPTCHA_SECRET_KEY.startsWith('6LeM0ugt')
       ? process.env.RECAPTCHA_SECRET_KEY.trim()
       : DEFAULT_RECAPTCHA_SECRET_KEY;
 
