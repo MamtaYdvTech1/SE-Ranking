@@ -454,7 +454,10 @@ export default function LandingPage() {
     if (user) {
       router.push('/projects');
     } else {
-      router.push('/login?redirect=/projects');
+      const hasAccount = typeof window !== 'undefined' && Boolean(
+        localStorage.getItem('user_email') || localStorage.getItem('seranking_auth_status')
+      );
+      router.push(hasAccount ? '/login?redirect=/projects' : '/signup?redirect=/projects');
     }
   };
 

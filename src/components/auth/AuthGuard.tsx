@@ -12,7 +12,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!isLoading && !user) {
       if (typeof window !== 'undefined') {
         const dest = window.location.pathname + window.location.search;
-        router.replace(`/login?redirect=${encodeURIComponent(dest)}`);
+        const hasAccount = Boolean(
+          localStorage.getItem('user_email') ||
+          localStorage.getItem('seranking_auth_status')
+        );
+        const targetRoute = hasAccount ? '/login' : '/signup';
+        router.replace(`${targetRoute}?redirect=${encodeURIComponent(dest)}`);
       }
     }
   }, [user, isLoading, router]);
