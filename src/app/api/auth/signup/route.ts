@@ -3,50 +3,30 @@ import { prisma } from '@/lib/db/prisma';
 import { SignupSchema } from '@/lib/validation/schemas';
 import { validateRealEmail } from '@/lib/validation/email-validator';
 import { hashPassword, sanitizeUser, createSession, setSessionCookie } from '@/lib/server/auth';
-import { verifyRecaptcha } from '@/lib/recaptcha';
-import { verifyTurnstileToken } from '@/lib/cloudflare/turnstile';
+import { checkAuthRateLimit } from '@/lib/server/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
-    // Verify security token (Cloudflare Turnstile or Google reCAPTCHA)
-    const captchaToken = body.captchaToken;
-    if (!captchaToken && process.env.NODE_ENV !== 'test') {
+    // 1. IP Rate Limiting (Abuse prevention)
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1';
+
+    const rateLimit = checkAuthRateLimit('signup', ip);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: 'Security verification is required. Please complete the captcha.' },
-        { status: 400 }
+        { error: 'Too many registration attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.resetSeconds) },
+        }
       );
     }
 
-    if (captchaToken) {
-      const isTurnstile =
-        body.captchaProvider === 'cloudflare_turnstile' ||
-        body.captchaProvider === 'turnstile' ||
-        captchaToken.startsWith('cf_') ||
-        captchaToken.startsWith('XXXX.') ||
-        captchaToken.includes('turnstile');
-
-      let captchaResult: { success: boolean; [key: string]: any };
-
-      if (isTurnstile) {
-        captchaResult = await verifyTurnstileToken(captchaToken);
-      } else {
-        captchaResult = await verifyRecaptcha(captchaToken);
-      }
-
-      if (!captchaResult.success) {
-        const errorMsg = captchaResult['error-codes']?.includes('connection-error')
-          ? 'Security verification timed out. Please check your internet connection and try again.'
-          : 'Security verification failed. Please complete the captcha again.';
-        return NextResponse.json(
-          { error: errorMsg },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Check confirmPassword match if supplied
+    // 2. Password Confirmation Validation
     if (body.confirmPassword !== undefined && body.password !== body.confirmPassword) {
       return NextResponse.json(
         { error: 'Password and confirm password do not match.' },
@@ -54,8 +34,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 3. Schema Validation
     const result = SignupSchema.safeParse(body);
-
     if (!result.success) {
       return NextResponse.json(
         { error: result.error.issues[0]?.message || 'Invalid registration details.' },
@@ -66,21 +46,24 @@ export async function POST(req: NextRequest) {
     const { email, password, firstName, lastName } = result.data;
     const cleanEmail = email.toLowerCase().trim();
 
-    // Full name
+    // 4. Resolve Full Name
     const rawName = (body.name || `${firstName || ''} ${lastName || ''}`).trim();
     const fullName = rawName || cleanEmail.split('@')[0];
 
+    // 5. Work Email Validation
+    // Accepts genuine emails from personal providers (Gmail, Outlook, Yahoo, etc.) and company domains.
+    // Rejects disposable / temporary mail services.
     const emailCheck = validateRealEmail(cleanEmail, {
       allowExampleDomains: process.env.NODE_ENV === 'test',
     });
     if (!emailCheck.valid) {
       return NextResponse.json(
-        { error: emailCheck.error || 'Please enter a valid email address.' },
+        { error: emailCheck.error || 'Please enter a valid personal or business email address.' },
         { status: 400 }
       );
     }
 
-    // Prevent duplicate account registration
+    // 6. Duplicate Account Handling
     const existing = await prisma.user.findUnique({
       where: { email: cleanEmail },
     });
@@ -92,10 +75,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Securely hash password on the server
+    // 7. Secure Password Hashing using Argon2id
     const passwordHash = hashPassword(password);
 
-    // Create user in database
+    // 8. Create User in Production Database
     const user = await prisma.user.create({
       data: {
         email: cleanEmail,
@@ -110,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const safeUser = sanitizeUser(user);
 
-    // Create a real database session and attach secure cookie
+    // 9. Create Real Database Session and Attach Secure HTTP-only Cookie
     const { sessionToken, expiresAt } = await createSession(user.id, req);
 
     const response = NextResponse.json({
@@ -122,9 +105,9 @@ export async function POST(req: NextRequest) {
     });
 
     return await setSessionCookie(response, sessionToken, expiresAt);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
-    const message = error?.message || 'Registration failed. Please try again.';
+    const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
     return NextResponse.json(
       { error: message },
       { status: 500 }

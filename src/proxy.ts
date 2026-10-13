@@ -51,9 +51,6 @@ const PUBLIC_API_PREFIXES = [
   '/api/auth/google',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
-  '/api/auth/verify-captcha',
-  '/api/captcha/verify',
-  '/api/cloudflare/turnstile',
 ];
 
 export async function proxy(request: NextRequest) {

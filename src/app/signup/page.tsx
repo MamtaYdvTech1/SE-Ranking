@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Eye, EyeOff, ChevronDown, Loader2 } from 'lucide-react';
+import { CreditCard, Eye, EyeOff, ChevronDown, Loader2, Check, AlertCircle } from 'lucide-react';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { CountryFlag } from '@/components/ui/CountryFlag';
-import { GoogleRecaptcha } from '@/components/auth/GoogleRecaptcha';
 import { validateRealEmail } from '@/lib/validation/email-validator';
-import { GoogleAccountChooserModal, GoogleAccountProfile } from '@/components/auth/GoogleAccountChooserModal';
+import { GoogleAccountChooserModal } from '@/components/auth/GoogleAccountChooserModal';
 
 const SIGNUP_LANGUAGES = [
   { code: 'en', flag: 'gb', short: 'EN', label: 'English' },
@@ -32,7 +31,6 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [selectedLang, setSelectedLang] = useState('en');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
@@ -58,8 +56,30 @@ export default function SignUpPage() {
 
   const currentLang = SIGNUP_LANGUAGES.find((l) => l.code === selectedLang) || SIGNUP_LANGUAGES[0];
 
+  // Dynamic Password Strength Assessment
+  const passwordStrength = useMemo(() => {
+    if (!password) return { score: 0, label: '', color: 'bg-gray-200', text: '' };
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    if (score <= 1) {
+      return { score: 1, label: 'Weak', color: 'bg-rose-500', text: 'text-rose-600' };
+    }
+    if (score === 2 || score === 3) {
+      return { score: 2, label: 'Fair', color: 'bg-amber-500', text: 'text-amber-600' };
+    }
+    return { score: 3, label: 'Strong', color: 'bg-emerald-500', text: 'text-emerald-600' };
+  }, [password]);
+
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent duplicate submissions
     setError(null);
     setSuccessMessage(null);
 
@@ -89,7 +109,7 @@ export default function SignUpPage() {
     }
 
     if (!password) {
-      setError('Please create a strong password.');
+      setError('Please create a password.');
       return;
     }
 
@@ -100,11 +120,6 @@ export default function SignUpPage() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please re-enter your password.');
-      return;
-    }
-
-    if (!captchaToken && process.env.NODE_ENV !== 'test') {
-      setError('Please complete the Google reCAPTCHA verification.');
       return;
     }
 
@@ -122,12 +137,10 @@ export default function SignUpPage() {
           email: cleanEmail,
           password,
           confirmPassword,
-          captchaToken: captchaToken || undefined,
-          captchaProvider: 'google_recaptcha',
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to create account.');
@@ -145,7 +158,7 @@ export default function SignUpPage() {
         sessionStorage.setItem('seranking_auth_status', 'logged_in');
         localStorage.setItem('auth_token', data.token || 'auth-token');
         localStorage.setItem('user_email', cleanEmail);
-        localStorage.setItem('user_name', data.user?.name || `${cleanFirst} ${cleanLast}`.trim() || cleanEmail.split('@')[0]);
+        localStorage.setItem('user_name', data.user?.name || fullName || cleanEmail.split('@')[0]);
         window.dispatchEvent(new CustomEvent('seranking_auth_change'));
       }
 
@@ -153,17 +166,10 @@ export default function SignUpPage() {
       setTimeout(() => {
         window.location.href = data.redirectTo || '/projects';
       }, 500);
-    } catch (err: any) {
-      setError(err?.message || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(msg);
       setIsLoading(false);
-      setCaptchaToken(null);
-      if (typeof window !== 'undefined' && window.grecaptcha?.reset) {
-        try {
-          window.grecaptcha.reset();
-        } catch {
-          // ignore
-        }
-      }
     }
   };
 
@@ -171,32 +177,15 @@ export default function SignUpPage() {
     setIsGoogleModalOpen(true);
   };
 
-  const handleGoogleAccountSelected = async (account: GoogleAccountProfile) => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('se_ranking_has_project');
-        localStorage.removeItem('se_ranking_active_project_id');
-        localStorage.removeItem('se_ranking_paused_projects');
-        localStorage.removeItem('se_ranking_starred_projects');
-        localStorage.removeItem('se_ranking_project_groups');
-        localStorage.removeItem('seranking_tour_completed');
-      }
-    } catch {
-      // ignore
-    }
-    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
-    window.location.href = redirectUrl;
-  };
-
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col justify-between font-sans select-none">
       {/* Top Header */}
       <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity" aria-label="SE Ranking Home">
           <SeRankingLogo variant="purple" width={150} height={34} />
         </Link>
 
-        {/* Language selector with real Country Flags */}
+        {/* Language selector */}
         <div className="relative">
           <button
             type="button"
@@ -236,7 +225,7 @@ export default function SignUpPage() {
       {/* Main Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-[560px] space-y-7">
-          {/* Headline with Purple Accent and Subtitle */}
+          {/* Headline */}
           <div className="text-center space-y-3">
             <h1 className="text-3xl sm:text-[40px] font-extrabold text-[#111827] tracking-tight leading-tight">
               Start a free trial with <span className="text-[#7C3AED]">your work</span> email
@@ -249,22 +238,25 @@ export default function SignUpPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
-                {error}
+              <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span className="flex-1">{error}</span>
               </div>
             )}
 
             {successMessage && (
-              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-                {successMessage}
+              <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span>{successMessage}</span>
               </div>
             )}
 
             {/* Row 1: First name & Last name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
+                <label htmlFor="signup-first-name" className="sr-only">First Name</label>
                 <input
                   type="text"
                   id="signup-first-name"
@@ -272,14 +264,16 @@ export default function SignUpPage() {
                   value={firstName}
                   onChange={(e) => {
                     setFirstName(e.target.value);
-                    setError(null);
+                    if (error) setError(null);
                   }}
+                  autoComplete="given-name"
                   className="w-full h-12 px-4 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
                   required
                 />
               </div>
 
               <div>
+                <label htmlFor="signup-last-name" className="sr-only">Last Name</label>
                 <input
                   type="text"
                   id="signup-last-name"
@@ -287,8 +281,9 @@ export default function SignUpPage() {
                   value={lastName}
                   onChange={(e) => {
                     setLastName(e.target.value);
-                    setError(null);
+                    if (error) setError(null);
                   }}
+                  autoComplete="family-name"
                   className="w-full h-12 px-4 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
                   required
                 />
@@ -297,6 +292,7 @@ export default function SignUpPage() {
 
             {/* Row 2: Work email */}
             <div>
+              <label htmlFor="signup-work-email" className="sr-only">Work Email Address</label>
               <input
                 type="email"
                 id="signup-work-email"
@@ -304,73 +300,101 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  setError(null);
+                  if (error) setError(null);
                 }}
+                autoComplete="email"
                 className="w-full h-12 px-4 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
                 required
               />
             </div>
 
-            {/* Row 3: Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="signup-password"
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError(null);
-                }}
-                className="w-full h-12 px-4 pr-11 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-gray-400 hover:text-[#7C3AED] cursor-pointer"
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+            {/* Row 3: Password with Show/Hide toggle */}
+            <div className="space-y-1.5">
+              <div className="relative">
+                <label htmlFor="signup-password" className="sr-only">Password</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="signup-password"
+                  placeholder="Create a strong password (min 8 chars)"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  autoComplete="new-password"
+                  className="w-full h-12 px-4 pr-11 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-gray-400 hover:text-[#7C3AED] cursor-pointer transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={0}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Password Strength Guidance */}
+              {password.length > 0 && (
+                <div className="px-1 py-1 space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-gray-500">Strength: <strong className={passwordStrength.text}>{passwordStrength.label}</strong></span>
+                    <span className="text-gray-400">At least 8 characters</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex gap-1">
+                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 1 ? passwordStrength.color : 'bg-gray-200'}`} />
+                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 2 ? passwordStrength.color : 'bg-gray-200'}`} />
+                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 3 ? passwordStrength.color : 'bg-gray-200'}`} />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Row 4: Confirm Password */}
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id="signup-confirm-password"
-                placeholder="Re-enter your password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setError(null);
-                }}
-                className="w-full h-12 px-4 pr-11 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-3.5 text-gray-400 hover:text-[#7C3AED] cursor-pointer"
-                title={showConfirmPassword ? 'Hide password' : 'Show password'}
-              >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
+            {/* Row 4: Confirm Password with Show/Hide toggle */}
+            <div className="space-y-1">
+              <div className="relative">
+                <label htmlFor="signup-confirm-password" className="sr-only">Confirm Password</label>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="signup-confirm-password"
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  autoComplete="new-password"
+                  className={`w-full h-12 px-4 pr-11 border rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none transition-all bg-white ${
+                    passwordsMismatch
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
+                      : 'border-gray-300 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]'
+                  }`}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-3.5 text-gray-400 hover:text-[#7C3AED] cursor-pointer transition-colors"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={0}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
 
-            {/* Google reCAPTCHA v2 Widget */}
-            <div className="pt-1">
-              <GoogleRecaptcha
-                id="signup-google-recaptcha"
-                onVerify={(token) => {
-                  setCaptchaToken(token);
-                  setError(null);
-                }}
-                onExpire={() => {
-                  setCaptchaToken(null);
-                }}
-              />
+              {passwordsMismatch && (
+                <p className="text-[11px] text-rose-600 px-1 font-medium">
+                  Passwords do not match.
+                </p>
+              )}
+              {passwordsMatch && (
+                <p className="text-[11px] text-emerald-600 px-1 font-medium flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  <span>Passwords match</span>
+                </p>
+              )}
             </div>
 
             {/* Purple CTA Button */}
@@ -451,15 +475,14 @@ export default function SignUpPage() {
 
       {/* Subtle Bottom Footer */}
       <footer className="w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-gray-400">
-        &copy; 2026 SE Ranking. All rights reserved.
+        &copy; {new Date().getFullYear()} SE Ranking. All rights reserved.
       </footer>
 
-      {/* Real Google Account Chooser Modal matching exact screenshot */}
+      {/* Google Account Modal */}
       <GoogleAccountChooserModal
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         serviceName="SE Ranking"
-        onSelectAccount={handleGoogleAccountSelected}
       />
     </div>
   );

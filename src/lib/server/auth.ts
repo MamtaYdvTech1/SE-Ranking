@@ -1,5 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { hashSync, verifySync } from '@node-rs/argon2';
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session, User } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 import { signSessionToken, verifySessionToken } from './session-token';
 
@@ -7,26 +9,41 @@ export const SESSION_COOKIE_NAME = 'seranking_session';
 export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 /**
- * Hashes a plaintext password using crypto scrypt with random salt.
- * Format stored: "salt:hash"
+ * Hashes a plaintext password using Argon2id.
+ * Format stored: "$argon2id$v=19$m=19456,t=2,p=1$..."
  */
 export function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = scryptSync(password, salt, 64);
-  return `${salt}:${derivedKey.toString('hex')}`;
+  return hashSync(password, {
+    memoryCost: 19456,
+    timeCost: 2,
+    outputLen: 32,
+    parallelism: 1,
+  });
 }
 
 /**
- * Securely verifies a plaintext password against a stored salt:hash string.
+ * Securely verifies a plaintext password against a stored Argon2id or legacy salt:hash string.
  */
 export function verifyPassword(password: string, storedHash: string): boolean {
   try {
+    if (!storedHash || !password) return false;
+
+    // 1. Argon2id verification
+    if (storedHash.startsWith('$argon2')) {
+      return verifySync(storedHash, password);
+    }
+
+    // 2. Backward compatibility for legacy salt:hash (scrypt) passwords
     const parts = storedHash.split(':');
-    if (parts.length !== 2) return false;
-    const [salt, key] = parts;
-    const keyBuffer = Buffer.from(key, 'hex');
-    const derivedKey = scryptSync(password, salt, 64);
-    return timingSafeEqual(keyBuffer, derivedKey);
+    if (parts.length === 2) {
+      const [salt, key] = parts;
+      const keyBuffer = Buffer.from(key, 'hex');
+      const derivedKey = scryptSync(password, salt, 64);
+      if (keyBuffer.length !== derivedKey.length) return false;
+      return timingSafeEqual(keyBuffer, derivedKey);
+    }
+
+    return false;
   } catch {
     return false;
   }
@@ -36,7 +53,8 @@ export function verifyPassword(password: string, storedHash: string): boolean {
  * Sanitizes a User record by removing passwordHash.
  */
 export function sanitizeUser<T extends { passwordHash?: string | null }>(user: T): Omit<T, 'passwordHash'> {
-  const { passwordHash: _discard, ...safe } = user;
+  const safe = { ...user };
+  delete (safe as { passwordHash?: string | null }).passwordHash;
   return safe;
 }
 
@@ -46,7 +64,7 @@ export function sanitizeUser<T extends { passwordHash?: string | null }>(user: T
 export async function createSession(
   userId: string,
   req?: Request | NextRequest
-): Promise<{ sessionToken: string; expiresAt: Date; session: any }> {
+): Promise<{ sessionToken: string; expiresAt: Date; session: Session }> {
   const sessionToken = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
 
@@ -76,8 +94,8 @@ export async function createSession(
 
 // In-memory cache for validated sessions to prevent redundant database hits across concurrent requests
 interface CachedSessionEntry {
-  session: any;
-  user: any;
+  session: Session;
+  user: User;
   cachedAt: number;
 }
 const sessionCache = new Map<string, CachedSessionEntry>();
@@ -190,7 +208,7 @@ export async function getAuthSession(req: Request | NextRequest) {
   let token: string | undefined;
 
   // 1. Check cookies
-  if ('cookies' in req && typeof (req as any).cookies?.get === 'function') {
+  if ('cookies' in req && typeof (req as unknown as { cookies?: { get?: (n: string) => { value?: string } | undefined } }).cookies?.get === 'function') {
     token = (req as NextRequest).cookies.get(SESSION_COOKIE_NAME)?.value;
   } else {
     const cookieHeader = req.headers.get('cookie') || '';

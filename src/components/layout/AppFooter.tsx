@@ -65,12 +65,8 @@ export function AppFooter({ className = '' }: AppFooterProps) {
           </a>
         </div>
 
-        {/* Google reCAPTCHA Footer Protection */}
         <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
-          <svg className="w-3.5 h-3.5 text-[#4285F4]" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-          </svg>
-          <span>Protected by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-[#7C3AED] underline">reCAPTCHA</a></span>
+          <span>&copy; {new Date().getFullYear()} SE Ranking</span>
         </div>
       </footer>
 

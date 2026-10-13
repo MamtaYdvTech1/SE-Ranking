@@ -66,12 +66,10 @@ export async function verifyPasswordResetToken(token: string): Promise<{ valid: 
     .digest('hex');
 
   // Constant-time comparison to prevent timing attacks
-  const signaturesMatch = crypto.timingSafeEqual(
-    Buffer.from(providedSignature, 'utf-8'),
-    Buffer.from(expectedSignature, 'utf-8')
-  );
+  const provBuf = Buffer.from(providedSignature, 'utf-8');
+  const expBuf = Buffer.from(expectedSignature, 'utf-8');
 
-  if (!signaturesMatch) {
+  if (provBuf.length !== expBuf.length || !crypto.timingSafeEqual(provBuf, expBuf)) {
     return { valid: false, error: 'Invalid or already-used reset token.' };
   }
 

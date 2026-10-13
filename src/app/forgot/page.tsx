@@ -2,25 +2,32 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ChevronDown, ArrowLeft, Mail, CheckCircle2, ShieldCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
-import { GoogleRecaptcha } from '@/components/auth/GoogleRecaptcha';
+import { validateRealEmail } from '@/lib/validation/email-validator';
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
+    if (isLoading) return;
+
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
       setError('Please enter your email address.');
       return;
     }
+
+    const emailCheck = validateRealEmail(cleanEmail);
+    if (!emailCheck.valid) {
+      setError(emailCheck.error || 'Please enter a valid personal or business email address.');
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
 
@@ -29,24 +36,23 @@ export default function ForgotPasswordPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: email.trim(),
-          captchaToken: captchaToken || undefined,
+          email: cleanEmail,
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Failed to send recovery instructions.');
       }
 
       setIsSubmitted(true);
-    } catch (err: any) {
-      setError(err?.message || 'A network error occurred. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'A network error occurred. Please try again.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="relative min-h-screen bg-[#FAF5FF] text-gray-900 flex flex-col justify-between select-none font-sans overflow-hidden">
@@ -75,7 +81,7 @@ export default function ForgotPasswordPage() {
 
       {/* Top Header */}
       <header className="relative z-10 w-full max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity" aria-label="SE Ranking Home">
           <SeRankingLogo variant="brand" width={140} height={34} />
         </Link>
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 bg-white/80 backdrop-blur-xs border border-purple-200 px-2.5 py-1.5 rounded-lg shadow-2xs">
@@ -103,9 +109,9 @@ export default function ForgotPasswordPage() {
               <div className="w-12 h-12 rounded-full bg-purple-100 text-[#7C3AED] mx-auto flex items-center justify-center shadow-xs">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h2 className="text-base font-bold text-gray-900">Email Sent!</h2>
+              <h2 className="text-base font-bold text-gray-900">Instructions Sent</h2>
               <p className="text-xs text-gray-600 leading-relaxed">
-                We have sent password recovery instructions to <strong className="text-purple-900">{email}</strong>. Please check your inbox and spam folder.
+                If an account exists with <strong className="text-purple-900">{email}</strong>, we have sent instructions to reset your password. Please check your inbox and spam folder.
               </p>
               <div className="pt-4">
                 <Link
@@ -117,9 +123,9 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <p className="text-xs text-gray-500 leading-relaxed text-center">
-                Enter your registered email address below and we will send you a secure link to reset your password.
+                Enter your registered work email address below and we will send you a secure link to reset your password.
               </p>
 
               <div>
@@ -132,29 +138,19 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setError(null);
+                    if (error) setError(null);
                   }}
                   placeholder="Enter your registered email"
+                  autoComplete="email"
                   className="w-full px-3.5 py-2.5 border border-purple-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 hover:border-purple-300 transition-all bg-white"
                   required
                 />
               </div>
 
-              {/* Google reCAPTCHA Verification */}
-              <div className="py-1">
-                <GoogleRecaptcha
-                  id="forgot-google-recaptcha"
-                  onVerify={(token: string) => {
-                    setCaptchaToken(token);
-                    setError(null);
-                  }}
-                  onExpire={() => setCaptchaToken(null)}
-                />
-              </div>
-
               {error && (
-                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-                  {error}
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span className="flex-1">{error}</span>
                 </div>
               )}
 
@@ -162,7 +158,7 @@ export default function ForgotPasswordPage() {
               <div className="flex items-center justify-between gap-3 pt-2">
                 <Link
                   href="/login"
-                  className="flex-1 py-2.5 border border-purple-200 hover:border-[#7C3AED] hover:bg-purple-50 text-gray-700 text-xs font-semibold rounded-lg transition-colors text-center flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 border border-purple-200 hover:border-[#7C3AED] hover:bg-purple-50 text-gray-700 text-xs font-semibold rounded-lg transition-colors text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back</span>
@@ -170,7 +166,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-purple-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
+                  className="flex-1 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-purple-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -178,7 +174,7 @@ export default function ForgotPasswordPage() {
                       <span>Sending...</span>
                     </>
                   ) : (
-                    <span>Send Mail</span>
+                    <span>Send Link</span>
                   )}
                 </button>
               </div>
@@ -189,13 +185,7 @@ export default function ForgotPasswordPage() {
 
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-md mx-auto py-6 text-center text-xs text-gray-400 flex flex-col items-center gap-1.5">
-        <div className="flex items-center gap-1 text-slate-500 text-[11px]">
-          <svg className="w-3.5 h-3.5 text-[#4285F4]" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-          </svg>
-          <span>Protected by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-[#7C3AED] underline">Google reCAPTCHA</a></span>
-        </div>
-        <div>&copy; 2026 SE Ranking. All rights reserved.</div>
+        <div>&copy; {new Date().getFullYear()} SE Ranking. All rights reserved.</div>
       </footer>
     </div>
   );

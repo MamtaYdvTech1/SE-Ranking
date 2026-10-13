@@ -88,7 +88,7 @@ async function runTests() {
   const { hashPassword, verifyPassword } = await import('../src/lib/server/auth');
   const testPw = 'SecureSecretPassword123#';
   const hashed = hashPassword(testPw);
-  assert(typeof hashed === 'string' && hashed.includes(':'), 'hashPassword produces salted scrypt hash');
+  assert(typeof hashed === 'string' && hashed.startsWith('$argon2id$'), 'hashPassword produces salted Argon2id hash');
   assert(verifyPassword(testPw, hashed), 'verifyPassword matches valid password');
   assert(!verifyPassword('WrongPassword!', hashed), 'verifyPassword rejects wrong password');
 
@@ -96,6 +96,9 @@ async function runTests() {
   const { LoginSchema, SignupSchema, ForgotPasswordSchema, ResetPasswordSchema } = await import('../src/lib/validation/schemas');
   const validLogin = LoginSchema.safeParse({ email: 'user@example.com', password: 'Password123#' });
   assert(validLogin.success, 'LoginSchema accepts valid email and password');
+
+  const validSignup = SignupSchema.safeParse({ email: 'user@example.com', password: 'Password123#' });
+  assert(validSignup.success, 'SignupSchema accepts valid email and password');
 
   const invalidLogin = LoginSchema.safeParse({ email: 'not-an-email', password: '' });
   assert(!invalidLogin.success, 'LoginSchema rejects invalid email and empty password');

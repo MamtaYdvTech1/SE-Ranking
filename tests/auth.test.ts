@@ -42,17 +42,22 @@ describe('1. Domain Normalization & Schema Validation', () => {
 });
 
 describe('2. Authentication Security & Password Hashing', () => {
-  it('hashes passwords with salted scrypt securely', () => {
+  it('hashes passwords with Argon2id securely', () => {
     const password = 'SuperSecurePassword2026#';
     const hash1 = hashPassword(password);
     const hash2 = hashPassword(password);
 
     // Salting ensures identical passwords have different hashes
     expect(hash1).not.toBe(hash2);
-    expect(hash1).toContain(':');
+    expect(hash1).toMatch(/^\$argon2id\$/);
     expect(verifyPassword(password, hash1)).toBe(true);
     expect(verifyPassword(password, hash2)).toBe(true);
     expect(verifyPassword('WrongPassword#', hash1)).toBe(false);
+
+    // Backward compatibility for legacy scrypt salt:hash passwords
+    const legacySalt = 'a1b2c3d4e5f60718';
+    const legacyHash = `${legacySalt}:dummyhash`;
+    expect(verifyPassword(password, legacyHash)).toBe(false);
   });
 
   it('validates login and registration credentials via Zod', () => {
@@ -73,6 +78,16 @@ describe('2. Authentication Security & Password Hashing', () => {
       password: 'short', // less than 8 chars
     });
     expect(shortPasswordSignup.success).toBe(false);
+
+    const validForgot = ForgotPasswordSchema.safeParse({
+      email: 'user@example.com',
+    });
+    expect(validForgot.success).toBe(true);
+
+    const invalidForgot = ForgotPasswordSchema.safeParse({
+      email: 'not-an-email',
+    });
+    expect(invalidForgot.success).toBe(false);
   });
 });
 

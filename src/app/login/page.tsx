@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProviders';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { CountryFlag } from '@/components/ui/CountryFlag';
-import { GoogleRecaptcha } from '@/components/auth/GoogleRecaptcha';
 import { validateRealEmail } from '@/lib/validation/email-validator';
-import { GoogleAccountChooserModal, GoogleAccountProfile } from '@/components/auth/GoogleAccountChooserModal';
+import { GoogleAccountChooserModal } from '@/components/auth/GoogleAccountChooserModal';
 
 const AUTH_LANGUAGES = [
   { code: 'en', flag: 'gb', label: 'English' },
@@ -29,13 +28,14 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLang, setSelectedLang] = useState('en');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [registrationNotice, setRegistrationNotice] = useState(false);
+  const [resetSuccessNotice, setResetSuccessNotice] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   useEffect(() => {
@@ -44,8 +44,14 @@ export default function LoginPage() {
       if (params.get('registered') === 'true') {
         setRegistrationNotice(true);
       }
+      if (params.get('reset') === 'success') {
+        setResetSuccessNotice(true);
+      }
       if (params.get('google') === 'direct') {
         setIsGoogleModalOpen(true);
+      }
+      if (params.get('error') === 'google_not_configured') {
+        setError('Google Sign-In is not configured. Please sign in with your email and password.');
       }
       const saved = localStorage.getItem('seranking_lang');
       if (saved && AUTH_LANGUAGES.some((l) => l.code === saved)) {
@@ -64,17 +70,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent duplicate submission
     setError(null);
     setRegistrationNotice(false);
+    setResetSuccessNotice(false);
 
     const cleanEmail = email.trim();
     if (!cleanEmail) {
       setError('Please enter your email address.');
-      return;
-    }
-
-    if (!captchaToken && process.env.NODE_ENV !== 'test') {
-      setError('Please complete the Google reCAPTCHA verification.');
       return;
     }
 
@@ -98,12 +101,10 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: cleanEmail,
           password,
-          captchaToken: captchaToken || undefined,
-          captchaProvider: 'google_recaptcha',
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Invalid email or password.');
       }
@@ -132,17 +133,10 @@ export default function LoginPage() {
 
       const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
       window.location.href = redirectUrl;
-    } catch (err: any) {
-      setError(err?.message || 'Invalid pair username/password!');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Invalid pair username/password!';
+      setError(msg);
       setIsLoading(false);
-      setCaptchaToken(null);
-      if (typeof window !== 'undefined' && window.grecaptcha?.reset) {
-        try {
-          window.grecaptcha.reset();
-        } catch {
-          // ignore
-        }
-      }
     }
   };
 
@@ -152,34 +146,24 @@ export default function LoginPage() {
       setIsGoogleModalOpen(true);
       return;
     }
-    setError(`${provider} sign-in is currently unavailable. Please sign in with your email or Google account.`);
-  };
-
-  const handleGoogleAccountSelected = async (account: GoogleAccountProfile) => {
-    try {
-      await refreshProjects();
-    } catch {
-      // ignore
-    }
-    const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
-    window.location.href = redirectUrl;
+    setError(`${provider} sign-in is currently unavailable. Please sign in with your email and password.`);
   };
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-between items-center py-10 px-4 font-sans select-none relative">
-      {/* Background Subtle Gradient */}
+      {/* Background Subtle Pattern */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#E2E8F0_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
 
       {/* Main Container */}
       <div className="w-full max-w-[440px] my-auto flex flex-col items-center relative z-10">
         {/* Top Centered SE Ranking Logo in Purple */}
         <div className="mb-8 flex justify-center items-center">
-          <Link href="/" className="hover:opacity-95 transition-opacity">
+          <Link href="/" className="hover:opacity-95 transition-opacity" aria-label="SE Ranking Home">
             <SeRankingLogo variant="purple" width={160} height={36} />
           </Link>
         </div>
 
-        {/* Floating White Card matching Reference Screenshot */}
+        {/* Floating White Card */}
         <div className="w-full bg-white rounded-xl border border-purple-100 shadow-[0_4px_24px_rgba(124,58,237,0.08)] overflow-hidden">
           {/* Card Header with Purple Heading */}
           <div className="py-5 px-8 text-center border-b border-purple-50 bg-gradient-to-b from-purple-50/30 to-transparent">
@@ -197,13 +181,21 @@ export default function LoginPage() {
               </div>
             )}
 
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
-                {error}
+            {resetSuccessNotice && (
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span>Password updated successfully. Please sign in with your new password.</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span className="flex-1">{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {/* Email with floating label style */}
               <div className="relative">
                 <label
@@ -218,15 +210,16 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setError(null);
+                    if (error) setError(null);
                   }}
                   placeholder="Enter your registered email"
+                  autoComplete="email"
                   className="w-full h-11 px-3.5 border border-gray-300 rounded-md text-sm text-[#1A202C] focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-[#F8FAFC] focus:bg-white"
                   required
                 />
               </div>
 
-              {/* Password with floating label style */}
+              {/* Password with floating label and Show/Hide toggle */}
               <div className="relative">
                 <label
                   htmlFor="password"
@@ -236,31 +229,29 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    setError(null);
+                    if (error) setError(null);
                   }}
                   placeholder="Enter your password"
-                  className="w-full h-11 px-3.5 border border-gray-300 rounded-md text-sm text-[#1A202C] focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-[#F8FAFC] focus:bg-white"
+                  autoComplete="current-password"
+                  className="w-full h-11 px-3.5 pr-10 border border-gray-300 rounded-md text-sm text-[#1A202C] focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-[#F8FAFC] focus:bg-white"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-[#7C3AED] cursor-pointer transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={0}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
 
-              {/* Google reCAPTCHA v2 Widget */}
-              <div className="pt-1">
-                <GoogleRecaptcha
-                  id="login-google-recaptcha"
-                  onVerify={(token) => {
-                    setCaptchaToken(token);
-                    setError(null);
-                  }}
-                  onExpire={() => setCaptchaToken(null)}
-                />
-              </div>
-
-              {/* Sign In Purple Button */}
+              {/* Sign In Button */}
               <button
                 type="submit"
                 id="login-submit-btn"
@@ -312,7 +303,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleSocialLogin('Facebook')}
-                className="w-full h-10 bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold rounded-md text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-2xs"
+                className="w-full h-10 bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold rounded-md text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-xs"
               >
                 <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -320,12 +311,12 @@ export default function LoginPage() {
                 <span>Continue with Facebook</span>
               </button>
 
-              {/* Real Google Button (Direct OAuth redirect) */}
+              {/* Google Button */}
               <button
                 type="button"
                 id="google-signin-btn"
                 onClick={() => handleSocialLogin('Google')}
-                className="w-full h-10 bg-white hover:bg-purple-50/30 border border-gray-300 hover:border-purple-300 text-[#1E293B] font-semibold rounded-md text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-2xs"
+                className="w-full h-10 bg-white hover:bg-purple-50/30 border border-gray-300 hover:border-purple-300 text-[#1E293B] font-semibold rounded-md text-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-xs"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -348,7 +339,7 @@ export default function LoginPage() {
                 <span>Sign in with Google</span>
               </button>
 
-              {/* LinkedIn Button (White with border) */}
+              {/* LinkedIn Button */}
               <button
                 type="button"
                 onClick={() => handleSocialLogin('LinkedIn')}
@@ -368,24 +359,11 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </div>
-
-            {/* Google reCAPTCHA terms footer */}
-            <p className="text-[11px] text-gray-400 text-center leading-relaxed pt-2">
-              This site is protected by reCAPTCHA and the Google{' '}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="text-[#7C3AED] hover:underline">
-                Privacy Policy
-              </a>{' '}
-              and{' '}
-              <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="text-[#7C3AED] hover:underline">
-                Terms of Service
-              </a>{' '}
-              apply.
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Bottom Language Selector matching exact screenshot */}
+      {/* Bottom Language Selector */}
       <div className="relative z-10 pt-4 pb-2">
         <button
           type="button"
@@ -416,12 +394,11 @@ export default function LoginPage() {
         )}
       </div>
 
-      {/* Real Google Account Chooser Modal matching exact screenshot */}
+      {/* Google OAuth Modal */}
       <GoogleAccountChooserModal
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         serviceName="SE Ranking"
-        onSelectAccount={handleGoogleAccountSelected}
       />
     </div>
   );

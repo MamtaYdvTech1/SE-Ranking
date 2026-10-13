@@ -79,7 +79,6 @@ CLOUDFLARE_TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
   - `/signup` — Shields registration from bot spam.
 - **REST Endpoints**:
   - `POST /api/cloudflare/turnstile` — Validates tokens with Cloudflare Turnstile verification API.
-  - `POST /api/auth/verify-captcha` — Unified verification handling both Turnstile and Google reCAPTCHA.
 
 ### C. Cloudflare 1.1.1.1 Anycast DNS & White-Label CNAME
 - **Global Anycast DNS**: Queries DNS records (A, AAAA, CNAME, TXT, MX, NS) in real-time via Cloudflare 1.1.1.1 DNS-over-HTTPS.

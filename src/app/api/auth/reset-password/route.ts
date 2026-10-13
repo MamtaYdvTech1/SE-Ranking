@@ -3,10 +3,27 @@ import { prisma } from '@/lib/db/prisma';
 import { ResetPasswordSchema } from '@/lib/validation/schemas';
 import { verifyPasswordResetToken } from '@/lib/server/password-reset';
 import { hashPassword } from '@/lib/server/auth';
+import { checkAuthRateLimit } from '@/lib/server/rate-limiter';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1';
+
+    const rateLimit = checkAuthRateLimit('reset-password', ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many attempts. Please wait a few minutes before trying again.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.resetSeconds) },
+        }
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
 
     // Validate body with Zod
     const validation = ResetPasswordSchema.safeParse(body);

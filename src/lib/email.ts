@@ -22,9 +22,12 @@ export function getEmailTransporter(customCredentials?: {
 }) {
   const host = customCredentials?.host || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = Number(customCredentials?.port || process.env.SMTP_PORT || 587);
-  const user = customCredentials?.user || process.env.SMTP_USER || process.env.DEMO_WORK_EMAIL || 'admin@seranking.com';
-  // Use the user's provided App Password (spaces stripped or kept)
-  const pass = customCredentials?.pass || process.env.SMTP_PASS || 'lnrkdpgwszfxlvuw';
+  const user = customCredentials?.user || process.env.SMTP_USER || '';
+  const pass = customCredentials?.pass || process.env.SMTP_PASS || '';
+
+  if (!user || !pass) {
+    throw new Error('SMTP credentials are not configured in environment variables (SMTP_USER, SMTP_PASS).');
+  }
 
   return nodemailer.createTransport({
     host,
