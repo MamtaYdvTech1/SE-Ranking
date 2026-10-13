@@ -132,10 +132,11 @@ const INITIAL_TASKS: TaskItem[] = [
 ];
 
 export default function MarketingPlanPage() {
-  const { activeProject } = useApp();
-  const displayDomain = activeProject?.domain
-    ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    : 'workcomposer.com';
+  const { activeProject, projects } = useApp();
+  const displayDomain = (activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com')
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/$/, '');
 
   const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
   const [filterMode, setFilterMode] = useState<'category' | 'priority' | 'status'>('category');

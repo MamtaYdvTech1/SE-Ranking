@@ -293,8 +293,15 @@ export function GoogleIndiaEngineBadge() {
 
 export function ProjectInsightsView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "flipkart.com",
 }: ProjectInsightsViewProps) {
+  const cleanDomain = (projectDomain || "flipkart.com")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "");
+  const brand = cleanDomain.split(".")[0] || "brand";
+  const brandCap = brand.charAt(0).toUpperCase() + brand.slice(1);
+
   // Banner dismiss state
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
@@ -546,28 +553,28 @@ export function ProjectInsightsView({
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {[
               {
-                url: "https://www.workcomposer.com/features/web-and-app-tracking/",
-                keyword: "work composer download",
+                url: `https://${cleanDomain}/deals`,
+                keyword: `${brand} deals`,
                 pos: 7,
               },
               {
-                url: "https://www.workcomposer.com/sitemap/",
-                keyword: "work composer download",
+                url: `https://${cleanDomain}/online-shopping`,
+                keyword: `${brand} online shopping`,
                 pos: 8,
               },
               {
-                url: "https://www.workcomposer.com/wc/time-and-screenshot-tracking-software/",
-                keyword: "work composer download",
+                url: `https://${cleanDomain}/app`,
+                keyword: `${brand} app download`,
                 pos: 9,
               },
               {
-                url: "https://www.workcomposer.com/getting-started/organization-onboarding/",
-                keyword: "work composer download",
+                url: `https://${cleanDomain}/offers`,
+                keyword: `${brand} offers today`,
                 pos: 10,
               },
               {
-                url: "https://www.workcomposer.com/features/work-time-tracking/",
-                keyword: "work composer download",
+                url: `https://${cleanDomain}/store`,
+                keyword: `buy on ${brand}`,
                 pos: 11,
               },
             ].map((item, idx) => (
@@ -646,18 +653,18 @@ export function ProjectInsightsView({
             <div className="py-3 flex items-start justify-between gap-4 flex-wrap text-xs">
               <div className="space-y-1">
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  work tracks
+                  {`${brand} shopping`}
                 </div>
                 <div className="pl-2 space-y-1 text-slate-600 dark:text-slate-300 font-mono">
                   <div className="flex items-center gap-1.5">
                     <span className="text-slate-400">↳</span>
-                    <a href="https://www.workcomposer.com/" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
-                      https://www.workcomposer.com/
+                    <a href={`https://${cleanDomain}/`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
+                      {`https://${cleanDomain}/`}
                     </a>
                   </div>
                   <div className="pl-4">
-                    <a href="https://www.workcomposer.com/features/work-time-tracking" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
-                      https://www.workcomposer.com/features/work-time-tracking
+                    <a href={`https://${cleanDomain}/deals`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
+                      {`https://${cleanDomain}/deals`}
                     </a>
                   </div>
                   <div className="pl-4 text-slate-400 dark:text-slate-500 text-[11px] font-sans">
@@ -674,18 +681,18 @@ export function ProjectInsightsView({
             <div className="py-3 flex items-start justify-between gap-4 flex-wrap text-xs">
               <div className="space-y-1">
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  work composer hack
+                  {`${brand} offers`}
                 </div>
                 <div className="pl-2 space-y-1 text-slate-600 dark:text-slate-300 font-mono">
                   <div className="flex items-center gap-1.5">
                     <span className="text-slate-400">↳</span>
-                    <a href="https://www.workcomposer.com/" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
-                      https://www.workcomposer.com/
+                    <a href={`https://${cleanDomain}/`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
+                      {`https://${cleanDomain}/`}
                     </a>
                   </div>
                   <div className="pl-4">
-                    <a href="https://www.workcomposer.com/features/work-time-tracking" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
-                      https://www.workcomposer.com/features/work-time-tracking
+                    <a href={`https://${cleanDomain}/offers`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 dark:text-blue-400">
+                      {`https://${cleanDomain}/offers`}
                     </a>
                   </div>
                   <div className="pl-4 text-slate-400 dark:text-slate-500 text-[11px] font-sans">
@@ -749,15 +756,15 @@ export function ProjectInsightsView({
                 </span>
                 <div>
                   <a
-                    href="https://www.workcomposer.com/download"
+                    href={`https://${cleanDomain}/products`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 hover:underline font-mono"
                   >
-                    https://www.workcomposer.com/download
+                    {`https://${cleanDomain}/products`}
                   </a>
                   <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-                    Keyword: <span className="text-slate-700 dark:text-slate-300 font-medium">composer download</span>
+                    Keyword: <span className="text-slate-700 dark:text-slate-300 font-medium">{`${brand} products`}</span>
                   </div>
                 </div>
               </div>
@@ -774,15 +781,15 @@ export function ProjectInsightsView({
                 </span>
                 <div>
                   <a
-                    href="https://www.workcomposer.com/wc/idle-time-tracking-software"
+                    href={`https://${cleanDomain}/pricing`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 hover:underline font-mono"
                   >
-                    https://www.workcomposer.com/wc/idle-time-tracking-software
+                    {`https://${cleanDomain}/pricing`}
                   </a>
                   <div className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
-                    Keyword: <span className="text-slate-700 dark:text-slate-300 font-medium">employee monitoring idle time</span>
+                    Keyword: <span className="text-slate-700 dark:text-slate-300 font-medium">{`${brand} pricing`}</span>
                   </div>
                 </div>
               </div>
@@ -1142,16 +1149,16 @@ export function ProjectInsightsView({
             <div className="py-2.5 flex items-center justify-between gap-4 flex-wrap text-xs">
               <div>
                 <a
-                  href="https://www.workcomposer.com/wc/idle-time-tracking-software"
+                  href={`https://${cleanDomain}/features`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 dark:text-blue-400 hover:underline font-mono block max-w-xl truncate"
                 >
-                  https://www.workcomposer.com/wc/idle-time-tracking-software
+                  {`https://${cleanDomain}/features`}
                 </a>
                 <div className="flex items-center gap-3 mt-1 text-slate-600 dark:text-slate-300">
                   <span className="font-semibold text-slate-900 dark:text-white">
-                    track computer idle time
+                    {`${brand} platform features`}
                   </span>
                   <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
                     Changes: 1

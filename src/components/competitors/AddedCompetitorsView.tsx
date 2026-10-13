@@ -536,6 +536,107 @@ export const ALL_KEYWORD_TAGS = [
   "screenshot",
 ];
 
+export function getProjectCompetitorData(projectDomain: string, competitors: CompetitorDto[]) {
+  const clean = projectDomain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
+
+  // 1. If it's explicitly workcomposer.com and has hubstaff/timedoctor, use COMPOSER dataset
+  if (
+    clean === "workcomposer.com" &&
+    Boolean(competitors && competitors.some((c) => c.domain === "hubstaff.com" || c.domain === "timedoctor.com"))
+  ) {
+    return {
+      isWorkComposerTest: true,
+      activeColumns: COMPOSER_AVAILABLE_COLUMNS,
+      activeDefaultOrder: COMPOSER_DEFAULT_ORDER,
+      activeDefaultVisible: COMPOSER_DEFAULT_VISIBLE,
+      activeComparisonKeywords: COMPOSER_COMPARISON_KEYWORDS,
+      activeCompetitorsList: competitors,
+    };
+  }
+
+  // 2. If it's explicitly myjio.com, use JIO dataset
+  if (clean === "myjio.com") {
+    return {
+      isWorkComposerTest: false,
+      activeColumns: JIO_AVAILABLE_COLUMNS,
+      activeDefaultOrder: JIO_DEFAULT_ORDER,
+      activeDefaultVisible: JIO_DEFAULT_VISIBLE,
+      activeComparisonKeywords: JIO_REAL_KEYWORDS,
+      activeCompetitorsList: competitors.length > 0 ? competitors : JIO_REAL_COMPETITORS,
+    };
+  }
+
+  // 3. For any other project (e.g. flipkart.com or newly added domains):
+  const brand = clean.split('.')[0];
+  const capitalizedBrand = brand.charAt(0).toUpperCase() + brand.slice(1);
+
+  const rivals: CompetitorDto[] = competitors.length > 0 ? competitors : (
+    clean.includes('flipkart') ? [
+      { id: "comp-fk-amazon", name: "amazon.in", domain: "amazon.in", notes: "Primary ecommerce competitor", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: "comp-fk-meesho", name: "meesho.com", domain: "meesho.com", notes: "Social commerce & value retail", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: "comp-fk-myntra", name: "myntra.com", domain: "myntra.com", notes: "Fashion & lifestyle ecommerce", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: "comp-fk-ajio", name: "ajio.com", domain: "ajio.com", notes: "Apparel & online shopping", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: "comp-fk-snapdeal", name: "snapdeal.com", domain: "snapdeal.com", notes: "Value marketplace rival", lastCheckedAt: "2026-10-12T10:00:00Z" },
+    ] : [
+      { id: `comp-${brand}-1`, name: `competitor-${clean}`, domain: `competitor-${clean}`, notes: "Direct category competitor", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: `comp-${brand}-2`, name: `leader-${brand}.com`, domain: `leader-${brand}.com`, notes: "Market leader", lastCheckedAt: "2026-10-12T10:00:00Z" },
+      { id: `comp-${brand}-3`, name: `benchmark-${brand}.io`, domain: `benchmark-${brand}.io`, notes: "Industry benchmark", lastCheckedAt: "2026-10-12T10:00:00Z" },
+    ]
+  );
+
+  const rivalCols: TableColumnDef[] = rivals.map((r) => {
+    const safeId = r.domain.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    return {
+      id: safeId,
+      label: r.domain,
+      canHide: true,
+      category: "competitor" as const,
+      faviconUrl: `https://www.google.com/s2/favicons?domain=https://${r.domain}`,
+    };
+  });
+
+  const cols: TableColumnDef[] = [
+    { id: "keywords", label: "Search engines & keywords", canHide: false, category: "primary" },
+    { id: "searchVolume", label: "Search vol.", canHide: true, category: "metric" },
+    ...rivalCols,
+    { id: "group", label: "Group", canHide: true, category: "metric" },
+    { id: "tags", label: "Tags", canHide: true, category: "metric" },
+    { id: "serpFeatures", label: "SERP features", canHide: true, category: "metric" },
+    { id: "contentScore", label: "Content Score", canHide: true, category: "metric" },
+    { id: "cpc", label: "CPC", canHide: true, category: "metric" },
+    { id: "competition", label: "Competition", canHide: true, category: "metric" },
+  ];
+
+  const defaultOrder = cols.map((c) => c.id);
+  const defaultVisible = ["keywords", "searchVolume", ...rivalCols.map((c) => c.id)];
+
+  const domainKeywords = clean.includes('flipkart') ? [
+    { id: "fk-kw-1", keyword: "flipkart online shopping", searchVolume: 1240000, searchVolumeDisplay: "1.24M", colorStripe: "#2874f0", group: "Brand", tags: ["brand", "core"], ranks: { amazon_in: { position: 2 }, meesho_com: { position: 8 } } },
+    { id: "fk-kw-2", keyword: "flipkart big billion days", searchVolume: 673000, searchVolumeDisplay: "673K", colorStripe: "#f59e0b", group: "Brand", tags: ["brand", "sale"], ranks: { amazon_in: { position: 5 } } },
+    { id: "fk-kw-3", keyword: "flipkart login", searchVolume: 450000, searchVolumeDisplay: "450K", colorStripe: "#10b981", group: "Brand", tags: ["brand", "login"], ranks: {} },
+    { id: "fk-kw-4", keyword: "flipkart mobile offers", searchVolume: 165000, searchVolumeDisplay: "165K", colorStripe: "#6366f1", group: "Deals", tags: ["deals", "mobile"], ranks: { amazon_in: { position: 3 } } },
+    { id: "fk-kw-5", keyword: "online shopping india", searchVolume: 246000, searchVolumeDisplay: "246K", colorStripe: "#ec4899", group: "Generic", tags: ["ecommerce"], ranks: { amazon_in: { position: 1 }, meesho_com: { position: 4 } } },
+    { id: "fk-kw-6", keyword: "buy smartphones online", searchVolume: 90500, searchVolumeDisplay: "90.5K", colorStripe: "#8b5cf6", group: "Electronics", tags: ["smartphones"], ranks: { amazon_in: { position: 2 } } },
+    { id: "fk-kw-7", keyword: "fashion clothes online sale", searchVolume: 74200, searchVolumeDisplay: "74.2K", colorStripe: "#14b8a6", group: "Fashion", tags: ["fashion"], ranks: { myntra_com: { position: 1 }, ajio_com: { position: 3 } } },
+    { id: "fk-kw-8", keyword: "flipkart customer care number", searchVolume: 110000, searchVolumeDisplay: "110K", colorStripe: "#ef4444", group: "Support", tags: ["support"], ranks: {} },
+  ] : [
+    { id: `kw-${brand}-1`, keyword: `${capitalizedBrand} official website`, searchVolume: 14200, searchVolumeDisplay: "14.2K", colorStripe: "#2563EB", group: "Brand", tags: ["brand", "core"], ranks: {} },
+    { id: `kw-${brand}-2`, keyword: `${capitalizedBrand} login online`, searchVolume: 8900, searchVolumeDisplay: "8.9K", colorStripe: "#10b981", group: "Brand", tags: ["brand", "login"], ranks: {} },
+    { id: `kw-${brand}-3`, keyword: `best ${capitalizedBrand} alternatives 2026`, searchVolume: 4200, searchVolumeDisplay: "4.2K", colorStripe: "#f59e0b", group: "Competitor", tags: ["competitor"], ranks: { [rivalCols[0]?.id || "rival1"]: { position: 2 } } },
+    { id: `kw-${brand}-4`, keyword: `${capitalizedBrand} pricing and features`, searchVolume: 3100, searchVolumeDisplay: "3.1K", colorStripe: "#6366f1", group: "Features", tags: ["pricing"], ranks: {} },
+    { id: `kw-${brand}-5`, keyword: `top software tools like ${capitalizedBrand}`, searchVolume: 2400, searchVolumeDisplay: "2.4K", colorStripe: "#ec4899", group: "Generic", tags: ["software"], ranks: { [rivalCols[0]?.id || "rival1"]: { position: 3 } } },
+  ];
+
+  return {
+    isWorkComposerTest: false,
+    activeColumns: cols,
+    activeDefaultOrder: defaultOrder,
+    activeDefaultVisible: defaultVisible,
+    activeComparisonKeywords: domainKeywords as KeywordRow[],
+    activeCompetitorsList: rivals,
+  };
+}
+
 export function AddedCompetitorsView({
   projectId,
   projectDomain = "myjio.com",
@@ -549,19 +650,19 @@ export function AddedCompetitorsView({
 }: AddedCompetitorsViewProps) {
   const router = useRouter();
 
-  const isWorkComposerTest =
-    projectDomain === "workcomposer.com" &&
-    Boolean(competitors && competitors.some((c) => c.domain === "hubstaff.com" || c.domain === "timedoctor.com"));
+  const dataset = useMemo(
+    () => getProjectCompetitorData(projectDomain, competitors),
+    [projectDomain, competitors]
+  );
 
-  const activeColumns = isWorkComposerTest ? COMPOSER_AVAILABLE_COLUMNS : JIO_AVAILABLE_COLUMNS;
-  const activeDefaultOrder = isWorkComposerTest ? COMPOSER_DEFAULT_ORDER : JIO_DEFAULT_ORDER;
-  const activeDefaultVisible = isWorkComposerTest ? COMPOSER_DEFAULT_VISIBLE : JIO_DEFAULT_VISIBLE;
-  const activeComparisonKeywords = isWorkComposerTest ? COMPOSER_COMPARISON_KEYWORDS : JIO_REAL_KEYWORDS;
-  const activeCompetitorsList = isWorkComposerTest
-    ? competitors
-    : competitors.length > 0
-    ? competitors
-    : JIO_REAL_COMPETITORS;
+  const {
+    isWorkComposerTest,
+    activeColumns,
+    activeDefaultOrder,
+    activeDefaultVisible,
+    activeComparisonKeywords,
+    activeCompetitorsList,
+  } = dataset;
 
   const handleAddCompetitor = () => {
     if (onAddCompetitor) {

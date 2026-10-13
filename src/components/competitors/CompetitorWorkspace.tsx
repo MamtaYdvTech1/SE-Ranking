@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useApp } from "@/components/providers/AppProviders";
 import { api } from "@/lib/api";
 import { CompetitorDto } from "@/lib/types";
 import { CompetitorOverviewTab } from "./CompetitorOverviewTab";
@@ -27,9 +28,16 @@ export function CompetitorWorkspace({ projectId, initialTab = "added" }: Competi
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const { activeProject, projects } = useApp();
+
+  const currentAppDomain =
+    activeProject?.domain ||
+    projects?.find((p) => p.id === projectId)?.domain ||
+    projects?.[0]?.domain ||
+    "flipkart.com";
 
   const [competitors, setCompetitors] = useState<CompetitorDto[]>([]);
-  const [projectDomain, setProjectDomain] = useState<string>("myjio.com");
+  const [projectDomain, setProjectDomain] = useState<string>(currentAppDomain);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,7 +95,7 @@ export function CompetitorWorkspace({ projectId, initialTab = "added" }: Competi
       if (api.projects?.get) {
         const res = await api.projects.get(projectId);
         if (res?.success && res.data) {
-          setProjectDomain(res.data.primaryDomain || (res.data as any).domain || res.data.name || "myjio.com");
+          setProjectDomain(res.data.primaryDomain || (res.data as any).domain || res.data.name || currentAppDomain);
         }
       }
     } catch {

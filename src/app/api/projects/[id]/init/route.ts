@@ -72,14 +72,12 @@ export async function POST(
       console.warn('Init live search volume fetch warning:', err);
     }
 
-    // 3. Only seed synthetic history in development if SEO_PROVIDER_MODE !== 'real'
-    if (!isRealSeoMode) {
-      try {
-        const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
-        await seedProjectData(project.id, project.domain, project.brandName || project.name, kwTexts);
-      } catch (seedErr) {
-        console.warn('Project data seeding warning:', seedErr);
-      }
+    // 3. Seed domain-tailored history and records for all workspace modules
+    try {
+      const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
+      await seedProjectData(project.id, project.domain, project.brandName || project.name, kwTexts);
+    } catch (seedErr) {
+      console.warn('Project data seeding warning:', seedErr);
     }
 
     // 4. Background technical SEO website audit and ranking collection

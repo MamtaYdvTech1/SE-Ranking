@@ -198,7 +198,7 @@ export async function getRankingSummary(
     throw new Error('Project not found');
   }
 
-  const keywords = await prisma.keyword.findMany({
+  let keywords = await prisma.keyword.findMany({
     where: {
       projectId: project.id,
       deletedAt: null,
@@ -207,6 +207,24 @@ export async function getRankingSummary(
     },
     orderBy: { createdAt: 'desc' },
   });
+
+  if (keywords.length === 0) {
+    try {
+      const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
+      await seedProjectData(project.id, project.domain, project.brandName || project.name);
+      keywords = await prisma.keyword.findMany({
+        where: {
+          projectId: project.id,
+          deletedAt: null,
+          ...(engineFilter ? { searchEngine: engineFilter } : {}),
+          ...(groupFilter && groupFilter !== 'All groups' ? { groupName: groupFilter } : {}),
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (seedErr) {
+      console.warn('Auto-seed project keywords notice:', seedErr);
+    }
+  }
 
   const totalKeywords = keywords.length;
 

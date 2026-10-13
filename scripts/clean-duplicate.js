@@ -24,6 +24,11 @@ async function main() {
     select: { id: true, name: true, domain: true }
   });
   console.log('Active projects now:', active);
+  for (const pr of active) {
+    const kwCount = await prisma.keyword.count({ where: { projectId: pr.id, deletedAt: null } });
+    const blCount = await prisma.backlink.count({ where: { projectId: pr.id, deletedAt: null } });
+    console.log(`- Project ${pr.name} (${pr.domain}, id: ${pr.id}): ${kwCount} keywords, ${blCount} backlinks`);
+  }
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

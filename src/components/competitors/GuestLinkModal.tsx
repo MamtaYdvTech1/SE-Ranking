@@ -30,7 +30,7 @@ export function GuestLinkModal({
   isOpen,
   onClose,
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "flipkart.com",
   hideSearchVolume = false,
   setHideSearchVolume,
   includeFilterSort = true,

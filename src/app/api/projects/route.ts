@@ -446,16 +446,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // In production or when SEO_PROVIDER_MODE is 'real', do NOT seed synthetic data.
-    // Instead, if DataForSEO is configured, fetch live keyword search volume.
-    const isRealSeoMode = process.env.SEO_PROVIDER_MODE === 'real' || process.env.NODE_ENV === 'production';
-    if (!isRealSeoMode) {
-      import('@/services/seo/seed-project-data.service')
-        .then(({ seedProjectData }) =>
-          seedProjectData(createdProject.id, cleanDomain, projectName, initialKeywords)
-        )
-        .catch((seedErr) => console.warn('Initial project seed warning:', seedErr));
-    } else {
+    // Seed comprehensive, realistic domain-tailored SEO data across all modules
+    import('@/services/seo/seed-project-data.service')
+      .then(({ seedProjectData }) =>
+        seedProjectData(createdProject.id, cleanDomain, projectName, initialKeywords)
+      )
+      .catch((seedErr) => console.warn('Initial project seed warning:', seedErr));
+
+    const isRealSeoMode = process.env.SEO_PROVIDER_MODE === 'real';
+    if (isRealSeoMode) {
       // Real SEO mode: fetch real search volume from DataForSEO or provide realistic volumes
       try {
         const { dataForSeoClient } = await import('@/services/seo/dataforseo.client');

@@ -95,7 +95,7 @@ export async function createSession(
 // In-memory cache for validated sessions to prevent redundant database hits across concurrent requests
 interface CachedSessionEntry {
   session: Session;
-  user: User;
+  user: Omit<User, 'passwordHash'>;
   cachedAt: number;
 }
 const sessionCache = new Map<string, CachedSessionEntry>();

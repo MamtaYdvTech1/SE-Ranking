@@ -335,9 +335,15 @@ function formatComparisonDate(d: Date): string {
 
 export function ShareOfVoiceView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "flipkart.com",
   competitors = [],
 }: ShareOfVoiceViewProps) {
+  const cleanDomain = (projectDomain || "flipkart.com")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "");
+  const brandTitle = cleanDomain.split(".")[0].toUpperCase();
+
   // 1. Notice alert banner dismissal
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
 
@@ -774,6 +780,39 @@ export function ShareOfVoiceView({
 
     return base.map((d) => {
       let mapped = { ...d };
+
+      if (mapped.isTargetDomain || mapped.domain === "workcomposer.com") {
+        mapped.domain = cleanDomain;
+        mapped.isTargetDomain = true;
+        mapped.urls = [
+          {
+            id: `url-${cleanDomain}-1`,
+            url: `https://${cleanDomain}/`,
+            keywordsInTop20: 6,
+            shareOfVoice: 8.2,
+            shareOfVoiceDisplay: "8.20%",
+            trafficForecast: 225.4,
+            trafficForecastDisplay: "225.4",
+          },
+          {
+            id: `url-${cleanDomain}-2`,
+            url: `https://${cleanDomain}/features`,
+            keywordsInTop20: 3,
+            shareOfVoice: 4.54,
+            shareOfVoiceDisplay: "4.54%",
+            trafficForecast: 124.7,
+            trafficForecastDisplay: "124.7",
+          },
+        ];
+      } else if (cleanDomain.includes("flipkart")) {
+        if (mapped.domain === "getcomposer.org") {
+          mapped.domain = "amazon.in";
+          mapped.urls = [{ id: "url-amz-1", url: "https://amazon.in/", keywordsInTop20: 8, shareOfVoice: 41.52, shareOfVoiceDisplay: "41.52%", trafficForecast: 1142, trafficForecastDisplay: "1.1K" }];
+        } else if (mapped.domain === "insightful.io") {
+          mapped.domain = "meesho.com";
+          mapped.urls = [{ id: "url-mee-1", url: "https://meesho.com/", keywordsInTop20: 4, shareOfVoice: 10.5, shareOfVoiceDisplay: "10.50%", trafficForecast: 280, trafficForecastDisplay: "280" }];
+        }
+      }
 
       if (keywordRatio < 1) {
         const scaledSov = Number((d.shareOfVoice * keywordRatio).toFixed(2));
@@ -1722,7 +1761,7 @@ export function ShareOfVoiceView({
             <div className="px-3">
               <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <span>TRAFFIC FORECAST</span>
-                <span className="text-slate-400 cursor-help" title="Estimated monthly clicks to workcomposer.com">
+                <span className="text-slate-400 cursor-help" title={`Estimated monthly clicks to ${cleanDomain}`}>
                   ℹ
                 </span>
               </div>
@@ -2146,7 +2185,7 @@ export function ShareOfVoiceView({
               </div>
               <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded">
                 <span className="font-bold text-slate-700 dark:text-slate-200">17 Sep 2026:</span>
-                <p className="text-slate-500 mt-0.5">WorkComposer gained rank #2 on download queries.</p>
+                <p className="text-slate-500 mt-0.5">{`${brandTitle} gained rank #2 on target search queries.`}</p>
               </div>
             </div>
             <div className="flex justify-end">

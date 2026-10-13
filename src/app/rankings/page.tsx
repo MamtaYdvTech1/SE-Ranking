@@ -87,20 +87,8 @@ const HIGH_POTENTIAL_KEYWORDS = [
   { keyword: 'time tracking software with screenshots', volume: 1900, kd: 18, intent: 'Commercial', cpc: '$3.40' },
 ];
 
-const INITIAL_KEYWORDS: KeywordItem[] = [
-  {
-    id: 'kw-1',
-    keyword: 'employee monitoring software',
-    rank: 2,
-    prevRank: 3,
-    change: 1,
-    volume: 14800,
-    cpc: '$4.50',
-    difficulty: 28,
-    serpFeatures: ['Featured Snippet', 'SiteLinks'],
-    url: 'https://www.workcomposer.com/employee-monitoring',
-    dateChecked: 'Today, 06:00',
-  },
+const INITIAL_KEYWORDS: KeywordItem[] = [];
+const DEPRECATED_KEYWORDS_SAMPLE: KeywordItem[] = [
   {
     id: 'kw-2',
     keyword: 'work time tracker',
@@ -503,6 +491,42 @@ const toRankNum = (r: number | string | null | undefined): number | null => {
     return isNaN(parsed) ? null : parsed;
   }
   return null;
+};
+
+const generateDynamicKeywordsForDomain = (targetDomain: string): TeamsKeywordItem[] => {
+  const clean = (targetDomain || 'flipkart.com').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase();
+  const brand = clean.split('.')[0] || 'brand';
+  const brandCap = brand.charAt(0).toUpperCase() + brand.slice(1);
+
+  const kwTemplates = [
+    { name: brand.toLowerCase(), vol: 450000, r3: 1, r4: 1, diff: 0, cs: 92, path: '' },
+    { name: `${brand.toLowerCase()} online shopping`, vol: 165000, r3: 2, r4: 2, diff: 0, cs: 88, path: '/online-shopping' },
+    { name: `${brand.toLowerCase()} app`, vol: 240000, r3: 1, r4: 1, diff: 0, cs: 85, path: '/app' },
+    { name: `buy on ${brand.toLowerCase()}`, vol: 90000, r3: 3, r4: 3, diff: 0, cs: 81, path: '/store' },
+    { name: `${brand.toLowerCase()} deals`, vol: 110000, r3: 5, r4: 4, diff: 1, cs: 79, path: '/deals' },
+    { name: `${brand.toLowerCase()} offers today`, vol: 75000, r3: 4, r4: 5, diff: -1, cs: 76, path: '/offers' },
+    { name: `${brand.toLowerCase()} best price`, vol: 60000, r3: 7, r4: 6, diff: 1, cs: 73, path: '/best-price' },
+    { name: `${brand.toLowerCase()} customer care`, vol: 95000, r3: 1, r4: 1, diff: 0, cs: 90, path: '/contact' },
+    { name: `${brand.toLowerCase()} discount code`, vol: 48000, r3: 8, r4: 9, diff: -1, cs: 70, path: '/coupons' },
+    { name: `${brand.toLowerCase()} login`, vol: 180000, r3: 1, r4: 1, diff: 0, cs: 94, path: '/account/login' },
+    { name: `${brand.toLowerCase()} official store`, vol: 82000, r3: 2, r4: 2, diff: 0, cs: 86, path: '/store' },
+    { name: `${brand.toLowerCase()} electronics`, vol: 120000, r3: 3, r4: 3, diff: 0, cs: 83, path: '/electronics' },
+    { name: `${brand.toLowerCase()} mobile phones`, vol: 310000, r3: 2, r4: 2, diff: 0, cs: 89, path: '/mobiles' },
+    { name: `${brand.toLowerCase()} fashion sale`, vol: 88000, r3: 6, r4: 5, diff: 1, cs: 77, path: '/fashion' },
+  ];
+
+  return kwTemplates.map((t, idx) => ({
+    id: `kw-${clean}-${idx + 1}`,
+    name: t.name,
+    color: ['rgb(33, 63, 52)', 'rgb(22, 219, 34)', 'rgb(6, 72, 220)', 'rgb(142, 68, 173)', 'rgb(230, 126, 34)'][idx % 5],
+    urlHref: `https://${clean}${t.path}`,
+    volume: t.vol,
+    features: { sge: idx % 2 === 0, sitelinks: idx < 4, paa: idx % 3 === 0 },
+    contentScore: t.cs,
+    rankOct3: t.r3,
+    rankOct4: t.r4,
+    diff: t.diff,
+  }));
 };
 
 const JIO_KEYWORDS_DATA: TeamsKeywordItem[] = [
@@ -918,7 +942,14 @@ function RankingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentProject = activeProject || projects[0] || null;
-  const domain = currentProject?.domain || 'in.pinterest.com';
+  const domain = currentProject?.domain || 'flipkart.com';
+  const cleanDomain = useMemo(() => {
+    return (domain || 'flipkart.com')
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .replace(/\/.*$/, '')
+      .toLowerCase();
+  }, [domain]);
   const effectiveProjectName = currentProject?.name || (domain.startsWith('http') ? domain : `https://${domain}/`);
   const effectiveDomain = domain;
 
@@ -1282,8 +1313,8 @@ function RankingsPageContent() {
           video: (k.serpFeatures || k.features || []).includes('video'),
         },
         contentScore: idx === 0 ? 88 : idx === 1 ? 78 : null,
-        rankOct3: k.prevRank ?? (idx === 0 ? 1 : 2),
-        rankOct4: k.rank ?? (idx === 0 ? 1 : 2),
+        rankOct3: k.prevRank !== undefined && k.prevRank !== null ? k.prevRank : (k.rank !== undefined && k.rank !== null ? k.rank : '-'),
+        rankOct4: k.rank !== undefined && k.rank !== null ? k.rank : '-',
         diff: k.change ?? (k.dynamics || 0),
       }));
     }
@@ -1299,8 +1330,8 @@ function RankingsPageContent() {
     if (domain.includes('workcomposer')) {
       return TEAMS_KEYWORDS_DATA;
     }
-    return MEESHO_48_KEYWORDS_DATA;
-  }, [keywords, domain, activeProject?.domain]);
+    return generateDynamicKeywordsForDomain(cleanDomain);
+  }, [keywords, domain, cleanDomain, activeProject?.domain]);
 
   const activeDetailedFiltersCount = useMemo(() => {
     let count = 0;
@@ -1372,8 +1403,8 @@ function RankingsPageContent() {
 
   const handlePerformExport = () => {
     setIsExportModalOpen(false);
-    const domainName = activeProject?.domain || 'workcomposer.com';
-    const dateStr = '2026-10-05';
+    const domainName = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+    const dateStr = '2026-10-12';
 
     if (selectedExportFormat === 'csv') {
       const headers = ['Keyword', 'Rank', 'Previous Rank', 'Change', 'Search Volume', 'CPC', 'Difficulty', 'SERP Features', 'Target URL', 'Date Checked'];
@@ -1587,7 +1618,11 @@ function RankingsPageContent() {
       .map((k) => k.trim())
       .filter((k) => k.length > 0);
 
-    const projectId = activeProject?.id || 'workcomposer.com';
+    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    if (!projectId) {
+      showToast('Please select or wait for a project to load.');
+      return;
+    }
     try {
       const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
         method: 'POST',
@@ -1612,7 +1647,11 @@ function RankingsPageContent() {
   const handleRecheckRankings = async (selectedIds?: string[]) => {
     setIsRechecking(true);
     setIsRecheckOpen(false);
-    const projectId = activeProject?.id || 'default';
+    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    if (!projectId) {
+      setIsRechecking(false);
+      return;
+    }
 
     try {
       const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings/check`, {
@@ -1637,13 +1676,15 @@ function RankingsPageContent() {
   };
 
   const handleExportCsv = () => {
-    const projectId = activeProject?.id || 'workcomposer.com';
+    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    if (!projectId) return;
     window.location.href = `/api/projects/${encodeURIComponent(projectId)}/keywords/export`;
     showToast('Exporting rankings CSV...');
   };
 
   const addSelectedHighPotential = async () => {
-    const projectId = activeProject?.id || 'workcomposer.com';
+    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    if (!projectId) return;
     try {
       const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
         method: 'POST',
@@ -3325,8 +3366,8 @@ function RankingsPageContent() {
                             { id: 'volume', label: 'Search vol.' },
                             { id: 'serp_features', label: 'SERP features' },
                             { id: 'content_score', label: 'Content Score' },
-                            { id: 'oct10', label: 'Oct-10' },
-                            { id: 'oct11', label: 'Oct-11' },
+                            { id: 'oct10', label: 'Oct-12' },
+                            { id: 'oct11', label: 'Oct-13' },
                           ].map((col) => {
                             const isVisible = visibleTableCols.has(col.id);
                             return (
@@ -3428,21 +3469,21 @@ function RankingsPageContent() {
                         </th>
                       )}
 
-                      {/* 6. Oct-10 (width 80px) */}
+                      {/* 6. Oct-12 (width 80px) */}
                       {visibleTableCols.has('oct10') && (
                         <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
                           <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                            <span>Oct-10</span>
+                            <span>Oct-12</span>
                             <ChevronDown className="w-3 h-3 text-gray-400" />
                           </div>
                         </th>
                       )}
 
-                      {/* 7. Oct-11 (width 80px) */}
+                      {/* 7. Oct-13 (width 80px) */}
                       {visibleTableCols.has('oct11') && (
                         <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
                           <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                            <span>Oct-11</span>
+                            <span>Oct-13</span>
                             <ChevronDown className="w-3 h-3 text-gray-400" />
                           </div>
                         </th>

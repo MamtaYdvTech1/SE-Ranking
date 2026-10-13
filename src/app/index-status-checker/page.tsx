@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -38,10 +38,15 @@ interface IndexCheckHistoryItem {
 }
 
 function IndexStatusCheckerContent() {
-  const { activeProject } = useApp();
+  const { activeProject, projects } = useApp();
   const searchParams = useSearchParams();
   const router = useRouter();
   const isResultsTab = searchParams.get('tab') === 'results';
+
+  const cleanDomain = useMemo(() => {
+    const raw = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+    return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
+  }, [activeProject?.domain, projects]);
 
   const [showBanner, setShowBanner] = useState(true);
   const [engine, setEngine] = useState('Google');
@@ -61,19 +66,20 @@ function IndexStatusCheckerContent() {
         // ignore
       }
     }
+    const base = `https://${cleanDomain}`;
     return [
       {
         id: 'idx_init_1',
-        firstUrl: 'https://www.workcomposer.com/',
+        firstUrl: `${base}/`,
         urlCount: 5,
         date: 'Oct 02, 2026',
         engine: 'Google',
         results: [
-          { url: 'https://www.workcomposer.com/', isIndexed: true, cacheDate: '01 Oct 2026, 12:45 GMT', responseCode: 200 },
-          { url: 'https://www.workcomposer.com/features/time-tracking', isIndexed: true, cacheDate: '30 Sep 2026, 18:20 GMT', responseCode: 200 },
-          { url: 'https://www.workcomposer.com/pricing', isIndexed: true, cacheDate: '29 Sep 2026, 09:15 GMT', responseCode: 200 },
-          { url: 'https://www.workcomposer.com/blog/remote-work-productivity-tips', isIndexed: false, cacheDate: 'Not cached', responseCode: 200 },
-          { url: 'https://www.workcomposer.com/contact', isIndexed: true, cacheDate: '28 Sep 2026, 14:02 GMT', responseCode: 200 },
+          { url: `${base}/`, isIndexed: true, cacheDate: '01 Oct 2026, 12:45 GMT', responseCode: 200 },
+          { url: `${base}/about-us`, isIndexed: true, cacheDate: '30 Sep 2026, 18:20 GMT', responseCode: 200 },
+          { url: `${base}/products`, isIndexed: true, cacheDate: '29 Sep 2026, 09:15 GMT', responseCode: 200 },
+          { url: `${base}/blog`, isIndexed: false, cacheDate: 'Not cached', responseCode: 200 },
+          { url: `${base}/contact`, isIndexed: true, cacheDate: '28 Sep 2026, 14:02 GMT', responseCode: 200 },
         ],
       },
     ];
@@ -97,9 +103,8 @@ function IndexStatusCheckerContent() {
   const totalCost = urls.length > 0 ? (urls.length * 0.005).toFixed(3) : '0';
 
   const loadSampleUrls = () => {
-    const domain = activeProject?.domain || 'https://www.workcomposer.com/';
-    const base = domain.replace(/\/$/, '');
-    setUrlList(`${base}/\n${base}/features/time-tracking\n${base}/pricing\n${base}/blog/remote-work-productivity-tips\n${base}/contact`);
+    const base = `https://${cleanDomain}`;
+    setUrlList(`${base}/\n${base}/about-us\n${base}/products\n${base}/blog\n${base}/contact`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

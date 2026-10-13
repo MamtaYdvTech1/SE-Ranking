@@ -292,6 +292,15 @@ export function SeRankingSerpCompetitors({
         { id: 'kw-5', name: 'pint pricing', group: 'General' },
       ];
     }
+    if (cleanDomain.includes('flipkart')) {
+      return [
+        { id: 'kw-1', name: 'flipkart online shopping', group: 'Brand' },
+        { id: 'kw-2', name: 'flipkart big billion days', group: 'Brand' },
+        { id: 'kw-3', name: 'flipkart login', group: 'Brand' },
+        { id: 'kw-4', name: 'flipkart mobile offers', group: 'Deals' },
+        { id: 'kw-5', name: 'flipkart grocery', group: 'General' },
+      ];
+    }
     if (cleanDomain.includes('workcomposer')) {
       return [
         { id: 'kw-1', name: 'workcomposer', group: 'General' },

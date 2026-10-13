@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { SUPPORTED_COUNTRIES } from '@/lib/constants';
+import { useApp } from '@/components/providers/AppProviders';
 
 interface ClusterGroup {
   id: string;
@@ -42,6 +43,10 @@ function KeywordGrouperContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = searchParams?.get('tab') || 'settings';
+  const { activeProject, projects } = useApp();
+  const domainName = (activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com')
+    .replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
+  const brandName = domainName.split('.')[0].toUpperCase();
 
   const [showInfo, setShowInfo] = useState(true);
   const [reportTitle, setReportTitle] = useState('');
@@ -71,7 +76,7 @@ function KeywordGrouperContent() {
     return [
       {
         id: 'group_init_1',
-        title: 'WorkComposer Remote Monitoring & Time Tracking',
+        title: `${brandName} Search Strategy & High-Intent Clusters`,
         date: 'Oct 02, 2026',
         queryCount: 12,
         accuracy: 3,
@@ -79,7 +84,7 @@ function KeywordGrouperContent() {
         clusters: [
           {
             id: 'c1',
-            name: 'Time Tracking & Timesheets',
+            name: `${brandName} Core Product Queries`,
             totalVolume: 8400,
             keywords: [
               { text: 'best time tracking software for agencies', volume: 2900, similarity: 88 },

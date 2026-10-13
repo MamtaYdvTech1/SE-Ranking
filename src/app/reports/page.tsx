@@ -778,7 +778,7 @@ export default function ReportBuilderPage() {
       id: `tpl-${Date.now()}`,
       name: newTemplateName.trim(),
       created: 'Today',
-      desc: 'Custom modular template for workcomposer.com',
+      desc: `Custom modular template for ${activeDomain}`,
     };
     setMyTemplates([newTpl, ...myTemplates]);
     setNewTemplateName('');
@@ -1761,7 +1761,7 @@ export default function ReportBuilderPage() {
                     <h2 className="text-sm font-bold text-[#1E293B]" style={{ color: templateAccentColor }}>
                       {templateTitle}
                     </h2>
-                    <p className="text-[11px] text-[#64748B]">workcomposer.com - SEO Modular Report</p>
+                    <p className="text-[11px] text-[#64748B]">{activeDomain} - SEO Modular Report</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -2406,7 +2406,7 @@ export default function ReportBuilderPage() {
                   <div
                     key={tpl.id}
                     onClick={() => {
-                      setNewReportTitle(`workcomposer.com - ${tpl.name}`);
+                      setNewReportTitle(`${activeDomain} - ${tpl.name}`);
                       setIsCreateReportModalOpen(true);
                     }}
                     className="p-3 bg-[#FAFBFD] hover:bg-white border border-[#CBD5E1] hover:border-[#00B074] rounded-md cursor-pointer transition-all shadow-2xs group"
@@ -2415,7 +2415,7 @@ export default function ReportBuilderPage() {
                       {tpl.name}
                     </div>
                     <div className="text-[11px] text-[#64748B] line-clamp-2">
-                      {tpl.desc || 'Custom modular template for workcomposer.com'}
+                      {tpl.desc || `Custom modular template for ${activeDomain}`}
                     </div>
                   </div>
                 ))}
@@ -2881,7 +2881,7 @@ export default function ReportBuilderPage() {
                   required
                   value={emailRecipient}
                   onChange={(e) => setEmailRecipient(e.target.value)}
-                  placeholder="client@workcomposer.com"
+                  placeholder={`client@${activeDomain}`}
                   className="w-full px-3 py-2 border border-[#CBD5E1] rounded focus:border-[#7C3AED] outline-hidden"
                 />
               </div>
@@ -3017,7 +3017,7 @@ export default function ReportBuilderPage() {
                   <span className="text-[11px] font-bold text-[#7C3AED]">Owner</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#475569]">workcomposer Team</span>
+                  <span className="text-[#475569]">{activeDomain} Team</span>
                   <span className="text-[11px] text-[#64748B]">Can edit & export</span>
                 </div>
               </div>
@@ -3092,7 +3092,7 @@ export default function ReportBuilderPage() {
             <div className="flex items-center justify-between border-b pb-3">
               <div>
                 <h3 className="font-bold text-sm text-[#1E293B]">Create Report</h3>
-                <p className="text-xs text-[#64748B]">Configure report modules for workcomposer.com</p>
+                <p className="text-xs text-[#64748B]">Configure report modules for {activeDomain}</p>
               </div>
               <button onClick={() => setIsCreateReportModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-4 h-4" />
@@ -3105,7 +3105,7 @@ export default function ReportBuilderPage() {
                 <input
                   type="text"
                   disabled
-                  value="workcomposer.com"
+                  value={activeDomain}
                   className="w-full px-3 py-2 bg-[#F1F5F9] border border-[#CBD5E1] rounded font-mono text-xs text-[#64748B]"
                 />
               </div>
@@ -3117,7 +3117,7 @@ export default function ReportBuilderPage() {
                   required
                   value={newReportTitle}
                   onChange={(e) => setNewReportTitle(e.target.value)}
-                  placeholder="e.g. workcomposer.com Weekly Audit"
+                  placeholder={`e.g. ${activeDomain} Weekly Audit`}
                   className="w-full px-3 py-2 border border-[#CBD5E1] rounded text-xs focus:border-[#7C3AED] outline-hidden"
                 />
               </div>
@@ -3215,7 +3215,7 @@ export default function ReportBuilderPage() {
                   required
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder="e.g. WorkComposer Client Audit"
+                  placeholder={`e.g. ${activeDomain} Client Audit`}
                   className="w-full px-3 py-2 border border-[#CBD5E1] rounded text-xs focus:border-[#7C3AED] outline-hidden"
                 />
               </div>

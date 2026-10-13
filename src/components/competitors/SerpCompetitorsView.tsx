@@ -108,6 +108,34 @@ export const SERP_PROJECT_KEYWORDS: SerpKeywordItem[] = [
   },
 ];
 
+export function getSerpKeywordsForDomain(domain: string): SerpKeywordItem[] {
+  const clean = domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
+  if (clean.includes('workcomposer')) {
+    return SERP_PROJECT_KEYWORDS;
+  }
+  if (clean.includes('flipkart')) {
+    return [
+      { id: "kw-1", keyword: "flipkart online shopping", searchVolume: 1240000, searchVolumeDisplay: "1.24M", group: "Brand", tags: ["core", "branded"] },
+      { id: "kw-2", keyword: "flipkart big billion days", searchVolume: 673000, searchVolumeDisplay: "673K", group: "Brand", tags: ["deals", "sale"] },
+      { id: "kw-3", keyword: "flipkart login", searchVolume: 450000, searchVolumeDisplay: "450K", group: "Brand", tags: ["login"] },
+      { id: "kw-4", keyword: "flipkart mobile offers", searchVolume: 165000, searchVolumeDisplay: "165K", group: "Deals", tags: ["deals"] },
+      { id: "kw-5", keyword: "online shopping app india", searchVolume: 246000, searchVolumeDisplay: "246K", group: "Generic", tags: ["ecommerce"] },
+      { id: "kw-6", keyword: "buy smartphones online", searchVolume: 90500, searchVolumeDisplay: "90.5K", group: "Electronics", tags: ["smartphones"] },
+      { id: "kw-7", keyword: "fashion clothes online sale", searchVolume: 74200, searchVolumeDisplay: "74.2K", group: "Fashion", tags: ["fashion"] },
+      { id: "kw-8", keyword: "flipkart customer care number", searchVolume: 110000, searchVolumeDisplay: "110K", group: "Support", tags: ["support"] },
+    ];
+  }
+  const brand = clean.split('.')[0];
+  const capitalized = brand.charAt(0).toUpperCase() + brand.slice(1);
+  return [
+    { id: "kw-1", keyword: `${capitalized} official website`, searchVolume: 14200, searchVolumeDisplay: "14.2K", group: "Brand", tags: ["core", "branded"] },
+    { id: "kw-2", keyword: `${capitalized} login online`, searchVolume: 8900, searchVolumeDisplay: "8.9K", group: "Brand", tags: ["login"] },
+    { id: "kw-3", keyword: `best ${capitalized} alternatives 2026`, searchVolume: 4200, searchVolumeDisplay: "4.2K", group: "Competitor", tags: ["high-intent"] },
+    { id: "kw-4", keyword: `${capitalized} pricing and plans`, searchVolume: 3100, searchVolumeDisplay: "3.1K", group: "Features", tags: ["software"] },
+    { id: "kw-5", keyword: `top software tools like ${capitalized}`, searchVolume: 2400, searchVolumeDisplay: "2.4K", group: "General", tags: ["software"] },
+  ];
+}
+
 export const ALL_KEYWORD_TAGS = [
   "core",
   "branded",
@@ -265,9 +293,16 @@ export function generateSerpData(keyword: string, date: string, targetDomain: st
 
 export function SerpCompetitorsView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "flipkart.com",
   competitors = [],
 }: SerpCompetitorsViewProps) {
+  const cleanDomain = (projectDomain || "flipkart.com")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "");
+  const brandTitle = cleanDomain.split(".")[0].toUpperCase();
+  const domainKeywords = useMemo(() => getSerpKeywordsForDomain(projectDomain), [projectDomain]);
+
   // 1. Notice banner dismissal
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
 
@@ -696,7 +731,7 @@ export function SerpCompetitorsView({
 
   // Filtered keywords list based on group, tag, search
   const filteredKeywords = useMemo(() => {
-    return SERP_PROJECT_KEYWORDS.filter((k) => {
+    return domainKeywords.filter((k) => {
       // Group filter
       if (selectedGroup !== "All groups" && selectedGroup !== "all") {
         if (k.group.toLowerCase() !== selectedGroup.toLowerCase()) {
@@ -723,13 +758,13 @@ export function SerpCompetitorsView({
       }
       return true;
     });
-  }, [selectedGroup, filterWithoutTags, filterAllTags, selectedTags, selectedTagMode, keywordSearch]);
+  }, [domainKeywords, selectedGroup, filterWithoutTags, filterAllTags, selectedTags, selectedTagMode, keywordSearch]);
 
   const activeKeyword = useMemo(() => {
     const found = filteredKeywords.find((k) => k.id === selectedKeywordId);
     if (found) return found;
-    return filteredKeywords[0] || SERP_PROJECT_KEYWORDS[0];
-  }, [filteredKeywords, selectedKeywordId]);
+    return filteredKeywords[0] || domainKeywords[0];
+  }, [filteredKeywords, selectedKeywordId, domainKeywords]);
 
   // Extract competitor domain strings for matching
   const competitorDomainList = useMemo(() => {
@@ -1971,7 +2006,7 @@ export function SerpCompetitorsView({
               </div>
               <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded">
                 <span className="font-bold text-slate-700 dark:text-slate-200">17 Sep 2026:</span>
-                <p className="text-slate-500 mt-0.5">WorkComposer gained rank #1 on download queries.</p>
+                <p className="text-slate-500 mt-0.5">{`${brandTitle} gained rank #1 on download queries.`}</p>
               </div>
             </div>
             <div className="flex justify-end">

@@ -874,6 +874,149 @@ export interface VisibilityRatingViewProps {
   competitors?: CompetitorDto[];
 }
 
+export function getVisibilityDataset(projectDomain: string, competitors?: CompetitorDto[]): VisibilityDomainItem[] {
+  const clean = projectDomain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
+  if (clean === "workcomposer.com" && Boolean(competitors && competitors.some((c) => c.domain === "getcomposer.org"))) {
+    return COMPOSER_VISIBILITY_DOMAINS;
+  }
+  if (clean === "myjio.com" || clean === "jio.com") {
+    return JIO_VISIBILITY_DOMAINS;
+  }
+  if (clean.includes("flipkart")) {
+    return [
+      {
+        id: "v-fk-1",
+        domain: "www.flipkart.com",
+        color: "#2874f0",
+        tags: ["core", "brand"],
+        group: "Core",
+        visibility: 88.5,
+        trafficForecast: 485000,
+        keywords: 195000,
+        keywordsInTop10: 92,
+        backlinks: 412000,
+        referringDomains: 24500,
+        history: {
+          week: [86.2, 86.8, 87.1, 87.5, 87.9, 88.2, 88.5],
+          twoWeeks: [84.0, 84.5, 85.0, 85.4, 85.8, 86.2, 86.8, 87.1, 87.5, 87.9, 88.2, 88.5, 88.5, 88.5],
+          month: [80.5, 81.2, 82.0, 83.1, 84.0, 85.0, 85.8, 86.5, 87.1, 87.8, 88.2, 88.5],
+        },
+      },
+      {
+        id: "v-fk-2",
+        domain: "www.amazon.in",
+        color: "#f59e0b",
+        tags: ["competitor", "leader"],
+        group: "Competitors",
+        visibility: 94.2,
+        trafficForecast: 590000,
+        keywords: 240000,
+        keywordsInTop10: 96,
+        backlinks: 650000,
+        referringDomains: 38000,
+        history: {
+          week: [93.5, 93.8, 93.9, 94.0, 94.1, 94.2, 94.2],
+          twoWeeks: [92.0, 92.4, 92.8, 93.1, 93.5, 93.8, 93.9, 94.0, 94.1, 94.2, 94.2, 94.2, 94.2, 94.2],
+          month: [90.0, 90.5, 91.2, 92.0, 92.5, 93.0, 93.5, 93.8, 94.0, 94.1, 94.2, 94.2],
+        },
+      },
+      {
+        id: "v-fk-3",
+        domain: "www.meesho.com",
+        color: "#ec4899",
+        tags: ["competitor"],
+        group: "Competitors",
+        visibility: 42.1,
+        trafficForecast: 180000,
+        keywords: 62000,
+        keywordsInTop10: 48,
+        backlinks: 85000,
+        referringDomains: 7200,
+        history: {
+          week: [40.5, 40.8, 41.2, 41.5, 41.8, 42.0, 42.1],
+          twoWeeks: [38.0, 38.5, 39.0, 39.5, 40.0, 40.5, 40.8, 41.2, 41.5, 41.8, 42.0, 42.1, 42.1, 42.1],
+          month: [35.0, 36.0, 36.8, 37.5, 38.0, 39.0, 39.8, 40.5, 41.2, 41.8, 42.0, 42.1],
+        },
+      },
+      {
+        id: "v-fk-4",
+        domain: "www.myntra.com",
+        color: "#ef4444",
+        tags: ["fashion", "competitor"],
+        group: "Competitors",
+        visibility: 38.4,
+        trafficForecast: 145000,
+        keywords: 54000,
+        keywordsInTop10: 41,
+        backlinks: 120000,
+        referringDomains: 9800,
+        history: {
+          week: [37.2, 37.5, 37.8, 38.0, 38.2, 38.3, 38.4],
+          twoWeeks: [35.0, 35.5, 36.0, 36.5, 37.0, 37.2, 37.5, 37.8, 38.0, 38.2, 38.3, 38.4, 38.4, 38.4],
+          month: [32.0, 33.0, 34.0, 34.8, 35.5, 36.2, 37.0, 37.5, 37.9, 38.2, 38.3, 38.4],
+        },
+      },
+      {
+        id: "v-fk-5",
+        domain: "www.ajio.com",
+        color: "#6366f1",
+        tags: ["apparel", "competitor"],
+        group: "Competitors",
+        visibility: 26.8,
+        trafficForecast: 92000,
+        keywords: 31000,
+        keywordsInTop10: 29,
+        backlinks: 62000,
+        referringDomains: 4900,
+        history: {
+          week: [25.8, 26.0, 26.2, 26.4, 26.5, 26.7, 26.8],
+          twoWeeks: [24.0, 24.3, 24.8, 25.0, 25.4, 25.8, 26.0, 26.2, 26.4, 26.5, 26.7, 26.8, 26.8, 26.8],
+          month: [21.5, 22.0, 22.8, 23.4, 24.0, 24.6, 25.2, 25.8, 26.2, 26.5, 26.7, 26.8],
+        },
+      },
+    ];
+  }
+  const brand = clean.split('.')[0];
+  return [
+    {
+      id: `v-${brand}-main`,
+      domain: `www.${clean}`,
+      color: "#2563EB",
+      tags: ["core", "brand"],
+      group: "Core",
+      visibility: 45.2,
+      trafficForecast: 12400,
+      keywords: 4200,
+      keywordsInTop10: 38,
+      backlinks: 1450,
+      referringDomains: 320,
+      history: {
+        week: [42.1, 42.8, 43.4, 44.0, 44.5, 45.0, 45.2],
+        twoWeeks: [39.0, 39.8, 40.5, 41.2, 42.1, 42.8, 43.4, 44.0, 44.5, 45.0, 45.2, 45.2, 45.2, 45.2],
+        month: [35.0, 36.2, 37.5, 38.8, 40.0, 41.2, 42.5, 43.4, 44.1, 44.8, 45.1, 45.2],
+      },
+    },
+    {
+      id: `v-${brand}-rival1`,
+      domain: `leader-${clean}`,
+      color: "#10b981",
+      tags: ["competitor"],
+      group: "Competitors",
+      visibility: 62.4,
+      trafficForecast: 28500,
+      keywords: 8900,
+      keywordsInTop10: 64,
+      backlinks: 5400,
+      referringDomains: 890,
+      history: {
+        week: [61.0, 61.3, 61.6, 61.9, 62.1, 62.3, 62.4],
+        twoWeeks: [58.0, 58.6, 59.2, 60.0, 60.5, 61.0, 61.3, 61.6, 61.9, 62.1, 62.3, 62.4, 62.4, 62.4],
+        month: [54.0, 55.2, 56.4, 57.5, 58.8, 60.0, 60.8, 61.5, 62.0, 62.2, 62.3, 62.4],
+      },
+    },
+  ];
+}
+
 export function VisibilityRatingView({
   projectId,
   projectDomain = "www.jio.com",
@@ -883,7 +1026,10 @@ export function VisibilityRatingView({
     projectDomain === "workcomposer.com" &&
     Boolean(competitors && competitors.some((c) => c.domain === "getcomposer.org"));
 
-  const activeDomainsDataset = isWorkComposerTest ? COMPOSER_VISIBILITY_DOMAINS : JIO_VISIBILITY_DOMAINS;
+  const activeDomainsDataset = useMemo(
+    () => getVisibilityDataset(projectDomain, competitors),
+    [projectDomain, competitors]
+  );
 
   // 1. Top Notice alert banner
   const [isNoticeVisible, setIsNoticeVisible] = useState(true);

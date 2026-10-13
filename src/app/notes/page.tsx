@@ -16,6 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
+import { useApp } from '@/components/providers/AppProviders';
 
 interface NoteItem {
   id: string;
@@ -202,6 +203,9 @@ const INITIAL_NOTES: NoteItem[] = [
 ];
 
 export default function NotesPage() {
+  const { activeProject, projects } = useApp();
+  const currentDomain = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+  const cleanDomain = currentDomain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
   const [notes, setNotes] = useState<NoteItem[]>(INITIAL_NOTES);
   const [filterTab, setFilterTab] = useState<'ALL' | 'DISPLAYED' | 'HIDDEN'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -288,7 +292,7 @@ export default function NotesPage() {
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-1.5 font-medium">
             <Link href="/project-overview" className="hover:text-blue-600">
-              https://www.workcomposer.com/
+              {`https://${cleanDomain}/`}
             </Link>
             <span>&gt;</span>
             <span className="text-gray-900 font-semibold">Notes</span>
