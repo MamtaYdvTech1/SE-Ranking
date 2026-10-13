@@ -1764,9 +1764,9 @@ function ProjectsDashboardPageContent() {
 
   if (!hasCreatedProject || projects.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#F8FAFC] min-h-[calc(100vh-80px)] text-gray-900 pb-16 select-none relative flex flex-col justify-between">
+      <div className="flex-1 overflow-y-auto bg-[#F8FAFC] text-gray-900 pb-16 select-none relative flex flex-col">
         {/* Main Onboarding Canvas matching screenshot */}
-        <div className="w-full max-w-5xl mx-auto px-6 py-10 flex-1 flex flex-col items-center justify-center">
+        <div className="w-full max-w-5xl mx-auto px-6 pt-6 sm:pt-8 pb-10 flex flex-col items-center">
           {/* Hero Title & Subtitle */}
           <div className="text-center space-y-2 mb-8">
             <h1 className="text-2xl sm:text-[32px] font-bold text-gray-900 tracking-tight">
