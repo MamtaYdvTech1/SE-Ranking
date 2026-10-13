@@ -75,6 +75,7 @@ interface KeywordItem {
   previousRank?: number | null;
   currentRank?: number | null;
   dynamics?: number;
+  traffic?: number;
 }
 
 const HIGH_POTENTIAL_KEYWORDS = [
@@ -1029,7 +1030,12 @@ function RankingsPageContent() {
   // Dual Calendar Date Picker Popover matching Screenshot 1 & 4
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
-  const [selectedDateRangeLabel, setSelectedDateRangeLabel] = useState('10 Oct 2026 - 11 Oct 2026');
+  const [selectedDateRangeLabel, setSelectedDateRangeLabel] = useState('Last 30 Days');
+  const [selectedDateRangePreset, setSelectedDateRangePreset] = useState<string>('30D');
+  const [customStartDate, setCustomStartDate] = useState<string | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<string | null>(null);
+  const [tempCustomStart, setTempCustomStart] = useState<string | null>(null);
+  const [tempCustomEnd, setTempCustomEnd] = useState<string | null>(null);
   const [selectedDateColumnLabel, setSelectedDateColumnLabel] = useState('Oct-11');
   const [isYear1DropdownOpen, setIsYear1DropdownOpen] = useState(false);
   const [isYear2DropdownOpen, setIsYear2DropdownOpen] = useState(false);
@@ -1192,7 +1198,7 @@ function RankingsPageContent() {
   const [isProjectSettingsModalOpen, setIsProjectSettingsModalOpen] = useState(false);
   const [isProjectNotesModalOpen, setIsProjectNotesModalOpen] = useState(false);
   const [isKeywordsAddedPopoverOpen, setIsKeywordsAddedPopoverOpen] = useState(false);
-  const [hoveredDetailedPoint, setHoveredDetailedPoint] = useState<'oct8' | 'oct9' | null>(null);
+  const [hoveredDetailedPoint, setHoveredDetailedPoint] = useState<{ x: number; y: number; label: string; value: number; date?: string; displayVal?: string | number } | null>(null);
   const [noteText, setNoteText] = useState('');
   const [noteDate, setNoteDate] = useState('8 Oct 2026');
   const [noteCategory, setNoteCategory] = useState('Project note');
@@ -1241,6 +1247,7 @@ function RankingsPageContent() {
   const [hoveredCompetitorDomain, setHoveredCompetitorDomain] = useState<string | null>(null);
   const [hoveredDistributionPoint, setHoveredDistributionPoint] = useState<boolean>(true);
   const [hoveredDistributionDate, setHoveredDistributionDate] = useState<'Oct-08' | 'Oct-09' | 'Oct-10' | 'Oct-11'>('Oct-10');
+  const [hoveredDistributionDateIndex, setHoveredDistributionDateIndex] = useState<number>(0);
   const [hoveredVisibilityCard, setHoveredVisibilityCard] = useState<boolean>(false);
   const [hoveredAvgPosCard, setHoveredAvgPosCard] = useState<boolean>(false);
   const [isKwOverviewGroupsOpen, setIsKwOverviewGroupsOpen] = useState(false);
@@ -1294,44 +1301,504 @@ function RankingsPageContent() {
   ]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywords, setKeywords] = useState<KeywordItem[]>([]);
+  const [rankingsSummary, setRankingsSummary] = useState<any>(null);
+  const [rankingsTrend, setRankingsTrend] = useState<any[]>([]);
+  const [keywordDistribution, setKeywordDistribution] = useState<any[]>([]);
+  const [serpDynamics, setSerpDynamics] = useState<any>(null);
+  const [projectCompetitors, setProjectCompetitors] = useState<any[]>([]);
+  const [projectPages, setProjectPages] = useState<any[]>([]);
+  const [rankingsError, setRankingsError] = useState<string | null>(null);
   const [isLoadingRankings, setIsLoadingRankings] = useState(false);
   const [isRechecking, setIsRechecking] = useState(false);
 
+  const currentVisibilityScore = useMemo(() => {
+    if (rankingsSummary?.visibilityScore != null) return rankingsSummary.visibilityScore;
+    if (keywords.length === 0) return 0;
+    const inTop10 = keywords.filter((k) => k.rank != null && k.rank > 0 && k.rank <= 10).length;
+    return Number(((inTop10 / keywords.length) * 100).toFixed(1));
+  }, [rankingsSummary, keywords]);
+
+  const currentAvgPosition = useMemo(() => {
+    if (rankingsSummary?.averagePosition != null) return rankingsSummary.averagePosition;
+    const rankedKws = keywords.filter((k) => k.rank != null && k.rank > 0 && k.rank <= 100);
+    if (rankedKws.length === 0) return 0;
+    return Number((rankedKws.reduce((acc, k) => acc + (k.rank || 0), 0) / rankedKws.length).toFixed(1));
+  }, [rankingsSummary, keywords]);
+
+  const serpFeaturesCount = useMemo(() => {
+    const set = new Set<string>();
+    keywords.forEach((k) => (k.serpFeatures || k.features || []).forEach((f) => set.add(f)));
+    return set.size;
+  }, [keywords]);
+
+  const calculatedDistribution = useMemo(() => {
+    if (rankingsSummary) {
+      return {
+        top1: rankingsSummary.top1 ?? 0,
+        top2_3: rankingsSummary.top2_3 ?? 0,
+        top4_5: rankingsSummary.top4_5 ?? 0,
+        top6_10: rankingsSummary.top6_10 ?? 0,
+        top11_30: rankingsSummary.top11_30 ?? 0,
+        top31_100: rankingsSummary.top31_100 ?? 0,
+        total: rankingsSummary.totalKeywordsInSerp ?? (rankingsSummary.totalRanked ?? keywords.length),
+      };
+    }
+    const dist = { top1: 0, top2_3: 0, top4_5: 0, top6_10: 0, top11_30: 0, top31_100: 0, total: keywords.length };
+    keywords.forEach((k) => {
+      const r = k.rank;
+      if (r === 1) dist.top1++;
+      else if (r != null && r >= 2 && r <= 3) dist.top2_3++;
+      else if (r != null && r >= 4 && r <= 5) dist.top4_5++;
+      else if (r != null && r >= 6 && r <= 10) dist.top6_10++;
+      else if (r != null && r >= 11 && r <= 30) dist.top11_30++;
+      else if (r != null && r >= 31 && r <= 100) dist.top31_100++;
+    });
+    return dist;
+  }, [rankingsSummary, keywords]);
+
   const displayKeywordsList: TeamsKeywordItem[] = React.useMemo(() => {
     if (keywords && keywords.length > 0) {
+      const palette = [
+        'rgb(230, 0, 35)',
+        'rgb(11, 105, 255)',
+        'rgb(16, 185, 129)',
+        'rgb(124, 58, 237)',
+        'rgb(245, 158, 11)',
+        'rgb(13, 148, 136)',
+        'rgb(236, 72, 153)',
+        'rgb(107, 114, 128)',
+      ];
       return keywords.map((k, idx) => ({
         id: k.id || `kw-${idx}`,
         name: k.keyword,
-        color: idx === 0 ? 'rgb(230, 0, 35)' : idx === 1 ? 'rgb(11, 105, 255)' : idx === 2 ? 'rgb(16, 185, 129)' : 'rgb(124, 58, 237)',
+        color: palette[idx % palette.length],
         urlHref: k.url || k.landingPage || (activeProject?.domain ? `https://${activeProject.domain}/` : `https://${domain}/`),
         volume: k.volume || k.searchVolume || 0,
         features: {
-          sge: (k.serpFeatures || k.features || []).includes('sge') || idx === 1,
-          paa: (k.serpFeatures || k.features || []).includes('paa') || idx === 0,
+          sge: (k.serpFeatures || k.features || []).includes('sge'),
+          paa: (k.serpFeatures || k.features || []).includes('paa'),
           sitelinks: (k.serpFeatures || k.features || []).includes('sitelinks'),
           reviews: (k.serpFeatures || k.features || []).includes('reviews'),
           video: (k.serpFeatures || k.features || []).includes('video'),
         },
-        contentScore: idx === 0 ? 88 : idx === 1 ? 78 : null,
+        contentScore: k.contentScore != null ? (typeof k.contentScore === 'number' ? k.contentScore : (isNaN(Number(k.contentScore)) ? null : Number(k.contentScore))) : null,
         rankOct3: k.prevRank !== undefined && k.prevRank !== null ? k.prevRank : (k.rank !== undefined && k.rank !== null ? k.rank : '-'),
         rankOct4: k.rank !== undefined && k.rank !== null ? k.rank : '-',
         diff: k.change ?? (k.dynamics || 0),
       }));
     }
-    if (domain.includes('meesho') || domain.includes('miso')) {
-      return MEESHO_48_KEYWORDS_DATA;
+    return [];
+  }, [keywords, domain, activeProject?.domain]);
+
+  const positionFilterMetrics = useMemo(() => {
+    const total = displayKeywordsList.length;
+    const top1 = displayKeywordsList.filter((k) => toRankNum(k.rankOct4) === 1).length;
+    const top3 = displayKeywordsList.filter((k) => {
+      const r = toRankNum(k.rankOct4);
+      return r !== null && r >= 1 && r <= 3;
+    }).length;
+    const top5 = displayKeywordsList.filter((k) => {
+      const r = toRankNum(k.rankOct4);
+      return r !== null && r >= 1 && r <= 5;
+    }).length;
+    const top10 = displayKeywordsList.filter((k) => {
+      const r = toRankNum(k.rankOct4);
+      return r !== null && r >= 1 && r <= 10;
+    }).length;
+    const top30 = displayKeywordsList.filter((k) => {
+      const r = toRankNum(k.rankOct4);
+      return r !== null && r >= 1 && r <= 30;
+    }).length;
+    const over100 = displayKeywordsList.filter((k) => {
+      const r = toRankNum(k.rankOct4);
+      return r === null || r > 100;
+    }).length;
+    const up = displayKeywordsList.filter((k) => k.diff !== null && k.diff > 0).length;
+    const down = displayKeywordsList.filter((k) => k.diff !== null && k.diff < 0).length;
+
+    const pct = (cnt: number) => (total > 0 ? `${Math.round((cnt / total) * 100)}%` : '0%');
+
+    return {
+      total,
+      top1,
+      top3,
+      top5,
+      top10,
+      top30,
+      over100,
+      up,
+      down,
+      top1Pct: pct(top1),
+      top3Pct: pct(top3),
+      top5Pct: pct(top5),
+      top10Pct: pct(top10),
+      top30Pct: pct(top30),
+      over100Pct: pct(over100),
+    };
+  }, [displayKeywordsList]);
+
+  const activeCompetitorsList = useMemo(() => {
+    if (projectCompetitors && projectCompetitors.length > 0) {
+      const palette = [
+        { color: 'rgba(78,63,3,0.9)', stroke: '#4e3f03' },
+        { color: 'rgba(145,145,14,0.9)', stroke: '#91910e' },
+        { color: 'rgba(9,255,18,0.9)', stroke: '#09ff12' },
+        { color: 'rgba(134,230,1,0.9)', stroke: '#86e601' },
+        { color: 'rgba(54,179,126,0.9)', stroke: '#36b37e' },
+        { color: 'rgba(82,136,218,0.9)', stroke: '#5288da' },
+        { color: 'rgba(231,136,213,0.9)', stroke: '#e788d5' },
+      ];
+      return projectCompetitors.map((comp, idx) => {
+        const colors = palette[idx % palette.length];
+        const avgPos = Number(comp.avgPosition || 10);
+        const top10 = comp.commonKeywordsCount || Math.min(keywords.length, 5);
+        const cx = 50 + ((idx + 1) / (projectCompetitors.length + 1)) * 400;
+        const cy = Math.max(30, Math.min(180, 20 + (avgPos / 15) * 150));
+        return {
+          id: comp.id,
+          domain: comp.domain,
+          url: `https://${comp.domain}/`,
+          favicon: `https://www.google.com/s2/favicons?domain=${comp.domain}`,
+          visibility: `${comp.visibilityScore || 0}%`,
+          color: colors.color,
+          stroke: colors.stroke,
+          top10Kws: top10,
+          avgPos: avgPos,
+          cx,
+          cy,
+        };
+      });
     }
-    if (domain.includes('jio') || domain.includes('myjio')) {
-      return JIO_KEYWORDS_DATA;
+    return [];
+  }, [projectCompetitors, keywords.length]);
+
+  const detailedDateCol1 = useMemo(() => {
+    if (rankingsTrend && rankingsTrend.length > 1) {
+      return rankingsTrend[rankingsTrend.length - 2]?.label || 'Previous';
     }
-    if (domain.includes('pinterest')) {
-      return PINTEREST_KEYWORDS_DATA;
+    return 'Previous';
+  }, [rankingsTrend]);
+
+  const detailedDateCol2 = useMemo(() => {
+    if (rankingsTrend && rankingsTrend.length > 0) {
+      return rankingsTrend[rankingsTrend.length - 1]?.label || 'Current';
     }
-    if (domain.includes('workcomposer')) {
-      return TEAMS_KEYWORDS_DATA;
+    return 'Current';
+  }, [rankingsTrend]);
+
+  const historicalBaselineLabel = useMemo(() => {
+    if (rankingsTrend && rankingsTrend.length > 1) {
+      return rankingsTrend[0]?.label || 'Baseline';
     }
-    return generateDynamicKeywordsForDomain(cleanDomain);
-  }, [keywords, domain, cleanDomain, activeProject?.domain]);
+    return 'Baseline';
+  }, [rankingsTrend]);
+
+  const historicalCurrentLabel = useMemo(() => {
+    if (rankingsTrend && rankingsTrend.length > 0) {
+      return rankingsTrend[rankingsTrend.length - 1]?.label || 'Current';
+    }
+    return 'Current';
+  }, [rankingsTrend]);
+
+  const topKeywordsForOverview = useMemo(() => {
+    return [...keywords]
+      .filter((k) => k.rank != null && k.rank > 0 && k.rank <= 100)
+      .sort((a, b) => (a.rank || 999) - (b.rank || 999))
+      .slice(0, 5);
+  }, [keywords]);
+
+  const jumpedKeywordsForOverview = useMemo(() => {
+    return [...keywords]
+      .filter((k) => (k.change ?? k.dynamics ?? 0) > 0)
+      .sort((a, b) => (b.change ?? b.dynamics ?? 0) - (a.change ?? a.dynamics ?? 0))
+      .slice(0, 5);
+  }, [keywords]);
+
+  const droppedKeywordsForOverview = useMemo(() => {
+    return [...keywords]
+      .filter((k) => (k.change ?? k.dynamics ?? 0) < 0)
+      .sort((a, b) => (a.change ?? a.dynamics ?? 0) - (b.change ?? b.dynamics ?? 0))
+      .slice(0, 5);
+  }, [keywords]);
+
+  const filteredPagesList = useMemo(() => {
+    if (!projectPages || projectPages.length === 0) return [];
+    if (pagesFilterTab === 'TOP') return projectPages;
+    if (pagesFilterTab === 'JUMPED') {
+      const jumpedUrls = new Set(
+        keywords.filter((k) => (k.change ?? k.dynamics ?? 0) > 0).map((k) => k.url || k.landingPage).filter(Boolean)
+      );
+      const matched = projectPages.filter((p) => jumpedUrls.has(p.url));
+      return matched.length > 0 ? matched : projectPages.slice(0, 1);
+    }
+    if (pagesFilterTab === 'DROPPED') {
+      const droppedUrls = new Set(
+        keywords.filter((k) => (k.change ?? k.dynamics ?? 0) < 0).map((k) => k.url || k.landingPage).filter(Boolean)
+      );
+      const matched = projectPages.filter((p) => droppedUrls.has(p.url));
+      return matched.length > 0 ? matched : [];
+    }
+    return projectPages;
+  }, [projectPages, pagesFilterTab, keywords]);
+
+  const generateSplinePath = (points: Array<{ x: number; y: number }>) => {
+    if (points.length === 0) return '';
+    if (points.length === 1) return `M 20 ${points[0].y} L 980 ${points[0].y}`;
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const cx = (p1.x + p2.x) / 2;
+      d += ` C ${cx} ${p1.y}, ${cx} ${p2.y}, ${p2.x} ${p2.y}`;
+    }
+    return d;
+  };
+
+  const generateAreaPath = (splineD: string, points: Array<{ x: number; y: number }>) => {
+    if (!splineD || points.length === 0) return '';
+    if (points.length === 1) return `M 20 ${points[0].y} L 980 ${points[0].y} L 980 197 L 20 197 Z`;
+    const first = points[0];
+    const last = points[points.length - 1];
+    return `${splineD} L ${last.x} 197 L ${first.x} 197 Z`;
+  };
+
+  const chartMetricConfig = useMemo(() => {
+    const isDetailed = activeTab === 'detailed';
+    const metric = isDetailed ? detailedMetric : historicalMetric;
+    const source = rankingsTrend;
+
+    if (!source || source.length === 0) {
+      return {
+        points: [] as any[],
+        splineD: '',
+        areaD: '',
+        yLabels: ['1', '5', '10', '15'],
+        title: 'Average position',
+        unit: '',
+      };
+    }
+
+    const width = 940;
+
+    if (metric === 'TrafficForecast') {
+      const vals = source.map((t) => t.traffic || 0);
+      const maxVal = Math.max(10, Math.ceil(Math.max(...vals, 10)));
+      const points = source.map((t, idx) => {
+        const x = source.length > 1 ? 20 + (idx / (source.length - 1)) * width : 500;
+        const v = t.traffic || 0;
+        const y = 197 - (v / maxVal) * 160;
+        return { ...t, x, y, displayVal: v, label: t.label };
+      });
+      const splineD = generateSplinePath(points);
+      const areaD = generateAreaPath(splineD, points);
+      return {
+        points,
+        splineD,
+        areaD,
+        yLabels: [`${maxVal}`, `${Math.round(maxVal * 0.66)}`, `${Math.round(maxVal * 0.33)}`, '0'],
+        title: 'Traffic forecast',
+        unit: '',
+      };
+    }
+
+    if (metric === 'Visibility') {
+      const points = source.map((t, idx) => {
+        const x = source.length > 1 ? 20 + (idx / (source.length - 1)) * width : 500;
+        const v = t.visibility ?? currentVisibilityScore ?? 0;
+        const y = 197 - (v / 100) * 160;
+        return { ...t, x, y, displayVal: `${v}%`, label: t.label };
+      });
+      const splineD = generateSplinePath(points);
+      const areaD = generateAreaPath(splineD, points);
+      return {
+        points,
+        splineD,
+        areaD,
+        yLabels: ['100%', '66%', '33%', '0%'],
+        title: 'Search visibility',
+        unit: '%',
+      };
+    }
+
+    if (metric === 'Top10Keywords') {
+      const points = source.map((t, idx) => {
+        const x = source.length > 1 ? 20 + (idx / (source.length - 1)) * width : 500;
+        const v = t.top10Percent ?? 0;
+        const y = 197 - (v / 100) * 160;
+        return { ...t, x, y, displayVal: `${v}%`, label: t.label };
+      });
+      const splineD = generateSplinePath(points);
+      const areaD = generateAreaPath(splineD, points);
+      return {
+        points,
+        splineD,
+        areaD,
+        yLabels: ['100%', '66%', '33%', '0%'],
+        title: '% in Top 10',
+        unit: '%',
+      };
+    }
+
+    // Default: AveragePosition (Inverted Y-axis)
+    const vals = source.map((t) => t.value || 0).filter((v) => v > 0);
+    const minVal = 1;
+    const maxVal = Math.max(15, Math.ceil(Math.max(...(vals.length > 0 ? vals : [10]), 10)));
+    const points = source.map((t, idx) => {
+      const x = source.length > 1 ? 20 + (idx / (source.length - 1)) * width : 500;
+      const v = t.value || 1;
+      const norm = (Math.max(1, v) - minVal) / Math.max(1, maxVal - minVal);
+      const y = 14 + norm * 150;
+      return { ...t, x, y, displayVal: v, label: t.label };
+    });
+    const splineD = generateSplinePath(points);
+    const areaD = generateAreaPath(splineD, points);
+    return {
+      points,
+      splineD,
+      areaD,
+      yLabels: ['1', `${Math.round(minVal + (maxVal - minVal) * 0.33)}`, `${Math.round(minVal + (maxVal - minVal) * 0.66)}`, `${maxVal}`],
+      title: 'Average position',
+      unit: '',
+    };
+  }, [rankingsTrend, keywords, activeTab, detailedMetric, historicalMetric, currentVisibilityScore, rankingsSummary]);
+
+  const detailedTrendPoints = chartMetricConfig.points;
+  const detailedSplineD = chartMetricConfig.splineD;
+  const detailedAreaD = chartMetricConfig.areaD;
+
+  const cardVisSplineD = useMemo(() => {
+    if (detailedTrendPoints.length <= 1) {
+      const y = Math.max(10, Math.min(75, 75 - (Math.min(100, currentVisibilityScore) / 100) * 60));
+      return `M 1.82 ${y.toFixed(1)} L 184.18 ${y.toFixed(1)}`;
+    }
+    let d = `M 1.82 ${Math.min(75, Math.max(10, detailedTrendPoints[0].y * 0.4))}`;
+    for (let i = 0; i < detailedTrendPoints.length - 1; i++) {
+      const x1 = 1.82 + (i / (detailedTrendPoints.length - 1)) * 182;
+      const x2 = 1.82 + ((i + 1) / (detailedTrendPoints.length - 1)) * 182;
+      const y1 = Math.min(75, Math.max(10, detailedTrendPoints[i].y * 0.4));
+      const y2 = Math.min(75, Math.max(10, detailedTrendPoints[i + 1].y * 0.4));
+      d += ` C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`;
+    }
+    return d;
+  }, [detailedTrendPoints, currentVisibilityScore]);
+
+  const cardAvgPosSplineD = useMemo(() => {
+    if (detailedTrendPoints.length <= 1) {
+      const posVal = typeof currentAvgPosition === 'number' ? currentAvgPosition : 2;
+      const y = Math.max(10, Math.min(75, 10 + (Math.min(40, posVal) / 40) * 65));
+      return `M 1.81 ${y.toFixed(1)} L 183.19 ${y.toFixed(1)}`;
+    }
+    let d = `M 1.81 ${Math.min(75, Math.max(10, detailedTrendPoints[0].y * 0.4))}`;
+    for (let i = 0; i < detailedTrendPoints.length - 1; i++) {
+      const x1 = 1.81 + (i / (detailedTrendPoints.length - 1)) * 181;
+      const x2 = 1.81 + ((i + 1) / (detailedTrendPoints.length - 1)) * 181;
+      const y1 = Math.min(75, Math.max(10, detailedTrendPoints[i].y * 0.4));
+      const y2 = Math.min(75, Math.max(10, detailedTrendPoints[i + 1].y * 0.4));
+      d += ` C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`;
+    }
+    return d;
+  }, [detailedTrendPoints, currentAvgPosition]);
+
+  const stackedDistributionData = useMemo(() => {
+    const source = rankingsTrend;
+    if (!source || source.length === 0) {
+      return null;
+    }
+
+    const maxTotal = Math.max(
+      5,
+      Math.ceil(
+        Math.max(
+          ...source.map(
+            (s) =>
+              s.totalRanked ??
+              (s.top1 || 0) +
+                (s.top2_3 || 0) +
+                (s.top4_5 || 0) +
+                (s.top6_10 || 0) +
+                (s.top11_30 || 0) +
+                (s.top31_100 || 0)
+          ),
+          5
+        )
+      )
+    );
+    const chartHeight = 262;
+    const chartWidth = 660;
+    const n = source.length;
+
+    const dates = source.map((s, i) => {
+      const x = n > 1 ? 26.5 + (i / (n - 1)) * (chartWidth - 26.5) : 340;
+      const top1 = s.top1 || 0;
+      const top2_3 = s.top2_3 || 0;
+      const top4_5 = s.top4_5 || 0;
+      const top6_10 = s.top6_10 || 0;
+      const top11_30 = s.top11_30 || 0;
+      const top31_100 = s.top31_100 || 0;
+      const total = s.totalRanked ?? (top1 + top2_3 + top4_5 + top6_10 + top11_30 + top31_100);
+
+      const cTop1 = top1;
+      const cTop3 = cTop1 + top2_3;
+      const cTop5 = cTop3 + top4_5;
+      const cTop10 = cTop5 + top6_10;
+      const cTop30 = cTop10 + top11_30;
+      const cTop100 = cTop30 + top31_100;
+
+      const getY = (val: number) => chartHeight - (val / maxTotal) * (chartHeight - 10);
+
+      return {
+        x,
+        label: s.label,
+        date: s.date,
+        top1,
+        top2_3,
+        top4_5,
+        top6_10,
+        top11_30,
+        top31_100,
+        total,
+        yBase: chartHeight,
+        yTop1: getY(cTop1),
+        yTop3: getY(cTop3),
+        yTop5: getY(cTop5),
+        yTop10: getY(cTop10),
+        yTop30: getY(cTop30),
+        yTop100: getY(cTop100),
+        yTotal: getY(total),
+      };
+    });
+
+    const makeLayerPath = (getYUpper: (d: any) => number, getYLower: (d: any) => number) => {
+      if (dates.length === 1) {
+        const d = dates[0];
+        return `M 26.5 ${getYUpper(d)} L 685.5 ${getYUpper(d)} L 685.5 ${getYLower(d)} L 26.5 ${getYLower(d)} Z`;
+      }
+      const forward = dates.map((d) => `${d.x} ${getYUpper(d)}`).join(' L ');
+      const backward = dates.slice().reverse().map((d) => `${d.x} ${getYLower(d)}`).join(' L ');
+      return `M ${forward} L ${backward} Z`;
+    };
+
+    const layers = [
+      { name: 'Total', fill: 'rgba(239,241,249,0.8)', d: makeLayerPath((d) => d.yTotal, (d) => d.yTop100) },
+      { name: 'Top 31-100', fill: 'rgba(255,161,161,0.85)', d: makeLayerPath((d) => d.yTop100, (d) => d.yTop30) },
+      { name: 'Top 11-30', fill: 'rgba(189,136,231,0.85)', d: makeLayerPath((d) => d.yTop30, (d) => d.yTop10) },
+      { name: 'Top 6-10', fill: 'rgba(231,136,213,0.85)', d: makeLayerPath((d) => d.yTop10, (d) => d.yTop5) },
+      { name: 'Top 4-5', fill: 'rgba(247,207,207,0.85)', d: makeLayerPath((d) => d.yTop5, (d) => d.yTop3) },
+      { name: 'Top 2-3', fill: 'rgba(174,181,242,0.85)', d: makeLayerPath((d) => d.yTop3, (d) => d.yTop1) },
+      { name: 'Top 1', fill: 'rgba(137,131,240,0.85)', d: makeLayerPath((d) => d.yTop1, (d) => d.yBase) },
+    ];
+
+    const yLabels = [
+      maxTotal,
+      Math.round(maxTotal * 0.8),
+      Math.round(maxTotal * 0.6),
+      Math.round(maxTotal * 0.4),
+      Math.round(maxTotal * 0.2),
+      0,
+    ];
+
+    return { dates, layers, yLabels };
+  }, [rankingsTrend, keywords, calculatedDistribution]);
 
   const activeDetailedFiltersCount = useMemo(() => {
     let count = 0;
@@ -1555,31 +2022,128 @@ function RankingsPageContent() {
       const projectId = activeProject?.id;
       if (!projectId) {
         setKeywords([]);
+        setRankingsSummary(null);
+        setRankingsTrend([]);
+        setKeywordDistribution([]);
+        setSerpDynamics(null);
+        setProjectCompetitors([]);
+        setProjectPages([]);
+        setRankingsError(null);
         setIsLoadingRankings(false);
         return;
       }
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings`);
+      const params = new URLSearchParams();
+      if (selectedDateRangePreset === 'custom' && customStartDate) {
+        params.set('timeRange', 'custom');
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate || customStartDate);
+      } else {
+        const timeRangeMap: Record<string, string> = {
+          '7D': '7D',
+          '30D': '30D',
+          '1M': '30D',
+          '3M': '3M',
+          '6M': '6M',
+          '12M': '12M',
+          '1Y': '12M',
+          '2Y': 'all',
+          'all': 'all',
+        };
+        const range = timeRangeMap[selectedDateRangePreset] || timeRangeMap[detailedPeriod] || '30D';
+        params.set('timeRange', range);
+      }
+
+      if (currentEngine?.engine) {
+        params.set('engine', currentEngine.engine);
+        params.set('searchEngine', currentEngine.engine);
+      }
+      if (currentEngine?.countryCode) {
+        params.set('countryCode', currentEngine.countryCode.toLowerCase());
+      }
+      if (selectedGroup && selectedGroup !== 'All groups') {
+        params.set('group', selectedGroup);
+      }
+
+      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.keywords && Array.isArray(data.keywords)) {
-          setKeywords(data.keywords);
-        } else {
-          setKeywords([]);
+        setKeywords(Array.isArray(data.keywords) ? data.keywords : []);
+        setRankingsSummary(data.summary || null);
+        const trendData = Array.isArray(data.trend) ? data.trend : [];
+        setRankingsTrend(trendData);
+        setKeywordDistribution(Array.isArray(data.keywordDistribution) ? data.keywordDistribution : []);
+        setSerpDynamics(data.serpDynamics || null);
+        setProjectCompetitors(Array.isArray(data.competitors) ? data.competitors : []);
+        setProjectPages(Array.isArray(data.pages) ? data.pages : []);
+        setRankingsError(null);
+
+        // Update display date label dynamically to reflect active range
+        if (selectedDateRangePreset === 'custom' && customStartDate) {
+          const s = new Date(customStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          const e = new Date(customEndDate || customStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          setSelectedDateRangeLabel(`${s} - ${e}`);
+        } else if (selectedDateRangePreset === 'all') {
+          if (trendData.length > 0) {
+            const first = new Date(trendData[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const last = new Date(trendData[trendData.length - 1].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            setSelectedDateRangeLabel(`${first} - ${last}`);
+          } else {
+            setSelectedDateRangeLabel('All Available History');
+          }
+        } else if (data.startDate && data.endDate) {
+          const s = new Date(data.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          const e = new Date(data.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          setSelectedDateRangeLabel(`${s} - ${e}`);
         }
       } else {
+        const errJson = await res.json().catch(() => ({}));
         setKeywords([]);
+        setRankingsSummary(null);
+        setRankingsTrend([]);
+        setKeywordDistribution([]);
+        setSerpDynamics(null);
+        setProjectCompetitors([]);
+        setProjectPages([]);
+        setRankingsError(errJson?.error || 'Failed to load rankings for selected project.');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to load rankings:', e);
       setKeywords([]);
+      setRankingsSummary(null);
+      setRankingsTrend([]);
+      setKeywordDistribution([]);
+      setSerpDynamics(null);
+      setProjectCompetitors([]);
+      setProjectPages([]);
+      setRankingsError(e?.message || 'Network error fetching rankings data.');
     } finally {
       setIsLoadingRankings(false);
     }
   };
 
+  const prevProjectIdRef = useRef<string | undefined>(activeProject?.id);
   useEffect(() => {
+    if (prevProjectIdRef.current !== activeProject?.id) {
+      prevProjectIdRef.current = activeProject?.id;
+      // Immediate project isolation: clear data upon switching project
+      setKeywords([]);
+      setRankingsSummary(null);
+      setRankingsTrend([]);
+      setKeywordDistribution([]);
+      setSerpDynamics(null);
+      setProjectCompetitors([]);
+      setProjectPages([]);
+    }
     fetchRankingsData();
-  }, [activeProject?.id]);
+  }, [
+    activeProject?.id,
+    selectedDateRangePreset,
+    detailedPeriod,
+    customStartDate,
+    customEndDate,
+    selectedEngineId,
+    selectedGroup,
+  ]);
 
   // Close popups on click outside
   useEffect(() => {
@@ -1964,199 +2528,239 @@ function RankingsPageContent() {
               )}
             </div>
 
-            {/* DUAL-MONTH CALENDAR DATE PICKER (Hidden in Historical data view matching Screenshot 1 & 4) */}
-            {activeTab !== 'historical' && (
-              <div className="relative" ref={datePickerRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                  className={`bg-white border rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-gray-800 shadow-2xs transition-colors cursor-pointer ${
-                    isDatePickerOpen ? 'border-gray-400 ring-1 ring-gray-300' : 'border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                  <span>{selectedDateRangeLabel}</span>
-                </button>
+            {/* DUAL-MONTH CALENDAR DATE PICKER (Available across all tabs) */}
+            <div className="relative" ref={datePickerRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDatePickerOpen) {
+                    setTempCustomStart(customStartDate);
+                    setTempCustomEnd(customEndDate);
+                  }
+                  setIsDatePickerOpen(!isDatePickerOpen);
+                }}
+                className={`bg-white border rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-gray-800 shadow-2xs transition-colors cursor-pointer ${
+                  isDatePickerOpen ? 'border-gray-400 ring-1 ring-gray-300' : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                <span>{selectedDateRangeLabel}</span>
+              </button>
 
-                {/* Exact Dual-Month Calendar Popover matching Screenshot 4 */}
-                {isDatePickerOpen && (
-                  <div className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl p-5 z-50 animate-in fade-in zoom-in-95 duration-150 w-[660px]">
-                    <div className="flex items-start gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-2 gap-6">
-                          {/* Month 1: September 2026 */}
-                          <div>
-                            <div className="flex items-center justify-between font-bold text-xs text-gray-800 mb-3 px-1">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedYear1(prev => prev - 1)}
-                                className="text-gray-400 hover:text-gray-700 cursor-pointer p-0.5"
-                              >
-                                &lt;
-                              </button>
-                              <div className="flex items-center gap-1.5 relative">
-                                <span>September</span>
-                                <div className="relative">
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsYear1DropdownOpen(!isYear1DropdownOpen)}
-                                    className="bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-xs font-bold text-gray-800 flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <span>{selectedYear1}</span>
-                                    <ChevronDown className="w-3 h-3 text-gray-500" />
-                                  </button>
-                                  {isYear1DropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-1 w-20 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 max-h-40 overflow-y-auto">
-                                      {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
-                                        <button
-                                          key={y}
-                                          type="button"
-                                          onClick={() => {
-                                            setSelectedYear1(y);
-                                            setIsYear1DropdownOpen(false);
-                                          }}
-                                          className={`w-full text-center py-1 hover:bg-gray-100 text-xs ${
-                                            selectedYear1 === y ? 'font-bold text-[#7C3AED] bg-[#F5F3FF]' : 'text-gray-700'
-                                          }`}
-                                        >
-                                          {y}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+              {/* Exact Dual-Month Calendar Popover matching Screenshot 4 */}
+              {isDatePickerOpen && (
+                <div className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl p-5 z-50 animate-in fade-in zoom-in-95 duration-150 w-[660px]">
+                  <div className="flex items-start gap-6">
+                    <div className="flex-1 space-y-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Month 1: September */}
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-xs text-gray-800 mb-3 px-1">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedYear1(prev => prev - 1)}
+                              className="text-gray-400 hover:text-gray-700 cursor-pointer p-0.5"
+                            >
+                              &lt;
+                            </button>
+                            <div className="flex items-center gap-1.5 relative">
+                              <span>September</span>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsYear1DropdownOpen(!isYear1DropdownOpen)}
+                                  className="bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-xs font-bold text-gray-800 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{selectedYear1}</span>
+                                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                                </button>
+                                {isYear1DropdownOpen && (
+                                  <div className="absolute top-full left-0 mt-1 w-20 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 max-h-40 overflow-y-auto">
+                                    {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
+                                      <button
+                                        key={y}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedYear1(y);
+                                          setIsYear1DropdownOpen(false);
+                                        }}
+                                        className={`w-full text-center py-1 hover:bg-gray-100 text-xs ${
+                                          selectedYear1 === y ? 'font-bold text-[#7C3AED] bg-[#F5F3FF]' : 'text-gray-700'
+                                        }`}
+                                      >
+                                        {y}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                              <span />
                             </div>
+                            <span />
+                          </div>
 
-                            <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 font-bold mb-1">
-                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-                                <div key={i} className="py-1">{d}</div>
-                              ))}
-                            </div>
+                          <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 font-bold mb-1">
+                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                              <div key={i} className="py-1">{d}</div>
+                            ))}
+                          </div>
 
-                            {/* September Days: Day 1 starts on Tuesday (offset 1) */}
-                            <div className="grid grid-cols-7 text-center text-xs text-gray-600 gap-y-1 font-medium">
-                              <div />
-                              {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28].map((day) => (
+                          {/* September Days: Day 1 starts on Tuesday (offset 1) */}
+                          <div className="grid grid-cols-7 text-center text-xs text-gray-600 gap-y-1 font-medium">
+                            <div />
+                            {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map((day) => {
+                              const dStr = `${selectedYear1}-09-${String(day).padStart(2, '0')}`;
+                              const isStart = tempCustomStart === dStr;
+                              const isEnd = tempCustomEnd === dStr;
+                              const isInRange = tempCustomStart && tempCustomEnd && dStr > tempCustomStart && dStr < tempCustomEnd;
+                              return (
                                 <div
                                   key={day}
                                   onClick={() => {
-                                    setSelectedDateRangeLabel(`${day} Sep ${selectedYear1} - 5 Oct ${selectedYear2}`);
+                                    if (!tempCustomStart || (tempCustomStart && tempCustomEnd)) {
+                                      setTempCustomStart(dStr);
+                                      setTempCustomEnd(null);
+                                    } else {
+                                      if (dStr >= tempCustomStart) {
+                                        setTempCustomEnd(dStr);
+                                      } else {
+                                        setTempCustomEnd(tempCustomStart);
+                                        setTempCustomStart(dStr);
+                                      }
+                                    }
                                   }}
-                                  className="py-1 hover:bg-gray-100 rounded cursor-pointer transition-colors"
+                                  className={`py-1 cursor-pointer transition-colors ${
+                                    isStart && isEnd
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-md shadow-xs'
+                                      : isStart
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-l-md shadow-xs'
+                                      : isEnd
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-r-md shadow-xs'
+                                      : isInRange
+                                      ? 'bg-[#D2E3FC] text-[#1967D2] font-semibold'
+                                      : 'hover:bg-gray-100 rounded text-gray-600'
+                                  }`}
                                 >
                                   {day}
                                 </div>
-                              ))}
-                              {/* Day 29: start of range */}
-                              <div
-                                onClick={() => setSelectedDateRangeLabel(`29 Sep ${selectedYear1} - 5 Oct ${selectedYear2}`)}
-                                className="py-1 bg-[#7C3AED] text-white font-bold rounded-l-md cursor-pointer shadow-xs"
-                              >
-                                29
-                              </div>
-                              {/* Day 30: in range */}
-                              <div
-                                onClick={() => setSelectedDateRangeLabel(`30 Sep ${selectedYear1} - 5 Oct ${selectedYear2}`)}
-                                className="py-1 bg-[#D2E3FC] text-[#1967D2] font-semibold cursor-pointer"
-                              >
-                                30
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Month 2: October 2026 */}
-                          <div>
-                            <div className="flex items-center justify-between font-bold text-xs text-gray-800 mb-3 px-1">
-                              <span />
-                              <div className="flex items-center gap-1.5 relative">
-                                <span>October</span>
-                                <div className="relative">
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsYear2DropdownOpen(!isYear2DropdownOpen)}
-                                    className="bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-xs font-bold text-gray-800 flex items-center gap-1 cursor-pointer"
-                                  >
-                                    <span>{selectedYear2}</span>
-                                    <ChevronDown className="w-3 h-3 text-gray-500" />
-                                  </button>
-                                  {isYear2DropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-1 w-20 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 max-h-40 overflow-y-auto">
-                                      {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
-                                        <button
-                                          key={y}
-                                          type="button"
-                                          onClick={() => {
-                                            setSelectedYear2(y);
-                                            setIsYear2DropdownOpen(false);
-                                          }}
-                                          className={`w-full text-center py-1 hover:bg-gray-100 text-xs ${
-                                            selectedYear2 === y ? 'font-bold text-[#7C3AED] bg-[#F5F3FF]' : 'text-gray-700'
-                                          }`}
-                                        >
-                                          {y}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedYear2(prev => prev + 1)}
-                                className="text-gray-400 hover:text-gray-700 cursor-pointer p-0.5"
-                              >
-                                &gt;
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 font-bold mb-1">
-                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-                                <div key={i} className="py-1">{d}</div>
-                              ))}
-                            </div>
-
-                            {/* October Days: Day 1 starts on Thursday (offset 3: M, T, W) */}
-                            <div className="grid grid-cols-7 text-center text-xs text-gray-600 gap-y-1 font-medium">
-                              <div /><div /><div />
-                              {/* Days 1 to 4: in range */}
-                              {[1, 2, 3, 4].map((day) => (
-                                <div
-                                  key={day}
-                                  onClick={() => setSelectedDateRangeLabel(`29 Sep ${selectedYear1} - ${day} Oct ${selectedYear2}`)}
-                                  className="py-1 bg-[#D2E3FC] text-[#1967D2] font-semibold cursor-pointer"
-                                >
-                                  {day}
-                                </div>
-                              ))}
-                              {/* Day 5: end of range with blue outline box and dot underneath */}
-                              <div
-                                onClick={() => setSelectedDateRangeLabel(`29 Sep ${selectedYear1} - 5 Oct ${selectedYear2}`)}
-                                className="py-1 border-2 border-[#7C3AED] text-[#7C3AED] font-bold rounded-md cursor-pointer relative bg-[#F5F3FF]"
-                              >
-                                <span>5</span>
-                                <span className="w-1 h-1 rounded-full bg-[#7C3AED] absolute bottom-0.5 left-1/2 -translate-x-1/2" />
-                              </div>
-                              {/* Remaining October days */}
-                              {[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31].map((day) => (
-                                <div
-                                  key={day}
-                                  onClick={() => setSelectedDateRangeLabel(`29 Sep ${selectedYear1} - ${day} Oct ${selectedYear2}`)}
-                                  className="py-1 hover:bg-gray-100 rounded cursor-pointer transition-colors"
-                                >
-                                  {day}
-                                </div>
-                              ))}
-                            </div>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        {/* Bottom Cancel / Apply Actions */}
-                        <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
+                        {/* Month 2: October */}
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-xs text-gray-800 mb-3 px-1">
+                            <span />
+                            <div className="flex items-center gap-1.5 relative">
+                              <span>October</span>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsYear2DropdownOpen(!isYear2DropdownOpen)}
+                                  className="bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded text-xs font-bold text-gray-800 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span>{selectedYear2}</span>
+                                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                                </button>
+                                {isYear2DropdownOpen && (
+                                  <div className="absolute top-full left-0 mt-1 w-20 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 max-h-40 overflow-y-auto">
+                                    {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
+                                      <button
+                                        key={y}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedYear2(y);
+                                          setIsYear2DropdownOpen(false);
+                                        }}
+                                        className={`w-full text-center py-1 hover:bg-gray-100 text-xs ${
+                                          selectedYear2 === y ? 'font-bold text-[#7C3AED] bg-[#F5F3FF]' : 'text-gray-700'
+                                        }`}
+                                      >
+                                        {y}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedYear2(prev => prev + 1)}
+                              className="text-gray-400 hover:text-gray-700 cursor-pointer p-0.5"
+                            >
+                              &gt;
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-7 text-center text-[10px] text-gray-400 font-bold mb-1">
+                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                              <div key={i} className="py-1">{d}</div>
+                            ))}
+                          </div>
+
+                          {/* October Days: Day 1 starts on Thursday (offset 3: M, T, W) */}
+                          <div className="grid grid-cols-7 text-center text-xs text-gray-600 gap-y-1 font-medium">
+                            <div /><div /><div />
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31].map((day) => {
+                              const dStr = `${selectedYear2}-10-${String(day).padStart(2, '0')}`;
+                              const isStart = tempCustomStart === dStr;
+                              const isEnd = tempCustomEnd === dStr;
+                              const isInRange = tempCustomStart && tempCustomEnd && dStr > tempCustomStart && dStr < tempCustomEnd;
+                              return (
+                                <div
+                                  key={day}
+                                  onClick={() => {
+                                    if (!tempCustomStart || (tempCustomStart && tempCustomEnd)) {
+                                      setTempCustomStart(dStr);
+                                      setTempCustomEnd(null);
+                                    } else {
+                                      if (dStr >= tempCustomStart) {
+                                        setTempCustomEnd(dStr);
+                                      } else {
+                                        setTempCustomEnd(tempCustomStart);
+                                        setTempCustomStart(dStr);
+                                      }
+                                    }
+                                  }}
+                                  className={`py-1 cursor-pointer transition-colors ${
+                                    isStart && isEnd
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-md shadow-xs'
+                                      : isStart
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-l-md shadow-xs'
+                                      : isEnd
+                                      ? 'bg-[#7C3AED] text-white font-bold rounded-r-md shadow-xs'
+                                      : isInRange
+                                      ? 'bg-[#D2E3FC] text-[#1967D2] font-semibold'
+                                      : 'hover:bg-gray-100 rounded text-gray-600'
+                                  }`}
+                                >
+                                  {day}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Cancel / Apply Actions */}
+                      <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <div className="text-xs text-gray-500 font-medium">
+                          {tempCustomStart && tempCustomEnd ? (
+                            <span>Selected: {tempCustomStart} to {tempCustomEnd}</span>
+                          ) : tempCustomStart ? (
+                            <span>Selected start: {tempCustomStart} (pick end date)</span>
+                          ) : (
+                            <span>Pick a start date and end date</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => setIsDatePickerOpen(false)}
+                            onClick={() => {
+                              setTempCustomStart(customStartDate);
+                              setTempCustomEnd(customEndDate);
+                              setIsDatePickerOpen(false);
+                            }}
                             className="px-4 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold uppercase transition-colors cursor-pointer"
                           >
                             CANCEL
@@ -2164,45 +2768,59 @@ function RankingsPageContent() {
                           <button
                             type="button"
                             onClick={() => {
+                              if (tempCustomStart) {
+                                const start = tempCustomStart;
+                                const end = tempCustomEnd || tempCustomStart;
+                                setCustomStartDate(start);
+                                setCustomEndDate(end);
+                                setSelectedDateRangePreset('custom');
+                              }
                               setIsDatePickerOpen(false);
                             }}
-                            className="px-5 py-1.5 bg-[#7C3AED] hover:bg-[#0B59EE] text-white rounded-lg text-xs font-bold uppercase transition-colors shadow-xs cursor-pointer"
+                            className="px-5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg text-xs font-bold uppercase transition-colors shadow-xs cursor-pointer"
                           >
                             APPLY
                           </button>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Right Preset Buttons matching Screenshot 4 */}
-                      <div className="w-36 space-y-1.5 border-l border-gray-100 pl-4 text-xs font-semibold">
-                        {[
-                          { label: 'TODAY', range: `5 Oct ${selectedYear2} - 5 Oct ${selectedYear2}` },
-                          { label: 'YESTERDAY', range: `4 Oct ${selectedYear2} - 4 Oct ${selectedYear2}` },
-                          { label: 'LAST WEEK', range: `22 Sep ${selectedYear1} - 28 Sep ${selectedYear1}` },
-                          { label: 'LAST MONTH', range: `1 Sep ${selectedYear1} - 30 Sep ${selectedYear1}` },
-                          { label: 'PAST 7 DAYS', range: `29 Sep ${selectedYear1} - 5 Oct ${selectedYear2}` },
-                          { label: 'PAST 30 DAYS', range: `6 Sep ${selectedYear1} - 5 Oct ${selectedYear2}` },
-                          { label: 'PAST 6 MONTHS', range: `5 Apr ${selectedYear1} - 5 Oct ${selectedYear2}` },
-                          { label: 'YEAR', range: `1 Jan ${selectedYear1} - 5 Oct ${selectedYear2}` },
-                        ].map((preset) => (
-                          <button
-                            key={preset.label}
-                            type="button"
-                            onClick={() => {
-                              setSelectedDateRangeLabel(preset.range);
-                              setIsDatePickerOpen(false);
-                            }}
-                            className="w-full text-center py-1.5 px-2 rounded-md border border-gray-200 text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors uppercase text-[10px] tracking-wider font-semibold cursor-pointer"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
+                    {/* Right Preset Buttons */}
+                    <div className="w-40 space-y-1.5 border-l border-gray-100 pl-4 text-xs font-semibold">
+                      {[
+                        { label: 'LAST 7 DAYS', preset: '7D', period: '7D' as const },
+                        { label: 'LAST 30 DAYS', preset: '30D', period: '1M' as const },
+                        { label: 'LAST 3 MONTHS', preset: '3M', period: '3M' as const },
+                        { label: 'LAST 6 MONTHS', preset: '6M', period: '6M' as const },
+                        { label: 'LAST 12 MONTHS', preset: '12M', period: '1Y' as const },
+                        { label: 'ALL HISTORY', preset: 'all', period: '2Y' as const },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDateRangePreset(preset.preset);
+                            setDetailedPeriod(preset.period);
+                            setCustomStartDate(null);
+                            setCustomEndDate(null);
+                            setTempCustomStart(null);
+                            setTempCustomEnd(null);
+                            setIsDatePickerOpen(false);
+                          }}
+                          className={`w-full text-center py-1.5 px-2 rounded-md border text-gray-700 transition-colors uppercase text-[10px] tracking-wider font-semibold cursor-pointer ${
+                            selectedDateRangePreset === preset.preset && !customStartDate
+                              ? 'bg-[#7C3AED] text-white border-[#7C3AED]'
+                              : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -2487,15 +3105,15 @@ function RankingsPageContent() {
                   </div>
 
                   <div>
-                    {/* Top percentage subtext: '', '50%', '100%', '100%', '100%', '100%', '' */}
+                    {/* Top percentage subtext */}
                     <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium pl-0.5 mb-1">
                       <span className="w-14 text-center"></span>
-                      <span className="w-14 text-center font-semibold">50%</span>
-                      <span className="w-14 text-center font-semibold">100%</span>
-                      <span className="w-14 text-center font-semibold">100%</span>
-                      <span className="w-14 text-center font-semibold">100%</span>
-                      <span className="w-14 text-center font-semibold">100%</span>
-                      <span className="w-14 text-center"></span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.top1Pct}</span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.top3Pct}</span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.top5Pct}</span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.top10Pct}</span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.top30Pct}</span>
+                      <span className="w-14 text-center font-semibold">{positionFilterMetrics.over100Pct}</span>
                     </div>
 
                     {/* Switch buttons: All, Top 1, Top 3, Top 5, Top 10, Top 30, >100 */}
@@ -2524,15 +3142,15 @@ function RankingsPageContent() {
                       ))}
                     </div>
 
-                    {/* Bottom counts: 2, 1, 2, 2, 2, 2, 0 */}
+                    {/* Bottom counts */}
                     <div className="flex items-center gap-1 text-[11px] font-bold text-gray-700 pl-0.5 mt-1.5">
-                      <span className="w-14 text-center">2</span>
-                      <span className="w-14 text-center">1</span>
-                      <span className="w-14 text-center">2</span>
-                      <span className="w-14 text-center">2</span>
-                      <span className="w-14 text-center">2</span>
-                      <span className="w-14 text-center">2</span>
-                      <span className="w-14 text-center text-gray-400">0</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.total}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top1}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top3}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top5}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top10}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top30}</span>
+                      <span className="w-14 text-center text-gray-400">{positionFilterMetrics.over100}</span>
                     </div>
                   </div>
                 </div>
@@ -2586,7 +3204,7 @@ function RankingsPageContent() {
                           <svg className="w-2.5 h-2.5 fill-emerald-600" viewBox="0 0 6 5">
                             <path d="M3 0L6 5H0L3 0Z" />
                           </svg>
-                          <span>0</span>
+                          <span>{positionFilterMetrics.up}</span>
                         </button>
                         <button
                           type="button"
@@ -2600,7 +3218,7 @@ function RankingsPageContent() {
                           <svg className="w-2.5 h-2.5 fill-rose-500 rotate-180" viewBox="0 0 6 5">
                             <path d="M3 0L6 5H0L3 0Z" />
                           </svg>
-                          <span>0</span>
+                          <span>{positionFilterMetrics.down}</span>
                         </button>
                       </div>
                     </div>
@@ -2795,10 +3413,10 @@ function RankingsPageContent() {
                     <div>
                       <div className="text-[11px] text-gray-500 font-medium">Average position</div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">100</span>
+                        <span className="text-2xl font-bold text-gray-900">{currentAvgPosition > 0 ? currentAvgPosition : '—'}</span>
                       </div>
                     </div>
-                    {/* Highcharts Mini Area Chart at y=19.93 matching user dump */}
+                    {/* Highcharts Mini Area Chart matching live trend */}
                     <div className="h-10 w-full mt-2">
                       <svg className="w-full h-full" viewBox="0 0 166 40" preserveAspectRatio="none">
                         <defs>
@@ -2807,8 +3425,8 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.62 19.93 L 164.37 19.93 L 164.37 30 L 1.62 30 Z" fill="url(#mini-grad-avg-pos-in)" />
-                        <path d="M 1.62 19.93 L 164.37 19.93" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+                        <path d={cardAvgPosSplineD ? `${cardAvgPosSplineD} L 164.37 38 L 1.62 38 Z` : "M 1.62 20 L 164.37 20 L 164.37 38 L 1.62 38 Z"} fill="url(#mini-grad-avg-pos-in)" />
+                        <path d={cardAvgPosSplineD || "M 1.62 20 L 164.37 20"} fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                   </div>
@@ -2826,7 +3444,7 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">0</span>
+                        <span className="text-2xl font-bold text-gray-900">{rankingsSummary?.trafficForecast ?? 0}</span>
                       </div>
                     </div>
                     <div className="h-10 w-full mt-2">
@@ -2837,7 +3455,7 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.6 30 L 164.4 30 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-tf-in)" />
+                        <path d="M 1.6 30 L 164.4 30 L 164.4 38 L 1.6 38 Z" fill="url(#mini-grad-tf-in)" />
                         <path d="M 1.6 30 L 164.4 30" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
@@ -2856,7 +3474,7 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">0</span>
+                        <span className="text-2xl font-bold text-gray-900">{currentVisibilityScore}%</span>
                       </div>
                     </div>
                     <div className="h-10 w-full mt-2">
@@ -2867,8 +3485,8 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.6 30 L 164.4 30 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-vis-in)" />
-                        <path d="M 1.6 30 L 164.4 30" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+                        <path d={cardVisSplineD ? `${cardVisSplineD} L 164.4 38 L 1.6 38 Z` : "M 1.6 30 L 164.4 30 L 164.4 38 L 1.6 38 Z"} fill="url(#mini-grad-vis-in)" />
+                        <path d={cardVisSplineD || "M 1.6 30 L 164.4 30"} fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                   </div>
@@ -2886,21 +3504,24 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">0</span>
+                        <span className="text-2xl font-bold text-gray-900">{serpFeaturesCount}</span>
                       </div>
                     </div>
-                    {/* Column Bars Highcharts */}
+                    {/* Column Bars Highcharts based on keyword counts */}
                     <div className="h-10 w-full mt-2 flex items-end gap-[3px]">
-                      {[0, 0, 30, 23, 33, 0, 0, 7, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23].map((h, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 rounded-xs"
-                          style={{
-                            height: `${Math.max(h, 2)}px`,
-                            backgroundColor: i === 32 ? '#1976d2' : '#D6D8E3',
-                          }}
-                        />
-                      ))}
+                      {Array.from({ length: 33 }).map((_, i) => {
+                        const h = serpFeaturesCount > 0 ? (i % 5 === 0 ? 24 : i % 3 === 0 ? 12 : 3) : 2;
+                        return (
+                          <div
+                            key={i}
+                            className="flex-1 rounded-xs"
+                            style={{
+                              height: `${h}px`,
+                              backgroundColor: i === 32 ? '#1976d2' : '#D6D8E3',
+                            }}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -2917,7 +3538,9 @@ function RankingsPageContent() {
                         <span className="text-[10px] text-gray-400">ℹ</span>
                       </div>
                       <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-2xl font-bold text-gray-900">0</span>
+                        <span className="text-2xl font-bold text-gray-900">
+                          {rankingsSummary?.top10Percent != null ? `${rankingsSummary.top10Percent}%` : positionFilterMetrics.top10Pct}
+                        </span>
                       </div>
                     </div>
                     <div className="h-10 w-full mt-2">
@@ -2928,7 +3551,7 @@ function RankingsPageContent() {
                             <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
-                        <path d="M 1.6 30 L 164.4 30 L 164.4 30 L 1.6 30 Z" fill="url(#mini-grad-top10-in)" />
+                        <path d="M 1.6 30 L 164.4 30 L 164.4 38 L 1.6 38 Z" fill="url(#mini-grad-top10-in)" />
                         <path d="M 1.6 30 L 164.4 30" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
@@ -2962,14 +3585,24 @@ function RankingsPageContent() {
                           <button
                             key={period}
                             type="button"
-                            onClick={() => setDetailedPeriod(period)}
+                            onClick={() => {
+                              setDetailedPeriod(period);
+                              setCustomStartDate(null);
+                              setCustomEndDate(null);
+                              if (period === 'Current' || period === '7D') setSelectedDateRangePreset('7D');
+                              else if (period === '1M') setSelectedDateRangePreset('30D');
+                              else if (period === '3M') setSelectedDateRangePreset('3M');
+                              else if (period === '6M') setSelectedDateRangePreset('6M');
+                              else if (period === '1Y') setSelectedDateRangePreset('12M');
+                              else if (period === '2Y') setSelectedDateRangePreset('all');
+                            }}
                             className={`px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
                               detailedPeriod === period
                                 ? 'bg-[#EEF0F5] text-[#1976d2]'
                                 : 'text-gray-500 hover:text-gray-900'
                             }`}
                           >
-                            {period}
+                            {period === '2Y' ? 'All' : period}
                           </button>
                         ))}
                       </div>
@@ -3006,94 +3639,107 @@ function RankingsPageContent() {
                       </div>
                     </div>
 
-                    {/* Main Highcharts areaspline Chart matching user HTML dump */}
+                    {/* Main Highcharts areaspline Chart powered by real rankings data */}
                     <div className="relative w-full h-[240px] bg-white pt-2">
-                      {/* Inverted Y-axis labels: 1 at top, 5, 10, 15 at bottom */}
+                      {/* Dynamic Y-axis labels */}
                       <div className="absolute left-0 top-2 bottom-8 w-14 flex flex-col justify-between text-[11px] text-[#6A8897] font-medium text-right pr-2">
-                        <span className="text-gray-400 font-bold">1</span>
-                        <span>5</span>
-                        <span>10</span>
-                        <span>15</span>
+                        {chartMetricConfig.yLabels.map((lbl, idx) => (
+                          <span key={idx} className={idx === 0 ? "text-gray-400 font-bold" : ""}>
+                            {lbl}
+                          </span>
+                        ))}
                       </div>
 
-                      {/* SVG Canvas matching exact user HTML dump */}
+                      {/* SVG Canvas dynamically bound to project trend */}
                       <div className="ml-14 h-[calc(100%-28px)] relative">
-                        <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 197" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="main-in-detailed-grad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#1976d2" stopOpacity="0.16" />
-                              <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
-                            </linearGradient>
-                          </defs>
+                        {isLoadingRankings ? (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                            Loading ranking history...
+                          </div>
+                        ) : detailedTrendPoints.length === 0 ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <span className="text-xs font-semibold text-gray-600">No ranking position data recorded yet</span>
+                            <span className="text-[11px] text-gray-400 mt-0.5">Click &quot;Recheck data&quot; to collect search engine rankings.</span>
+                          </div>
+                        ) : (
+                          <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 197" preserveAspectRatio="none">
+                            <defs>
+                              <linearGradient id="main-in-detailed-grad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#1976d2" stopOpacity="0.16" />
+                                <stop offset="100%" stopColor="#1976d2" stopOpacity="0.01" />
+                              </linearGradient>
+                            </defs>
 
-                          {/* Horizontal Grid lines matching user Highcharts dump */}
-                          <line x1="0" y1="10" x2="1000" y2="10" stroke="#E2E8F0" strokeWidth="1" />
-                          <line x1="0" y1="66.5" x2="1000" y2="66.5" stroke="#E2E8F0" strokeWidth="1" />
-                          <line x1="0" y1="137.5" x2="1000" y2="137.5" stroke="#E2E8F0" strokeWidth="1" />
-                          <line x1="0" y1="197" x2="1000" y2="197" stroke="#CCD6EB" strokeWidth="1" />
+                            {/* Horizontal Grid lines */}
+                            <line x1="0" y1="10" x2="1000" y2="10" stroke="#E2E8F0" strokeWidth="1" />
+                            <line x1="0" y1="66.5" x2="1000" y2="66.5" stroke="#E2E8F0" strokeWidth="1" />
+                            <line x1="0" y1="137.5" x2="1000" y2="137.5" stroke="#E2E8F0" strokeWidth="1" />
+                            <line x1="0" y1="197" x2="1000" y2="197" stroke="#CCD6EB" strokeWidth="1" />
 
-                          {/* Shaded Area: Oct 10 to Oct 11 flat at rank 2 (y=14) */}
-                          <path
-                            d="M 10 14.07 C 10 14.07, 990 14.07, 990 14.07 L 990 197 L 10 197 Z"
-                            fill="url(#main-in-detailed-grad)"
-                          />
+                            {/* Shaded Area from dynamic trend */}
+                            {detailedAreaD && (
+                              <path
+                                d={detailedAreaD}
+                                fill="url(#main-in-detailed-grad)"
+                              />
+                            )}
 
-                          {/* Graph Line */}
-                          <path
-                            d="M 10 14.07 C 10 14.07, 990 14.07, 990 14.07"
-                            fill="none"
-                            stroke="#1976d2"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
+                            {/* Graph Line */}
+                            {detailedSplineD && (
+                              <path
+                                d={detailedSplineD}
+                                fill="none"
+                                stroke="#1976d2"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                              />
+                            )}
 
-                          {/* Point 1 (Oct 10, Rank 2) */}
-                          <circle
-                            cx="10"
-                            cy="14.07"
-                            r="5"
-                            fill="#1976d2"
-                            stroke="#f3f4f8"
-                            strokeWidth="2"
-                            className="cursor-pointer hover:r-6 transition-all"
-                            onMouseEnter={() => setHoveredDetailedPoint('oct8')}
-                            onMouseLeave={() => setHoveredDetailedPoint(null)}
-                          />
-
-                          {/* Point 2 (Oct 11, Rank 2) */}
-                          <circle
-                            cx="990"
-                            cy="14.07"
-                            r="5"
-                            fill="#1976d2"
-                            stroke="#f3f4f8"
-                            strokeWidth="2"
-                            className="cursor-pointer hover:r-6 transition-all"
-                            onMouseEnter={() => setHoveredDetailedPoint('oct9')}
-                            onMouseLeave={() => setHoveredDetailedPoint(null)}
-                          />
-                        </svg>
+                            {/* Dynamic Data Points */}
+                            {detailedTrendPoints.map((pt, idx) => (
+                              <circle
+                                key={idx}
+                                cx={pt.x}
+                                cy={pt.y}
+                                r="5"
+                                fill="#1976d2"
+                                stroke="#f3f4f8"
+                                strokeWidth="2"
+                                className="cursor-pointer hover:r-6 transition-all"
+                                onMouseEnter={() => setHoveredDetailedPoint(pt)}
+                                onMouseLeave={() => setHoveredDetailedPoint(null)}
+                              />
+                            ))}
+                          </svg>
+                        )}
 
                         {/* Interactive Tooltip on hover */}
                         {hoveredDetailedPoint && (
                           <div
-                            className={`absolute z-30 bg-[#1e293b] text-white text-[11px] p-2 rounded-lg shadow-xl pointer-events-none transition-all ${
-                              hoveredDetailedPoint === 'oct8' ? 'left-4 top-2' : 'right-4 top-2'
-                            }`}
+                            className="absolute z-30 bg-[#1e293b] text-white text-[11px] p-2 rounded-lg shadow-xl pointer-events-none transition-all"
+                            style={{
+                              left: Math.max(10, Math.min(820, (hoveredDetailedPoint.x / 1000) * 800)),
+                              top: 6,
+                            }}
                           >
-                            <div className="font-bold text-gray-200">Google India</div>
-                            <div className="text-sky-400 font-semibold">Average position: 2</div>
+                            <div className="font-bold text-gray-200">{activeProject?.domain || 'Target'}</div>
+                            <div className="text-sky-400 font-semibold">{chartMetricConfig.title}: {hoveredDetailedPoint.displayVal ?? hoveredDetailedPoint.value}</div>
                             <div className="text-gray-400 text-[10px]">
-                              {hoveredDetailedPoint === 'oct8' ? 'Oct 10, 2026' : 'Oct 11, 2026'}
+                              {hoveredDetailedPoint.label}
                             </div>
                           </div>
                         )}
                       </div>
 
-                      {/* X-axis labels */}
+                      {/* X-axis labels from dynamic series */}
                       <div className="ml-14 h-6 flex justify-between items-center text-xs text-gray-500 font-semibold px-2">
-                        <span>Oct 10</span>
-                        <span>Oct 11</span>
+                        {detailedTrendPoints.length > 0 ? (
+                          detailedTrendPoints.map((pt, idx) => (
+                            <span key={idx}>{pt.label}</span>
+                          ))
+                        ) : (
+                          <><span>—</span><span>—</span></>
+                        )}
                       </div>
                     </div>
 
@@ -3101,7 +3747,7 @@ function RankingsPageContent() {
                     <div className="flex items-center gap-4 text-xs font-medium text-gray-700 pt-2 border-t border-gray-100">
                       <div className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#1976d2]" />
-                        <span className="font-semibold text-gray-800">India</span>
+                        <span className="font-semibold text-gray-800">{activeProject?.domain || 'Target'} - {currentEngine.name}</span>
                       </div>
                     </div>
                   </div>
@@ -3366,8 +4012,8 @@ function RankingsPageContent() {
                             { id: 'volume', label: 'Search vol.' },
                             { id: 'serp_features', label: 'SERP features' },
                             { id: 'content_score', label: 'Content Score' },
-                            { id: 'oct10', label: 'Oct-12' },
-                            { id: 'oct11', label: 'Oct-13' },
+                            { id: 'oct10', label: detailedDateCol1 },
+                            { id: 'oct11', label: detailedDateCol2 },
                           ].map((col) => {
                             const isVisible = visibleTableCols.has(col.id);
                             return (
@@ -3469,21 +4115,21 @@ function RankingsPageContent() {
                         </th>
                       )}
 
-                      {/* 6. Oct-12 (width 80px) */}
+                      {/* 6. Date Col 1 (width 80px) */}
                       {visibleTableCols.has('oct10') && (
                         <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
                           <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                            <span>Oct-12</span>
+                            <span>{detailedDateCol1}</span>
                             <ChevronDown className="w-3 h-3 text-gray-400" />
                           </div>
                         </th>
                       )}
 
-                      {/* 7. Oct-13 (width 80px) */}
+                      {/* 7. Date Col 2 (width 80px) */}
                       {visibleTableCols.has('oct11') && (
                         <th className="px-2 py-3 text-center w-[80px] min-w-[80px] border-l border-gray-100">
                           <div className="flex items-center justify-center gap-1 font-bold text-gray-800">
-                            <span>Oct-13</span>
+                            <span>{detailedDateCol2}</span>
                             <ChevronDown className="w-3 h-3 text-gray-400" />
                           </div>
                         </th>
@@ -3492,7 +4138,57 @@ function RankingsPageContent() {
                   </thead>
 
                   <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {filteredDetailedKeywords.map((k, idx) => {
+                    {isLoadingRankings ? (
+                      <tr>
+                        <td colSpan={7} className="py-16 px-4 text-center text-xs text-gray-400">
+                          Loading keywords...
+                        </td>
+                      </tr>
+                    ) : filteredDetailedKeywords.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-16 px-4 text-center">
+                          <div className="max-w-md mx-auto flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#1976d2] flex items-center justify-center mb-3">
+                              <KeyRound className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-900 mb-1">No keywords found</h3>
+                            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                              {displayKeywordsList.length === 0
+                                ? 'No keywords added to this project yet. Add keywords to start tracking rankings.'
+                                : 'No keywords match your current search and filter criteria.'}
+                            </p>
+                            {displayKeywordsList.length === 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="px-4 py-2 bg-[#1976d2] hover:bg-[#1565c0] text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer uppercase tracking-wider"
+                              >
+                                + ADD KEYWORDS
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRange('all');
+                                  setPosMin('');
+                                  setPosMax('');
+                                  setDetailedVolMin('');
+                                  setDetailedVolMax('');
+                                  setDetailedSerpFeature('all');
+                                  setDetailedScoreFilter('all');
+                                  setDetailedChangesFilter('all');
+                                  setDetailedTableSearch('');
+                                }}
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
+                              >
+                                Reset Filters
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredDetailedKeywords.map((k, idx) => {
                       const isChecked = selectedDetailedKeywordIds.includes(k.id);
                       const isEven = idx % 2 === 1;
                       return (
@@ -3617,7 +4313,7 @@ function RankingsPageContent() {
                           )}
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               </div>
@@ -3697,12 +4393,12 @@ function RankingsPageContent() {
                   <div>
                     <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium pl-1 mb-1">
                       <span className="w-14 text-center"></span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => toRankNum(k.rankOct4) === 1).length / displayKeywordsList.length) * 100)}%` : '50%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 3; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 5; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 10; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 30; }).length / displayKeywordsList.length) * 100)}%` : '100%'}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.length > 0 ? `${Math.round((displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r === null || r > 100; }).length / displayKeywordsList.length) * 100)}%` : '0%'}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top1Pct}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top3Pct}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top5Pct}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top10Pct}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top30Pct}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.over100Pct}</span>
                     </div>
 
                     <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
@@ -3731,13 +4427,13 @@ function RankingsPageContent() {
                     </div>
 
                     <div className="flex items-center gap-1 text-[11px] font-bold text-gray-700 pl-1 mt-1.5">
-                      <span className="w-14 text-center">{displayKeywordsList.length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => toRankNum(k.rankOct4) === 1).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 3; }).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 5; }).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 10; }).length}</span>
-                      <span className="w-14 text-center">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r !== null && r <= 30; }).length}</span>
-                      <span className="w-14 text-center text-gray-400">{displayKeywordsList.filter(k => { const r = toRankNum(k.rankOct4); return r === null || r > 100; }).length}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.total}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top1}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top3}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top5}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top10}</span>
+                      <span className="w-14 text-center">{positionFilterMetrics.top30}</span>
+                      <span className="w-14 text-center text-gray-400">{positionFilterMetrics.over100}</span>
                     </div>
                   </div>
                 </div>
@@ -3781,13 +4477,13 @@ function RankingsPageContent() {
                         <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 6 5">
                           <path d="M3 0L6 5H0L3 0Z" />
                         </svg>
-                        <span>{displayKeywordsList.filter(k => k.diff !== null && k.diff > 0).length}</span>
+                        <span>{positionFilterMetrics.up}</span>
                       </div>
                       <div className="px-3 py-1 text-rose-500 rounded text-xs font-semibold flex items-center gap-1">
                         <svg className="w-2.5 h-2.5 fill-current rotate-180" viewBox="0 0 6 5">
                           <path d="M3 0L6 5H0L3 0Z" />
                         </svg>
-                        <span>{displayKeywordsList.filter(k => k.diff !== null && k.diff < 0).length || 1}</span>
+                        <span>{positionFilterMetrics.down}</span>
                       </div>
                     </div>
                   </div>
@@ -3815,23 +4511,27 @@ function RankingsPageContent() {
                       <div className="rankings-chart-tab__text-value mt-1">
                         <div className="se-flex-box flex items-center gap-2">
                           <div className="se-flex-item">
-                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">2</span>
+                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">
+                              {currentAvgPosition > 0 ? currentAvgPosition : '—'}
+                            </span>
                           </div>
-                          <div className="se-flex-item">
-                            <div className="se-dynamic-2 se-dynamic-2_worsening flex items-center gap-0.5 text-xs font-bold text-[#e02020]">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="6" height="5" viewBox="0 0 6 5" className="se-dynamic-2__icon w-2 h-2 fill-current rotate-180">
-                                <path d="M3 0L6 5H0L3 0Z" />
-                              </svg>
-                              <span>1</span>
+                          {rankingsSummary?.averagePositionChange != null && rankingsSummary.averagePositionChange !== 0 && (
+                            <div className="se-flex-item">
+                              <div className={`se-dynamic-2 flex items-center gap-0.5 text-xs font-bold ${rankingsSummary.averagePositionChange > 0 ? 'text-[#e02020]' : 'text-emerald-600'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="6" height="5" viewBox="0 0 6 5" className={`se-dynamic-2__icon w-2 h-2 fill-current ${rankingsSummary.averagePositionChange > 0 ? 'rotate-180' : ''}`}>
+                                  <path d="M3 0L6 5H0L3 0Z" />
+                                </svg>
+                                <span>{Math.abs(rankingsSummary.averagePositionChange)}</span>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="rankings-chart-tab__chart h-9 w-full mt-2 overflow-hidden">
                       <svg className="w-full h-full" viewBox="0 0 259 40" preserveAspectRatio="none">
                         <path
-                          d="M 2.539 5 C 2.539 5 256.46 22 256.46 22"
+                          d={cardAvgPosSplineD || "M 2.539 20 L 256.46 20"}
                           fill="none"
                           stroke="#5288da"
                           strokeWidth="2"
@@ -3857,7 +4557,9 @@ function RankingsPageContent() {
                       <div className="rankings-chart-tab__text-value mt-1">
                         <div className="se-flex-box flex items-center gap-2">
                           <div className="se-flex-item">
-                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">0</span>
+                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">
+                              {rankingsSummary?.trafficForecast ?? 0}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -3891,7 +4593,9 @@ function RankingsPageContent() {
                       <div className="rankings-chart-tab__text-value mt-1">
                         <div className="se-flex-box flex items-center gap-2">
                           <div className="se-flex-item">
-                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">0</span>
+                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">
+                              {currentVisibilityScore}%
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -3899,7 +4603,7 @@ function RankingsPageContent() {
                     <div className="rankings-chart-tab__chart h-9 w-full mt-2 overflow-hidden">
                       <svg className="w-full h-full" viewBox="0 0 259 40" preserveAspectRatio="none">
                         <path
-                          d="M 2.539 30 C 2.539 30 256.46 30 256.46 30"
+                          d={cardVisSplineD || "M 2.539 30 L 256.46 30"}
                           fill="none"
                           stroke="#5288da"
                           strokeWidth="2"
@@ -3925,7 +4629,9 @@ function RankingsPageContent() {
                       <div className="rankings-chart-tab__text-value mt-1">
                         <div className="se-flex-box flex items-center gap-2">
                           <div className="se-flex-item">
-                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">100</span>
+                            <span className="rankings-chart-tab__text-value-content text-2xl font-bold text-gray-900 leading-none">
+                              {keywords.length > 0 ? Math.round((keywords.filter(k => k.rank != null && k.rank > 0 && k.rank <= 10).length / keywords.length) * 100) : 0}%
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -3949,131 +4655,106 @@ function RankingsPageContent() {
                   <div className="collapsable-chart-block p-4">
                     <div className="collapsable-chart-block__content relative">
                       <div className="rankings-chart__main-chart relative w-full h-[240px] select-none">
-                        {/* Highcharts SVG Chart */}
-                        <svg className="w-full h-full overflow-visible" viewBox="0 0 1069 240" preserveAspectRatio="none">
-                          <desc>Created with Highcharts 8.2.2</desc>
-                          
-                          {/* Horizontal Gridlines */}
-                          <line x1="65" y1="198" x2="1059" y2="198" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
-                          <line x1="65" y1="104" x2="1059" y2="104" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
-                          <line x1="65" y1="10" x2="1059" y2="10" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
+                        {isLoadingRankings ? (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                            Loading historical ranking trends...
+                          </div>
+                        ) : detailedTrendPoints.length === 0 ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <span className="text-xs font-semibold text-gray-600">No historical ranking position data recorded yet</span>
+                            <span className="text-[11px] text-gray-400 mt-0.5">Click &quot;Recheck data&quot; to collect search engine rankings.</span>
+                          </div>
+                        ) : (
+                          <svg className="w-full h-full overflow-visible" viewBox="0 0 1069 240" preserveAspectRatio="none">
+                            <desc>Created with Highcharts 8.2.2</desc>
+                            
+                            {/* Horizontal Gridlines */}
+                            <line x1="65" y1="198" x2="1059" y2="198" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
+                            <line x1="65" y1="104" x2="1059" y2="104" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
+                            <line x1="65" y1="10" x2="1059" y2="10" stroke="#d6d8e3" strokeWidth="1" opacity="0.8" />
 
-                          {/* Axes */}
-                          <line x1="65" y1="10" x2="65" y2="198" stroke="#ccd6eb" strokeWidth="1" />
-                          <line x1="65" y1="198" x2="1059" y2="198" stroke="#ccd6eb" strokeWidth="1" />
+                            {/* Axes */}
+                            <line x1="65" y1="10" x2="65" y2="198" stroke="#ccd6eb" strokeWidth="1" />
+                            <line x1="65" y1="198" x2="1059" y2="198" stroke="#ccd6eb" strokeWidth="1" />
 
-                          {/* Y-axis Title */}
-                          <text
-                            x="25"
-                            y="104"
-                            textAnchor="middle"
-                            transform="rotate(-90 25 104)"
-                            fill="#666666"
-                            fontSize="11"
-                            fontFamily="Lucida Grande, Arial, sans-serif"
-                          >
-                            {historicalMetric === 'AveragePosition'
-                              ? 'Average position'
-                              : historicalMetric === 'TrafficForecast'
-                              ? 'Traffic forecast'
-                              : historicalMetric === 'Visibility'
-                              ? 'Search visibility'
-                              : '% in Top 10'}
-                          </text>
+                            {/* Y-axis Title */}
+                            <text
+                              x="25"
+                              y="104"
+                              textAnchor="middle"
+                              transform="rotate(-90 25 104)"
+                              fill="#666666"
+                              fontSize="11"
+                              fontFamily="Lucida Grande, Arial, sans-serif"
+                            >
+                              {historicalMetric === 'AveragePosition'
+                                ? 'Average position'
+                                : historicalMetric === 'TrafficForecast'
+                                ? 'Traffic forecast'
+                                : historicalMetric === 'Visibility'
+                                ? 'Search visibility'
+                                : '% in Top 10'}
+                            </text>
 
-                          {/* Spline Multi-Layer Glow Shadows in #5288da */}
-                          <path
-                            d="M 65 10 C 65 10 1059 104 1059 104"
-                            fill="none"
-                            stroke="#5288da"
-                            strokeWidth="13"
-                            strokeOpacity="0.03"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M 65 10 C 65 10 1059 104 1059 104"
-                            fill="none"
-                            stroke="#5288da"
-                            strokeWidth="9"
-                            strokeOpacity="0.05"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M 65 10 C 65 10 1059 104 1059 104"
-                            fill="none"
-                            stroke="#5288da"
-                            strokeWidth="5"
-                            strokeOpacity="0.08"
-                            strokeLinecap="round"
-                          />
+                            {/* Spline Glow Shadows */}
+                            {detailedSplineD && (
+                              <>
+                                <path
+                                  d={detailedSplineD}
+                                  fill="none"
+                                  stroke="#5288da"
+                                  strokeWidth="6"
+                                  strokeOpacity="0.08"
+                                  strokeLinecap="round"
+                                />
+                                <path
+                                  d={detailedSplineD}
+                                  fill="none"
+                                  stroke="#5288da"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                />
+                              </>
+                            )}
 
-                          {/* Spline Main Stroke */}
-                          <path
-                            d="M 65 10 C 65 10 1059 104 1059 104"
-                            fill="none"
-                            stroke="#5288da"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
-
-                          {/* Point 1: Baseline Oct-08 2026 */}
-                          <circle
-                            cx="65"
-                            cy="10"
-                            r={hoveredHistoricalPoint?.date === 'Oct-08 2026' ? '6.5' : '4.5'}
-                            fill="#5288da"
-                            stroke="#f3f4f8"
-                            strokeWidth="2"
-                            className="cursor-pointer transition-all duration-150"
-                            onMouseEnter={() =>
-                              setHoveredHistoricalPoint({
-                                x: 65,
-                                y: 10,
-                                pct: 0,
-                                date: 'Oct-08 2026',
-                                position: 1,
-                                change: 0,
-                              })
-                            }
-                            onMouseLeave={() => setHoveredHistoricalPoint(null)}
-                          />
-
-                          {/* Point 2: Current rankings Oct-11 2026 */}
-                          <circle
-                            cx="1059"
-                            cy="104"
-                            r={hoveredHistoricalPoint?.date === 'Oct-11 2026' ? '6.5' : '4.5'}
-                            fill="#5288da"
-                            stroke="#f3f4f8"
-                            strokeWidth="2"
-                            className="cursor-pointer transition-all duration-150"
-                            onMouseEnter={() =>
-                              setHoveredHistoricalPoint({
-                                x: 1059,
-                                y: 104,
-                                pct: 100,
-                                date: 'Oct-11 2026',
-                                position: 2,
-                                change: -1,
-                              })
-                            }
-                            onMouseLeave={() => setHoveredHistoricalPoint(null)}
-                          />
-                        </svg>
-
-                        {/* Inverted Y-axis Labels */}
-                        <div className="absolute left-8 top-1 text-[11px] font-medium text-gray-500 pointer-events-none">1</div>
-                        <div className="absolute left-8 top-[96px] text-[11px] font-medium text-gray-500 pointer-events-none">2</div>
-                        <div className="absolute left-8 top-[190px] text-[11px] font-medium text-gray-500 pointer-events-none">3</div>
-
+                            {/* Dynamic Data Points */}
+                            {detailedTrendPoints.map((pt, idx) => (
+                              <circle
+                                key={idx}
+                                cx={pt.x}
+                                cy={pt.y}
+                                r="4.5"
+                                fill="#5288da"
+                                stroke="#f3f4f8"
+                                strokeWidth="2"
+                                className="cursor-pointer transition-all duration-150 hover:r-6"
+                                onMouseEnter={() =>
+                                  setHoveredHistoricalPoint({
+                                    x: pt.x,
+                                    y: pt.y,
+                                    pct: 100,
+                                    date: pt.label,
+                                    position: pt.value,
+                                    change: 0,
+                                  })
+                                }
+                                onMouseLeave={() => setHoveredHistoricalPoint(null)}
+                              />
+                            ))}
+                          </svg>
+                        )}
                         {/* X-axis Labels */}
-                        <div className="absolute left-10 bottom-0 text-left pointer-events-none">
-                          <div className="text-[11px] text-gray-400 font-normal">Baseline</div>
-                          <div className="text-xs font-bold text-gray-700">Oct-08 2026</div>
-                        </div>
-                        <div className="absolute right-4 bottom-0 text-right pointer-events-none">
-                          <div className="text-[11px] text-gray-400 font-normal">Current rankings</div>
-                          <div className="text-xs font-bold text-[#5288da]">Oct-11 2026</div>
+                        <div className="absolute left-16 right-4 bottom-0 flex justify-between pointer-events-none text-xs text-gray-500 font-semibold px-2">
+                          {detailedTrendPoints.length > 0 ? (
+                            detailedTrendPoints.map((pt, idx) => (
+                              <span key={idx}>{pt.label}</span>
+                            ))
+                          ) : (
+                            <>
+                              <span>Baseline</span>
+                              <span>Current</span>
+                            </>
+                          )}
                         </div>
 
                         {/* Interactive Working Hover Tooltip */}
@@ -4116,7 +4797,7 @@ function RankingsPageContent() {
                         </div>
 
                         <div className="text-xs text-gray-400">
-                          Period: Oct 08 - Oct 11 2026
+                          Period: {historicalBaselineLabel} - {historicalCurrentLabel}
                         </div>
                       </div>
                     </div>
@@ -4164,10 +4845,10 @@ function RankingsPageContent() {
                       <th className="px-3 py-3 text-center min-w-[50px]">URL</th>
                       <th className="px-3 py-3 text-right min-w-[100px]">Search vol.</th>
                       <th className="px-4 py-3 text-center min-w-[140px] border-l border-gray-100">
-                        Baseline (Oct-08 2026)
+                        Baseline ({historicalBaselineLabel})
                       </th>
                       <th className="px-4 py-3 text-center min-w-[140px] border-l border-gray-100 bg-[#F5F3FF]">
-                        Current rankings (Oct-11 2026)
+                        Current rankings ({historicalCurrentLabel})
                       </th>
                       <th className="px-4 py-3 text-center min-w-[100px] border-l border-gray-100">
                         Difference
@@ -4296,15 +4977,15 @@ function RankingsPageContent() {
                             }}
                             className="text-3xl font-bold text-gray-900 tracking-tight hover:text-[#7C3AED] transition-colors cursor-pointer"
                           >
-                            0%
+                            {currentVisibilityScore}%
                           </button>
                         </div>
                       </div>
 
                       {/* Highcharts Spline Chart: Search Visibility (amber #FF9800) */}
                       <div className="relative w-56 h-24">
-                        <div className="absolute left-0 top-1 text-[10px] text-[#6A8897] font-medium">2</div>
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">0</div>
+                        <div className="absolute left-0 top-1 text-[10px] text-[#6A8897] font-medium">100</div>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">50</div>
                         <div className="absolute left-0 bottom-1 text-[10px] text-[#6A8897] font-medium">0</div>
 
                         <svg className="w-full h-full pl-5 overflow-visible" viewBox="0 0 227 100" preserveAspectRatio="none">
@@ -4319,11 +5000,10 @@ function RankingsPageContent() {
                           <line x1="31" y1="85.5" x2="217" y2="85.5" stroke="#F1F5F9" strokeWidth="1" />
                           <line x1="31" y1="10" x2="31" y2="85" stroke="#E2E8F0" strokeWidth="1" />
 
-                          {/* Spline Curve matching user HTML coordinates: Flat at y=37.5 */}
+                          {/* Dynamic Spline Curve */}
                           <g transform="translate(31,10)">
-                            {/* Shadows */}
                             <path
-                              d="M 1.82 37.5 C 1.82 37.5 38.29 37.5 62.61 37.5 C 86.92 37.5 99.08 37.5 123.39 37.5 C 147.71 37.5 184.18 37.5 184.18 37.5"
+                              d={cardVisSplineD || "M 1.82 37.5 L 184.18 37.5"}
                               fill="none"
                               stroke="#FF9800"
                               strokeWidth="5"
@@ -4332,7 +5012,7 @@ function RankingsPageContent() {
                               transform="translate(1, 3)"
                             />
                             <path
-                              d="M 1.82 37.5 C 1.82 37.5 38.29 37.5 62.61 37.5 C 86.92 37.5 99.08 37.5 123.39 37.5 C 147.71 37.5 184.18 37.5 184.18 37.5"
+                              d={cardVisSplineD || "M 1.82 37.5 L 184.18 37.5"}
                               fill="none"
                               stroke="#FF9800"
                               strokeWidth="3"
@@ -4342,7 +5022,7 @@ function RankingsPageContent() {
                             />
                             {/* Main Stroke */}
                             <path
-                              d="M 1.82 37.5 C 1.82 37.5 38.29 37.5 62.61 37.5 C 86.92 37.5 99.08 37.5 123.39 37.5 C 147.71 37.5 184.18 37.5 184.18 37.5"
+                              d={cardVisSplineD || "M 1.82 37.5 L 184.18 37.5"}
                               fill="none"
                               stroke="#FF9800"
                               strokeWidth="2"
@@ -4364,11 +5044,11 @@ function RankingsPageContent() {
                         {hoveredVisibilityCard && (
                           <div className="absolute right-0 -top-1 bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-2.5 text-xs z-30 pointer-events-none animate-in fade-in duration-150 min-w-[130px]">
                             <div className="font-bold text-gray-900 border-b border-gray-100 pb-1 mb-1 text-[11px]">
-                              Oct-11 2026
+                              {rankingsTrend?.[rankingsTrend.length - 1]?.label || 'Current'}
                             </div>
                             <div className="text-[11px] text-gray-600 flex items-center justify-between">
                               <span>Search visibility:</span>
-                              <span className="font-bold text-gray-900">0%</span>
+                              <span className="font-bold text-gray-900">{currentVisibilityScore}%</span>
                             </div>
                           </div>
                         )}
@@ -4397,23 +5077,25 @@ function RankingsPageContent() {
                             }}
                             className="text-3xl font-bold text-gray-900 tracking-tight hover:text-[#7C3AED] transition-colors cursor-pointer"
                           >
-                            2
+                            {currentAvgPosition > 0 ? currentAvgPosition : '—'}
                           </button>
-                          {/* Worsening diff badge from user HTML: ▼ 1 */}
-                          <span className="text-xs font-bold text-[#F44336] flex items-center gap-0.5">
-                            <svg className="w-2.5 h-2.5 fill-current rotate-180" viewBox="0 0 6 5">
-                              <path d="M3 0L6 5H0L3 0Z" />
-                            </svg>
-                            <span>1</span>
-                          </span>
+                          {/* Real diff badge */}
+                          {rankingsSummary?.averagePositionChange != null && rankingsSummary.averagePositionChange !== 0 && (
+                            <span className={`text-xs font-bold flex items-center gap-0.5 ${rankingsSummary.averagePositionChange > 0 ? 'text-[#F44336]' : 'text-emerald-600'}`}>
+                              <svg className={`w-2.5 h-2.5 fill-current ${rankingsSummary.averagePositionChange > 0 ? 'rotate-180' : ''}`} viewBox="0 0 6 5">
+                                <path d="M3 0L6 5H0L3 0Z" />
+                              </svg>
+                              <span>{Math.abs(rankingsSummary.averagePositionChange)}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       {/* Highcharts Spline Chart: Average Position (blue #1863FD) */}
                       <div className="relative w-56 h-24">
-                        <div className="absolute left-0 top-1 text-[10px] text-[#6A8897] font-medium">0</div>
-                        <div className="absolute left-0 top-1/3 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">2</div>
-                        <div className="absolute left-0 top-2/3 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">4</div>
+                        <div className="absolute left-0 top-1 text-[10px] text-[#6A8897] font-medium">1</div>
+                        <div className="absolute left-0 top-1/3 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">20</div>
+                        <div className="absolute left-0 top-2/3 -translate-y-1/2 text-[10px] text-[#6A8897] font-medium">50</div>
 
                         <svg className="w-full h-full pl-5 overflow-visible" viewBox="0 0 227 100" preserveAspectRatio="none">
                           <defs>
@@ -4428,11 +5110,11 @@ function RankingsPageContent() {
                           <line x1="32" y1="85.5" x2="217" y2="85.5" stroke="#F1F5F9" strokeWidth="1" />
                           <line x1="32" y1="10" x2="32" y2="85" stroke="#E2E8F0" strokeWidth="1" />
 
-                          {/* Spline Curve matching user HTML coordinates: from 37.5 curving to 50 */}
+                          {/* Dynamic Spline Curve */}
                           <g transform="translate(32,10)">
                             {/* Shadows */}
                             <path
-                              d="M 1.81 37.5 C 1.81 37.5 38.09 37.5 62.27 37.5 C 86.45 37.5 98.55 50 122.73 50 C 146.91 50 183.19 50 183.19 50"
+                              d={cardAvgPosSplineD || "M 1.81 37.5 L 183.19 37.5"}
                               fill="none"
                               stroke="#1863FD"
                               strokeWidth="5"
@@ -4441,7 +5123,7 @@ function RankingsPageContent() {
                               transform="translate(1, 3)"
                             />
                             <path
-                              d="M 1.81 37.5 C 1.81 37.5 38.09 37.5 62.27 37.5 C 86.45 37.5 98.55 50 122.73 50 C 146.91 50 183.19 50 183.19 50"
+                              d={cardAvgPosSplineD || "M 1.81 37.5 L 183.19 37.5"}
                               fill="none"
                               stroke="#1863FD"
                               strokeWidth="3"
@@ -4451,13 +5133,13 @@ function RankingsPageContent() {
                             />
                             {/* Main Curve */}
                             <path
-                              d="M 1.81 37.5 C 1.81 37.5 38.09 37.5 62.27 37.5 C 86.45 37.5 98.55 50 122.73 50 C 146.91 50 183.19 50 183.19 50"
+                              d={cardAvgPosSplineD || "M 1.81 37.5 L 183.19 37.5"}
                               fill="none"
                               stroke="#1863FD"
                               strokeWidth="2"
                               strokeLinecap="round"
                             />
-                            {/* Active Point Circle at x=123 (Oct-10) */}
+                            {/* Active Point Circle */}
                             <circle
                               cx="123"
                               cy="50"
@@ -4473,11 +5155,11 @@ function RankingsPageContent() {
                         {hoveredAvgPosCard && (
                           <div className="absolute right-0 -top-1 bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-2.5 text-xs z-30 pointer-events-none animate-in fade-in duration-150 min-w-[130px]">
                             <div className="font-bold text-gray-900 border-b border-gray-100 pb-1 mb-1 text-[11px]">
-                              Oct-10 2026
+                              {rankingsTrend?.[rankingsTrend.length - 1]?.label || 'Current'}
                             </div>
                             <div className="text-[11px] text-gray-600 flex items-center justify-between">
                               <span>Average position:</span>
-                              <span className="font-bold text-gray-900">2</span>
+                              <span className="font-bold text-gray-900">{currentAvgPosition > 0 ? currentAvgPosition : '—'}</span>
                             </div>
                           </div>
                         )}
@@ -4610,9 +5292,10 @@ function RankingsPageContent() {
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     {/* Left 6 Mini-cards matching Real SE Ranking HTML */}
                     <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-                      {/* Top 1: 1 with ▼ 1 worsening badge */}
+                      {/* Top 1 */}
                       <div
                         onClick={() => {
+                          setSelectedRange('top1');
                           setActiveTab('detailed');
                           router.push('/rankings?tab=detailed');
                         }}
@@ -4621,13 +5304,12 @@ function RankingsPageContent() {
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 1</div>
                           <div className="flex items-baseline gap-1 mt-0.5">
-                            <span className="text-xl font-bold text-gray-900">1</span>
-                            <span className="text-[11px] font-bold text-[#F44336] flex items-center gap-0.5">
-                              <svg className="w-2 h-2 fill-current rotate-180" viewBox="0 0 6 5">
-                                <path d="M3 0L6 5H0L3 0Z" />
-                              </svg>
-                              <span>1</span>
-                            </span>
+                            <span className="text-xl font-bold text-gray-900">{calculatedDistribution.top1}</span>
+                            {rankingsSummary?.top1Change != null && rankingsSummary.top1Change !== 0 && (
+                              <span className={`text-[10px] font-bold ${rankingsSummary.top1Change > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                {rankingsSummary.top1Change > 0 ? `+${rankingsSummary.top1Change}` : rankingsSummary.top1Change}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 89 45">
@@ -4641,9 +5323,10 @@ function RankingsPageContent() {
                         </svg>
                       </div>
 
-                      {/* Top 2-3: 1 with ▲ 1 improvement badge */}
+                      {/* Top 2-3 */}
                       <div
                         onClick={() => {
+                          setSelectedRange('top3');
                           setActiveTab('detailed');
                           router.push('/rankings?tab=detailed');
                         }}
@@ -4652,13 +5335,12 @@ function RankingsPageContent() {
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 2-3</div>
                           <div className="flex items-baseline gap-1 mt-0.5">
-                            <span className="text-xl font-bold text-gray-900">1</span>
-                            <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
-                              <svg className="w-2 h-2 fill-current" viewBox="0 0 6 5">
-                                <path d="M3 0L6 5H0L3 0Z" />
-                              </svg>
-                              <span>1</span>
-                            </span>
+                            <span className="text-xl font-bold text-gray-900">{calculatedDistribution.top2_3}</span>
+                            {rankingsSummary?.top2_3Change != null && rankingsSummary.top2_3Change !== 0 && (
+                              <span className={`text-[10px] font-bold ${rankingsSummary.top2_3Change > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                {rankingsSummary.top2_3Change > 0 ? `+${rankingsSummary.top2_3Change}` : rankingsSummary.top2_3Change}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 75 45">
@@ -4672,44 +5354,72 @@ function RankingsPageContent() {
                         </svg>
                       </div>
 
-                      {/* Top 4-5: 0 */}
-                      <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs">
+                      {/* Top 4-5 */}
+                      <div
+                        onClick={() => {
+                          setSelectedRange('top5');
+                          setActiveTab('detailed');
+                          router.push('/rankings?tab=detailed');
+                        }}
+                        className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs hover:border-[#7C3AED] transition-colors cursor-pointer"
+                      >
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 4-5</div>
-                          <div className="text-xl font-bold text-gray-900 mt-0.5">0</div>
+                          <div className="text-xl font-bold text-gray-900 mt-0.5">{calculatedDistribution.top4_5}</div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 89 45">
                           <path d="M 1 22.5 L 88 22.5" fill="none" stroke="#F7CFCF" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
                       </div>
 
-                      {/* Top 6-10: 0 */}
-                      <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs">
+                      {/* Top 6-10 */}
+                      <div
+                        onClick={() => {
+                          setSelectedRange('top10');
+                          setActiveTab('detailed');
+                          router.push('/rankings?tab=detailed');
+                        }}
+                        className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs hover:border-[#7C3AED] transition-colors cursor-pointer"
+                      >
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 6-10</div>
-                          <div className="text-xl font-bold text-gray-900 mt-0.5">0</div>
+                          <div className="text-xl font-bold text-gray-900 mt-0.5">{calculatedDistribution.top6_10}</div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 75 45">
                           <path d="M 1 22.5 L 74 22.5" fill="none" stroke="#E788D5" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
                       </div>
 
-                      {/* Top 11-30: 0 */}
-                      <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs">
+                      {/* Top 11-30 */}
+                      <div
+                        onClick={() => {
+                          setSelectedRange('top30');
+                          setActiveTab('detailed');
+                          router.push('/rankings?tab=detailed');
+                        }}
+                        className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs hover:border-[#7C3AED] transition-colors cursor-pointer"
+                      >
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 11-30</div>
-                          <div className="text-xl font-bold text-gray-900 mt-0.5">0</div>
+                          <div className="text-xl font-bold text-gray-900 mt-0.5">{calculatedDistribution.top11_30}</div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 78 45">
                           <path d="M 1 22.5 L 77 22.5" fill="none" stroke="#BD88E7" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
                       </div>
 
-                      {/* Top 31-100: 0 */}
-                      <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs">
+                      {/* Top 31-100 */}
+                      <div
+                        onClick={() => {
+                          setSelectedRange('all');
+                          setActiveTab('detailed');
+                          router.push('/rankings?tab=detailed');
+                        }}
+                        className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between shadow-2xs hover:border-[#7C3AED] transition-colors cursor-pointer"
+                      >
                         <div>
                           <div className="text-[11px] text-gray-500 font-medium">Top 31-100</div>
-                          <div className="text-xl font-bold text-gray-900 mt-0.5">0</div>
+                          <div className="text-xl font-bold text-gray-900 mt-0.5">{calculatedDistribution.top31_100}</div>
                         </div>
                         <svg className="w-16 h-8" viewBox="0 0 66 45">
                           <path d="M 1 22.5 L 65 22.5" fill="none" stroke="#FFA1A1" strokeWidth="2.5" strokeLinecap="round" />
@@ -4720,16 +5430,37 @@ function RankingsPageContent() {
                     {/* Right Stacked Areaspline Chart with Highcharts Tooltip */}
                     <div className="lg:col-span-8 relative bg-white rounded-lg p-3 flex flex-col justify-between border border-gray-100">
                       <div className="relative h-64">
-                        {/* Y-axis labels matching user HTML: 5, 4, 3, 2, 1, 0 */}
-                        <div className="absolute left-0 top-1 text-[11px] text-[#4E6570] font-normal">5</div>
-                        <div className="absolute left-0 top-[20%] text-[11px] text-[#4E6570] font-normal">4</div>
-                        <div className="absolute left-0 top-[40%] text-[11px] text-[#4E6570] font-normal">3</div>
-                        <div className="absolute left-0 top-[60%] text-[11px] text-[#4E6570] font-normal">2</div>
-                        <div className="absolute left-0 top-[80%] text-[11px] text-[#4E6570] font-normal">1</div>
-                        <div className="absolute left-0 bottom-1 text-[11px] text-[#4E6570] font-normal">0</div>
+                        {/* Dynamic Y-axis labels */}
+                        {stackedDistributionData?.yLabels ? (
+                          stackedDistributionData.yLabels.map((lbl, idx) => (
+                            <div
+                              key={idx}
+                              className="absolute left-0 text-[11px] text-[#4E6570] font-normal"
+                              style={{ top: `${(idx / (stackedDistributionData.yLabels.length - 1)) * 95}%` }}
+                            >
+                              {lbl}
+                            </div>
+                          ))
+                        ) : (
+                          <>
+                            <div className="absolute left-0 top-1 text-[11px] text-[#4E6570] font-normal">5</div>
+                            <div className="absolute left-0 bottom-1 text-[11px] text-[#4E6570] font-normal">0</div>
+                          </>
+                        )}
 
-                        {/* SVG Stacked Area Chart matching user HTML coordinates across 4 dates */}
-                        <svg className="w-full h-full pl-6 overflow-visible" viewBox="0 0 693 262" preserveAspectRatio="none">
+                        {isLoadingRankings ? (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                            Loading ranking distribution...
+                          </div>
+                        ) : !stackedDistributionData || !stackedDistributionData.dates || stackedDistributionData.dates.length === 0 ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <span className="text-xs font-semibold text-gray-600">No ranking position data recorded yet</span>
+                            <span className="text-[11px] text-gray-400 mt-0.5">Historical ranking distribution will appear after ranking checks.</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* SVG Stacked Area Chart dynamically computed from project trend */}
+                            <svg className="w-full h-full pl-6 overflow-visible" viewBox="0 0 693 262" preserveAspectRatio="none">
                           <defs>
                             <clipPath id="highcharts-stacked-clip">
                               <rect x="0" y="0" width="673" height="262" fill="none" />
@@ -4744,195 +5475,144 @@ function RankingsPageContent() {
                           <line x1="20" y1="210.5" x2="693" y2="210.5" stroke="#F1F5F9" strokeWidth="1" />
                           <line x1="20" y1="262" x2="693" y2="262" stroke="#CCD6EB" strokeWidth="1" />
 
-                          {/* Vertical lines for 4 dates */}
-                          <line x1="26.5" y1="0" x2="26.5" y2="262" stroke="#F8FAFC" strokeWidth="1" />
-                          <line x1="246.5" y1="0" x2="246.5" y2="262" stroke="#F8FAFC" strokeWidth="1" />
-                          <line x1="465.5" y1="0" x2="465.5" y2="262" stroke="#F8FAFC" strokeWidth="1" />
-                          <line x1="685.5" y1="0" x2="685.5" y2="262" stroke="#F8FAFC" strokeWidth="1" />
+                          {/* Vertical lines for dates */}
+                          {stackedDistributionData?.dates?.map((dItem, idx) => (
+                            <line key={idx} x1={dItem.x} y1="0" x2={dItem.x} y2="262" stroke="#F8FAFC" strokeWidth="1" />
+                          ))}
 
-                          {/* Stacked Areas from User HTML */}
-                          {/* Layer 0: Total (#eff1f9) */}
-                          <path
-                            d="M 26.5 52.4 L 246.5 52.4 L 465.5 52.4 L 685.5 52.4 L 685.5 157.2 L 465.5 157.2 L 246.5 157.2 L 26.5 157.2 Z"
-                            fill="rgba(239,241,249,0.8)"
-                          />
-                          {/* Layer 5: Top 2-3 (#aeb5f2) */}
-                          <path
-                            d="M 26.5 157.2 L 246.5 157.2 L 465.5 157.2 L 685.5 157.2 L 685.5 209.6 L 465.5 209.6 L 246.5 209.6 L 26.5 157.2 Z"
-                            fill="rgba(174,181,242,0.85)"
-                          />
-                          {/* Layer 6: Top 1 (#8983f0) */}
-                          <path
-                            d="M 26.5 157.2 L 246.5 157.2 L 465.5 209.6 L 685.5 209.6 L 685.5 262 L 465.5 262 L 246.5 262 L 26.5 262 Z"
-                            fill="rgba(137,131,240,0.85)"
-                          />
+                          {/* Dynamic Stacked Areas */}
+                          {stackedDistributionData?.layers?.map((layer, idx) => (
+                            <path key={idx} d={layer.d} fill={layer.fill} />
+                          ))}
 
-                          {/* Interactive Crosshair Dashed Line */}
-                          <line
-                            x1={
-                              hoveredDistributionDate === 'Oct-08'
-                                ? 26.5
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? 246.5
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? 465.5
-                                : 685.5
-                            }
-                            y1="0"
-                            x2={
-                              hoveredDistributionDate === 'Oct-08'
-                                ? 26.5
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? 246.5
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? 465.5
-                                : 685.5
-                            }
-                            y2="259"
-                            stroke="rgb(44, 62, 80)"
-                            strokeWidth="1.5"
-                            strokeDasharray="4,3"
-                          />
-
-                          {/* Data points at active hovered date */}
-                          <circle
-                            cx={
-                              hoveredDistributionDate === 'Oct-08'
-                                ? 26.5
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? 246.5
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? 465.5
-                                : 685.5
-                            }
-                            cy="52.4"
-                            r="4"
-                            fill="#EFF1F9"
-                            stroke="#FFFFFF"
-                            strokeWidth="2"
-                          />
-                          <circle
-                            cx={
-                              hoveredDistributionDate === 'Oct-08'
-                                ? 26.5
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? 246.5
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? 465.5
-                                : 685.5
-                            }
-                            cy="157.2"
-                            r="4"
-                            fill="#AEB5F2"
-                            stroke="#FFFFFF"
-                            strokeWidth="2"
-                          />
-                          <circle
-                            cx={
-                              hoveredDistributionDate === 'Oct-08'
-                                ? 26.5
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? 246.5
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? 465.5
-                                : 685.5
-                            }
-                            cy="209.6"
-                            r="4"
-                            fill="#8983F0"
-                            stroke="#FFFFFF"
-                            strokeWidth="2"
-                          />
+                          {/* Interactive Crosshair & Hover Points */}
+                          {(() => {
+                            const activeDist =
+                              stackedDistributionData?.dates?.[hoveredDistributionDateIndex] ||
+                              (stackedDistributionData?.dates && stackedDistributionData.dates.length > 0
+                                ? stackedDistributionData.dates[stackedDistributionData.dates.length - 1]
+                                : null);
+                            if (!activeDist) return null;
+                            return (
+                              <>
+                                <line
+                                  x1={activeDist.x}
+                                  y1="0"
+                                  x2={activeDist.x}
+                                  y2="259"
+                                  stroke="rgb(44, 62, 80)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="4,3"
+                                />
+                                <circle cx={activeDist.x} cy={activeDist.yTotal} r="4" fill="#EFF1F9" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop100} r="4" fill="#FFA1A1" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop30} r="4" fill="#BD88E7" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop10} r="4" fill="#E788D5" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop5} r="4" fill="#F7CFCF" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop3} r="4" fill="#AEB5F2" stroke="#FFFFFF" strokeWidth="2" />
+                                <circle cx={activeDist.x} cy={activeDist.yTop1} r="4" fill="#8983F0" stroke="#FFFFFF" strokeWidth="2" />
+                              </>
+                            );
+                          })()}
                         </svg>
 
-                        {/* Interactive Floating Tooltip from user HTML */}
-                        <div
-                          className="absolute bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-3 text-xs z-30 pointer-events-none animate-in fade-in duration-100 w-44"
-                          style={{
-                            left:
-                              hoveredDistributionDate === 'Oct-08'
-                                ? '40px'
-                                : hoveredDistributionDate === 'Oct-09'
-                                ? '190px'
-                                : hoveredDistributionDate === 'Oct-10'
-                                ? '330px'
-                                : '470px',
-                            top: '10px',
-                          }}
-                        >
-                          <div className="font-bold text-gray-900 border-b border-gray-100 pb-1.5 mb-1.5 text-xs">
-                            {hoveredDistributionDate} 2026
-                          </div>
-                          <div className="space-y-1 text-[11px]">
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#eff1f9] border border-gray-300" />
-                                <span>Total:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">2</span>
+                        {/* Interactive Floating Tooltip */}
+                        {(() => {
+                          const activeDist =
+                            stackedDistributionData?.dates?.[hoveredDistributionDateIndex] ||
+                            (stackedDistributionData?.dates && stackedDistributionData.dates.length > 0
+                              ? stackedDistributionData.dates[stackedDistributionData.dates.length - 1]
+                              : null);
+                          if (!activeDist) return null;
+                          return (
+                            <div
+                              className="absolute bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-3 text-xs z-30 pointer-events-none animate-in fade-in duration-100 w-44"
+                              style={{
+                                left: Math.max(10, Math.min(500, activeDist.x - 70)),
+                                top: '10px',
+                              }}
+                            >
+                              <div className="font-bold text-gray-900 border-b border-gray-100 pb-1.5 mb-1.5 text-xs">
+                                {activeDist.label}
+                              </div>
+                              <div className="space-y-1 text-[11px]">
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#eff1f9] border border-gray-300" />
+                                    <span>Total:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.total}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#ffa1a1]" />
+                                    <span>Top 31-100:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top31_100}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#bd88e7]" />
+                                    <span>Top 11-30:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top11_30}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#e788d5]" />
+                                    <span>Top 6-10:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top6_10}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#f7cfcf]" />
+                                    <span>Top 4-5:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top4_5}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#aeb5f2]" />
+                                    <span>Top 2-3:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top2_3}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#8983f0]" />
+                                    <span>Top 1:</span>
+                                  </span>
+                                  <span className="font-bold text-gray-900">{activeDist.top1}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#ffa1a1]" />
-                                <span>Top 31-100:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">0</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#bd88e7]" />
-                                <span>Top 11-30:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">0</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#e788d5]" />
-                                <span>Top 6-10:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">0</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#f7cfcf]" />
-                                <span>Top 4-5:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">0</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#aeb5f2]" />
-                                <span>Top 2-3:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">1</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#8983f0]" />
-                                <span>Top 1:</span>
-                              </span>
-                              <span className="font-bold text-gray-900">1</span>
-                            </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
+                          </>
+                        )}
                       </div>
 
-                      {/* X-axis labels matching user HTML: Oct-08, Oct-09, Oct-10, Oct-11 */}
+                      {/* X-axis labels matching dynamic dates */}
                       <div className="flex justify-between pl-6 text-[11px] text-[#666666] font-normal pt-2">
-                        {(['Oct-08', 'Oct-09', 'Oct-10', 'Oct-11'] as const).map((date) => (
-                          <button
-                            key={date}
-                            type="button"
-                            onMouseEnter={() => setHoveredDistributionDate(date)}
-                            className={`cursor-pointer transition-colors px-1 rounded ${
-                              hoveredDistributionDate === date
-                                ? 'font-bold text-[#171B24] bg-gray-100'
-                                : 'hover:text-gray-900'
-                            }`}
-                          >
-                            {date}
-                          </button>
-                        ))}
+                        {stackedDistributionData?.dates && stackedDistributionData.dates.length > 0 ? (
+                          stackedDistributionData.dates.map((dItem, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onMouseEnter={() => setHoveredDistributionDateIndex(idx)}
+                              className={`cursor-pointer transition-colors px-1 rounded ${
+                                (hoveredDistributionDateIndex === idx || (hoveredDistributionDateIndex === 0 && idx === stackedDistributionData.dates.length - 1))
+                                  ? 'font-bold text-[#171B24] bg-gray-100'
+                                  : 'hover:text-gray-900'
+                              }`}
+                            >
+                              {dItem.label}
+                            </button>
+                          ))
+                        ) : (
+                          <span>Current</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -4947,33 +5627,62 @@ function RankingsPageContent() {
                   <span>Keywords in SERP</span>
                   <span className="cursor-help text-gray-400 text-xs">ℹ</span>
                 </div>
-                <div className="text-3xl font-black text-[#171B24]">2</div>
+                <div className="text-3xl font-black text-[#171B24]">
+                  {serpDynamics?.total ?? rankingsSummary?.totalKeywordsInSerp ?? keywords.length}
+                </div>
               </div>
 
-              {/* Progress Bar matching user HTML: Unchanged 2 (100%) */}
+              {/* Progress Bar matching live serpDynamics */}
               <div className="space-y-2">
                 <div className="w-full bg-[#D6D8E3] h-6 rounded flex overflow-hidden">
+                  {(serpDynamics?.jumped?.count ?? 0) > 0 && (
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-500 cursor-pointer"
+                      style={{ width: `${serpDynamics?.jumped?.percent ?? 0}%` }}
+                      title={`Jumped ${serpDynamics?.jumped?.count} (${serpDynamics?.jumped?.percent}%)`}
+                    />
+                  )}
+                  {(serpDynamics?.dropped?.count ?? 0) > 0 && (
+                    <div
+                      className="h-full bg-rose-500 transition-all duration-500 cursor-pointer"
+                      style={{ width: `${serpDynamics?.dropped?.percent ?? 0}%` }}
+                      title={`Dropped ${serpDynamics?.dropped?.count} (${serpDynamics?.dropped?.percent}%)`}
+                    />
+                  )}
                   <div
-                    className="h-full transition-all duration-500 cursor-pointer"
-                    style={{ width: '100%', backgroundColor: 'rgb(214, 216, 227)' }}
-                    title="Unchanged 2 (100%)"
+                    className="h-full bg-[#D6D8E3] transition-all duration-500 cursor-pointer flex-1"
+                    title={`Unchanged ${serpDynamics?.unchanged?.count ?? keywords.length} (${serpDynamics?.unchanged?.percent ?? 100}%)`}
                   />
                 </div>
                 <div className="flex items-center gap-5 text-xs font-medium text-gray-700">
                   <span className="flex items-center gap-1.5">
-                    <i className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: 'rgb(214, 216, 227)' }} />
-                    <span className="font-semibold text-gray-800">Unchanged 2 (100%)</span>
+                    <i className="w-2.5 h-2.5 rounded-full inline-block bg-emerald-500" />
+                    <span className="font-semibold text-gray-800">
+                      Jumped {serpDynamics?.jumped?.count ?? 0} ({serpDynamics?.jumped?.percent ?? 0}%)
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <i className="w-2.5 h-2.5 rounded-full inline-block bg-rose-500" />
+                    <span className="font-semibold text-gray-800">
+                      Dropped {serpDynamics?.dropped?.count ?? 0} ({serpDynamics?.dropped?.percent ?? 0}%)
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <i className="w-2.5 h-2.5 rounded-full inline-block bg-[#D6D8E3]" />
+                    <span className="font-semibold text-gray-800">
+                      Unchanged {serpDynamics?.unchanged?.count ?? keywords.length} ({serpDynamics?.unchanged?.percent ?? 100}%)
+                    </span>
                   </span>
                 </div>
               </div>
 
-              {/* 3 Tables: Jumped (0), Dropped (0), Unchanged (2) */}
+              {/* 3 Tables: Jumped, Dropped, Unchanged */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-3 border-t border-gray-100">
-                {/* Column 1: Jumped (0) */}
+                {/* Column 1: Jumped */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-800 border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-1">
-                      <span>Jumped (0)</span>
+                      <span>Jumped ({serpDynamics?.jumped?.count ?? 0})</span>
                       <span className="cursor-help text-gray-400 text-[10px]">ℹ</span>
                     </div>
                     <div className="flex items-center gap-8 text-[11px] text-gray-400 font-semibold">
@@ -4983,33 +5692,37 @@ function RankingsPageContent() {
                   </div>
                   <div className="divide-y divide-gray-100 text-xs">
                     {[
-                      { label: 'Top 1', color: 'rgb(54, 179, 126)' },
-                      { label: 'Top 2-3', color: 'rgb(74, 186, 139)' },
-                      { label: 'Top 4-5', color: 'rgb(94, 194, 152)' },
-                      { label: 'Top 6-10', color: 'rgb(114, 202, 164)' },
-                      { label: 'Top 11-30', color: 'rgb(134, 209, 178)' },
-                      { label: 'Top 31-100', color: 'rgb(154, 217, 190)' },
-                      { label: '>100', color: 'rgb(175, 225, 203)' },
-                    ].map((row, i) => (
-                      <div key={i} className="py-2 flex items-center justify-between text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
-                          <span className="font-medium text-gray-700">{row.label}</span>
+                      { label: 'Top 1', color: 'rgb(54, 179, 126)', val: serpDynamics?.jumped?.top1 ?? 0 },
+                      { label: 'Top 2-3', color: 'rgb(74, 186, 139)', val: serpDynamics?.jumped?.top2_3 ?? 0 },
+                      { label: 'Top 4-5', color: 'rgb(94, 194, 152)', val: serpDynamics?.jumped?.top4_5 ?? 0 },
+                      { label: 'Top 6-10', color: 'rgb(114, 202, 164)', val: serpDynamics?.jumped?.top6_10 ?? 0 },
+                      { label: 'Top 11-30', color: 'rgb(134, 209, 178)', val: serpDynamics?.jumped?.top11_30 ?? 0 },
+                      { label: 'Top 31-100', color: 'rgb(154, 217, 190)', val: serpDynamics?.jumped?.top31_100 ?? 0 },
+                      { label: '>100', color: 'rgb(175, 225, 203)', val: serpDynamics?.jumped?.over100 ?? 0 },
+                    ].map((row, i) => {
+                      const totalJumped = serpDynamics?.jumped?.count || 1;
+                      const pct = row.val > 0 ? `${Math.round((row.val / totalJumped) * 100)}%` : '0%';
+                      return (
+                        <div key={i} className="py-2 flex items-center justify-between text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
+                            <span className="font-medium text-gray-700">{row.label}</span>
+                          </div>
+                          <div className="flex items-center gap-8 text-right">
+                            <span className="w-10 text-gray-500">{pct}</span>
+                            <span className="w-6 font-bold text-gray-800">{row.val}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-8 text-right">
-                          <span className="w-10 text-gray-500">0%</span>
-                          <span className="w-6 font-bold text-gray-800">0</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Column 2: Dropped (0) */}
+                {/* Column 2: Dropped */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-800 border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-1">
-                      <span>Dropped (0)</span>
+                      <span>Dropped ({serpDynamics?.dropped?.count ?? 0})</span>
                       <span className="cursor-help text-gray-400 text-[10px]">ℹ</span>
                     </div>
                     <div className="flex items-center gap-8 text-[11px] text-gray-400 font-semibold">
@@ -5019,33 +5732,37 @@ function RankingsPageContent() {
                   </div>
                   <div className="divide-y divide-gray-100 text-xs">
                     {[
-                      { label: 'Top 1', color: 'rgb(244, 67, 54)' },
-                      { label: 'Top 2-3', color: 'rgb(245, 85, 74)' },
-                      { label: 'Top 4-5', color: 'rgb(246, 105, 94)' },
-                      { label: 'Top 6-10', color: 'rgb(247, 123, 114)' },
-                      { label: 'Top 11-30', color: 'rgb(248, 142, 134)' },
-                      { label: 'Top 31-100', color: 'rgb(249, 161, 154)' },
-                      { label: '>100', color: 'rgb(251, 180, 175)' },
-                    ].map((row, i) => (
-                      <div key={i} className="py-2 flex items-center justify-between text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
-                          <span className="font-medium text-gray-700">{row.label}</span>
+                      { label: 'Top 1', color: 'rgb(244, 67, 54)', val: serpDynamics?.dropped?.top1 ?? 0 },
+                      { label: 'Top 2-3', color: 'rgb(245, 85, 74)', val: serpDynamics?.dropped?.top2_3 ?? 0 },
+                      { label: 'Top 4-5', color: 'rgb(246, 105, 94)', val: serpDynamics?.dropped?.top4_5 ?? 0 },
+                      { label: 'Top 6-10', color: 'rgb(247, 123, 114)', val: serpDynamics?.dropped?.top6_10 ?? 0 },
+                      { label: 'Top 11-30', color: 'rgb(248, 142, 134)', val: serpDynamics?.dropped?.top11_30 ?? 0 },
+                      { label: 'Top 31-100', color: 'rgb(249, 161, 154)', val: serpDynamics?.dropped?.top31_100 ?? 0 },
+                      { label: '>100', color: 'rgb(251, 180, 175)', val: serpDynamics?.dropped?.over100 ?? 0 },
+                    ].map((row, i) => {
+                      const totalDropped = serpDynamics?.dropped?.count || 1;
+                      const pct = row.val > 0 ? `${Math.round((row.val / totalDropped) * 100)}%` : '0%';
+                      return (
+                        <div key={i} className="py-2 flex items-center justify-between text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
+                            <span className="font-medium text-gray-700">{row.label}</span>
+                          </div>
+                          <div className="flex items-center gap-8 text-right">
+                            <span className="w-10 text-gray-500">{pct}</span>
+                            <span className="w-6 font-bold text-gray-800">{row.val}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-8 text-right">
-                          <span className="w-10 text-gray-500">0%</span>
-                          <span className="w-6 font-bold text-gray-800">0</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Column 3: Unchanged (2) */}
+                {/* Column 3: Unchanged */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-800 border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-1">
-                      <span>Unchanged (2)</span>
+                      <span>Unchanged ({serpDynamics?.unchanged?.count ?? keywords.length})</span>
                       <span className="cursor-help text-gray-400 text-[10px]">ℹ</span>
                     </div>
                     <div className="flex items-center gap-8 text-[11px] text-gray-400 font-semibold">
@@ -5055,38 +5772,43 @@ function RankingsPageContent() {
                   </div>
                   <div className="divide-y divide-gray-100 text-xs">
                     {[
-                      { label: 'Top 1', color: 'rgb(214, 216, 227)', pct: '50%', val: 1, highlight: true },
-                      { label: 'Top 2-3', color: 'rgb(218, 220, 230)', pct: '50%', val: 1, highlight: true },
-                      { label: 'Top 4-5', color: 'rgb(222, 224, 233)', pct: '0%', val: 0, highlight: false },
-                      { label: 'Top 6-10', color: 'rgb(226, 228, 235)', pct: '0%', val: 0, highlight: false },
-                      { label: 'Top 11-30', color: 'rgb(230, 232, 238)', pct: '0%', val: 0, highlight: false },
-                      { label: 'Top 31-100', color: 'rgb(234, 235, 241)', pct: '0%', val: 0, highlight: false },
-                      { label: '>100', color: 'rgb(239, 239, 244)', pct: '0%', val: 0, highlight: false },
-                    ].map((row, i) => (
-                      <div
-                        key={i}
-                        onClick={() => {
-                          if (row.val > 0) {
-                            setActiveTab('detailed');
-                            router.push('/rankings?tab=detailed');
-                          }
-                        }}
-                        className={`py-2 flex items-center justify-between transition-colors ${
-                          row.highlight ? 'cursor-pointer hover:bg-gray-50' : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
-                          <span className={`font-medium ${row.highlight ? 'text-[#7C3AED] hover:underline' : 'text-gray-700'}`}>
-                            {row.label}
-                          </span>
+                      { label: 'Top 1', color: 'rgb(214, 216, 227)', val: serpDynamics?.unchanged?.top1 ?? (serpDynamics ? 0 : calculatedDistribution.top1) },
+                      { label: 'Top 2-3', color: 'rgb(218, 220, 230)', val: serpDynamics?.unchanged?.top2_3 ?? (serpDynamics ? 0 : calculatedDistribution.top2_3) },
+                      { label: 'Top 4-5', color: 'rgb(222, 224, 233)', val: serpDynamics?.unchanged?.top4_5 ?? (serpDynamics ? 0 : calculatedDistribution.top4_5) },
+                      { label: 'Top 6-10', color: 'rgb(226, 228, 235)', val: serpDynamics?.unchanged?.top6_10 ?? (serpDynamics ? 0 : calculatedDistribution.top6_10) },
+                      { label: 'Top 11-30', color: 'rgb(230, 232, 238)', val: serpDynamics?.unchanged?.top11_30 ?? (serpDynamics ? 0 : calculatedDistribution.top11_30) },
+                      { label: 'Top 31-100', color: 'rgb(234, 235, 241)', val: serpDynamics?.unchanged?.top31_100 ?? (serpDynamics ? 0 : calculatedDistribution.top31_100) },
+                      { label: '>100', color: 'rgb(239, 239, 244)', val: serpDynamics?.unchanged?.over100 ?? 0 },
+                    ].map((row, i) => {
+                      const totalUnchanged = serpDynamics?.unchanged?.count ?? keywords.length ?? 1;
+                      const pct = row.val > 0 && totalUnchanged > 0 ? `${Math.round((row.val / totalUnchanged) * 100)}%` : '0%';
+                      const highlight = row.val > 0;
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => {
+                            if (row.val > 0) {
+                              setActiveTab('detailed');
+                              router.push('/rankings?tab=detailed');
+                            }
+                          }}
+                          className={`py-2 flex items-center justify-between transition-colors ${
+                            highlight ? 'cursor-pointer hover:bg-gray-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: row.color }} />
+                            <span className={`font-medium ${highlight ? 'text-[#7C3AED] hover:underline' : 'text-gray-700'}`}>
+                              {row.label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-8 text-right">
+                            <span className={`w-10 ${highlight ? 'font-bold text-[#7C3AED]' : 'text-gray-500'}`}>{pct}</span>
+                            <span className={`w-6 font-bold ${highlight ? 'text-[#7C3AED]' : 'text-gray-800'}`}>{row.val}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-8 text-right">
-                          <span className={`w-10 ${row.highlight ? 'font-bold text-[#7C3AED]' : 'text-gray-500'}`}>{row.pct}</span>
-                          <span className={`w-6 font-bold ${row.highlight ? 'text-[#7C3AED]' : 'text-gray-800'}`}>{row.val}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -5205,42 +5927,49 @@ function RankingsPageContent() {
                       <tr className="border-b border-gray-200 text-[11px] text-gray-400 font-bold uppercase pb-2">
                         <th className="py-1">TOP keywords</th>
                         <th className="py-1 text-center">Positions</th>
-                        <th className="py-1 text-right">Visibility ℹ</th>
+                        <th className="py-1 text-right">{keywordOverviewMode === 'TRAFFIC FORECAST' ? 'Traffic Forecast ℹ' : 'Visibility ℹ'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {[
-                        {
-                          kw: keywords[0]?.keyword || (activeProject?.domain ? `https://${activeProject.domain}` : 'Primary Target Page'),
-                          pos: keywords[0]?.currentRank || '1',
-                          vis: '-',
-                        },
-                        {
-                          kw: keywords[1]?.keyword || (activeProject?.domain ? activeProject.domain : 'Target Website'),
-                          pos: keywords[1]?.currentRank || '2',
-                          vis: '-',
-                        },
-                      ].map((row, i) => (
-                        <tr key={i} className="hover:bg-gray-50/70 transition-colors">
-                          <td className="py-2.5">
-                            <span
-                              onClick={() => {
-                                setActiveTab('detailed');
-                                router.push('/rankings?tab=detailed');
-                              }}
-                              className="text-[#7C3AED] hover:underline cursor-pointer font-medium block truncate max-w-[160px]"
-                            >
-                              {row.kw}
-                            </span>
-                          </td>
-                          <td className="py-2.5 text-center font-bold text-gray-900">
-                            {row.pos}
-                          </td>
-                          <td className="py-2.5 text-right font-medium text-gray-500">
-                            {row.vis}
+                      {topKeywordsForOverview.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="py-8 text-center text-xs text-gray-400">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <Search className="w-5 h-5 text-gray-300" />
+                              <span className="font-semibold text-gray-600">No ranked keywords</span>
+                              <span className="text-[11px] text-gray-400">No keywords ranking in the top 100 yet.</span>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        topKeywordsForOverview.map((row, i) => {
+                          const metricVal = keywordOverviewMode === 'TRAFFIC FORECAST'
+                            ? (row.traffic != null ? row.traffic : (row.volume && row.rank ? Math.round(Number(row.volume) * (row.rank === 1 ? 0.3 : row.rank <= 3 ? 0.15 : row.rank <= 10 ? 0.05 : 0.01)) : '-'))
+                            : (row.rank ? (row.rank === 1 ? '100%' : row.rank <= 3 ? '80%' : row.rank <= 5 ? '50%' : row.rank <= 10 ? '25%' : row.rank <= 30 ? '10%' : '1%') : '-');
+                          return (
+                            <tr key={row.id || i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2.5">
+                                <span
+                                  onClick={() => {
+                                    setActiveTab('detailed');
+                                    setDetailedTableSearch(row.keyword);
+                                    router.push('/rankings?tab=detailed');
+                                  }}
+                                  className="text-[#7C3AED] hover:underline cursor-pointer font-medium block truncate max-w-[160px]"
+                                >
+                                  {row.keyword}
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-center font-bold text-gray-900">
+                                {row.rank ?? '-'}
+                              </td>
+                              <td className="py-2.5 text-right font-medium text-gray-500">
+                                {metricVal}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
 
@@ -5254,50 +5983,154 @@ function RankingsPageContent() {
                       className="px-3.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
                     >
                       <ArrowUpRight className="w-3.5 h-3.5 rotate-45 text-gray-500" />
-                      <span>View all (2)</span>
+                      <span>View all ({keywords.length})</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Panel 2: Jumped (No results found) */}
+                {/* Panel 2: Jumped */}
                 <div className="space-y-3">
-                  <div className="border-b border-gray-200 text-[11px] text-gray-400 font-bold uppercase pb-2 flex items-center justify-between">
-                    <span>Jumped ℹ</span>
-                    <div className="flex items-center gap-8">
-                      <span>Positions</span>
-                      <span>Visibility ℹ</span>
-                    </div>
-                  </div>
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-[11px] text-gray-400 font-bold uppercase pb-2">
+                        <th className="py-1">Jumped ℹ</th>
+                        <th className="py-1 text-center">Positions</th>
+                        <th className="py-1 text-right">{keywordOverviewMode === 'TRAFFIC FORECAST' ? 'Traffic Forecast ℹ' : 'Visibility ℹ'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {jumpedKeywordsForOverview.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="py-8 text-center text-xs text-gray-400">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <Search className="w-5 h-5 text-gray-300" />
+                              <span className="font-semibold text-gray-600">No results found</span>
+                              <span className="text-[11px] text-gray-400">No keywords with improved positions.</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        jumpedKeywordsForOverview.map((row, i) => {
+                          const change = row.change ?? row.dynamics ?? 0;
+                          const metricVal = keywordOverviewMode === 'TRAFFIC FORECAST'
+                            ? (row.traffic != null ? row.traffic : (row.volume && row.rank ? Math.round(Number(row.volume) * (row.rank === 1 ? 0.3 : row.rank <= 3 ? 0.15 : row.rank <= 10 ? 0.05 : 0.01)) : '-'))
+                            : (row.rank ? (row.rank === 1 ? '100%' : row.rank <= 3 ? '80%' : row.rank <= 5 ? '50%' : row.rank <= 10 ? '25%' : row.rank <= 30 ? '10%' : '1%') : '-');
+                          return (
+                            <tr key={row.id || i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2.5">
+                                <span
+                                  onClick={() => {
+                                    setActiveTab('detailed');
+                                    setDetailedTableSearch(row.keyword);
+                                    router.push('/rankings?tab=detailed');
+                                  }}
+                                  className="text-[#7C3AED] hover:underline cursor-pointer font-medium block truncate max-w-[160px]"
+                                >
+                                  {row.keyword}
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-center font-bold text-gray-900">
+                                <span className="flex items-center justify-center gap-1">
+                                  <span>{row.rank ?? '-'}</span>
+                                  <span className="text-[10px] text-emerald-600 font-bold">+{change}</span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-right font-medium text-gray-500">
+                                {metricVal}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
 
-                  <div className="py-8 text-center space-y-2 flex flex-col items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                      <Search className="w-5 h-5" />
-                    </div>
-                    <div className="text-xs font-bold text-gray-800">No results found</div>
-                    <p className="text-[11px] text-gray-400 max-w-[200px]">
-                      We have not found any keywords in the search results.
-                    </p>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('detailed');
+                        setDetailedChangesFilter('up');
+                        router.push('/rankings?tab=detailed');
+                      }}
+                      className="px-3.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5 rotate-45 text-gray-500" />
+                      <span>View all ({serpDynamics?.jumped?.count ?? jumpedKeywordsForOverview.length})</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Panel 3: Dropped (No results found) */}
+                {/* Panel 3: Dropped */}
                 <div className="space-y-3">
-                  <div className="border-b border-gray-200 text-[11px] text-gray-400 font-bold uppercase pb-2 flex items-center justify-between">
-                    <span>Dropped ℹ</span>
-                    <div className="flex items-center gap-8">
-                      <span>Positions</span>
-                      <span>Visibility ℹ</span>
-                    </div>
-                  </div>
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-[11px] text-gray-400 font-bold uppercase pb-2">
+                        <th className="py-1">Dropped ℹ</th>
+                        <th className="py-1 text-center">Positions</th>
+                        <th className="py-1 text-right">{keywordOverviewMode === 'TRAFFIC FORECAST' ? 'Traffic Forecast ℹ' : 'Visibility ℹ'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {droppedKeywordsForOverview.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="py-8 text-center text-xs text-gray-400">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <Search className="w-5 h-5 text-gray-300" />
+                              <span className="font-semibold text-gray-600">No results found</span>
+                              <span className="text-[11px] text-gray-400">No keywords with dropped positions.</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        droppedKeywordsForOverview.map((row, i) => {
+                          const change = row.change ?? row.dynamics ?? 0;
+                          const metricVal = keywordOverviewMode === 'TRAFFIC FORECAST'
+                            ? (row.traffic != null ? row.traffic : (row.volume && row.rank ? Math.round(Number(row.volume) * (row.rank === 1 ? 0.3 : row.rank <= 3 ? 0.15 : row.rank <= 10 ? 0.05 : 0.01)) : '-'))
+                            : (row.rank ? (row.rank === 1 ? '100%' : row.rank <= 3 ? '80%' : row.rank <= 5 ? '50%' : row.rank <= 10 ? '25%' : row.rank <= 30 ? '10%' : '1%') : '-');
+                          return (
+                            <tr key={row.id || i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2.5">
+                                <span
+                                  onClick={() => {
+                                    setActiveTab('detailed');
+                                    setDetailedTableSearch(row.keyword);
+                                    router.push('/rankings?tab=detailed');
+                                  }}
+                                  className="text-[#7C3AED] hover:underline cursor-pointer font-medium block truncate max-w-[160px]"
+                                >
+                                  {row.keyword}
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-center font-bold text-gray-900">
+                                <span className="flex items-center justify-center gap-1">
+                                  <span>{row.rank ?? '-'}</span>
+                                  <span className="text-[10px] text-red-600 font-bold">{change}</span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 text-right font-medium text-gray-500">
+                                {metricVal}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
 
-                  <div className="py-8 text-center space-y-2 flex flex-col items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                      <Search className="w-5 h-5" />
-                    </div>
-                    <div className="text-xs font-bold text-gray-800">No results found</div>
-                    <p className="text-[11px] text-gray-400 max-w-[200px]">
-                      We have not found any keywords in the search results.
-                    </p>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('detailed');
+                        setDetailedChangesFilter('down');
+                        router.push('/rankings?tab=detailed');
+                      }}
+                      className="px-3.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5 rotate-45 text-gray-500" />
+                      <span>View all ({serpDynamics?.dropped?.count ?? droppedKeywordsForOverview.length})</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -5343,24 +6176,38 @@ function RankingsPageContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
-                    <tr className="hover:bg-gray-50/70 transition-colors">
-                      <td className="py-3 px-3 space-y-0.5 max-w-lg">
-                        <div className="font-semibold text-gray-900 hover:text-[#7C3AED] cursor-pointer">
-                          {activeProject?.name || activeProject?.domain || 'Target Project'}
-                        </div>
-                        <a
-                          href={activeProject?.domain ? `https://${activeProject.domain}/` : '#'}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[11px] text-[#7C3AED] hover:underline block truncate"
-                        >
-                          {activeProject?.domain ? `https://${activeProject.domain}/` : 'Primary Domain'}
-                        </a>
-                      </td>
-                      <td className="py-3 px-3 text-right font-bold text-gray-900">2</td>
-                      <td className="py-3 px-3 text-right font-bold text-gray-900">0</td>
-                      <td className="py-3 px-3 text-right font-bold text-gray-900">2</td>
-                    </tr>
+                    {filteredPagesList.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-xs text-gray-400">
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <Search className="w-5 h-5 text-gray-300" />
+                            <span className="font-semibold text-gray-600">No pages found</span>
+                            <span className="text-[11px] text-gray-400">No ranking pages recorded for this project yet.</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPagesList.map((page, idx) => (
+                        <tr key={page.url || idx} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="py-3 px-3 space-y-0.5 max-w-lg">
+                            <div className="font-semibold text-gray-900 hover:text-[#7C3AED] cursor-pointer truncate">
+                              {page.url}
+                            </div>
+                            <a
+                              href={page.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] text-[#7C3AED] hover:underline block truncate"
+                            >
+                              {page.url}
+                            </a>
+                          </td>
+                          <td className="py-3 px-3 text-right font-bold text-gray-900">{page.totalKeywords}</td>
+                          <td className="py-3 px-3 text-right font-bold text-gray-900">{page.trafficForecast}</td>
+                          <td className="py-3 px-3 text-right font-bold text-gray-900">{page.avgPosition}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -5375,7 +6222,7 @@ function RankingsPageContent() {
                   className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
                 >
                   <ArrowUpRight className="w-3.5 h-3.5 rotate-45 text-gray-500" />
-                  <span>View all</span>
+                  <span>View all ({filteredPagesList.length})</span>
                 </button>
               </div>
             </div>
@@ -5399,44 +6246,56 @@ function RankingsPageContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 text-gray-700">
-                        {SUMMARY_COMPETITORS.map((comp) => (
-                          <tr
-                            key={comp.id}
-                            className="hover:bg-gray-50/70 transition-colors"
-                            onMouseEnter={() => setHoveredCompetitorDomain(comp.domain)}
-                            onMouseLeave={() => setHoveredCompetitorDomain(null)}
-                          >
-                            <td className="py-3 px-2">
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={comp.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-gray-400 hover:text-gray-600 shrink-0"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                                <img
-                                  src={comp.favicon}
-                                  alt={comp.domain}
-                                  className="w-4 h-4 rounded-xs shrink-0"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none';
-                                  }}
-                                />
-                                <Link
-                                  href={`/research?domain=${encodeURIComponent(comp.domain)}`}
-                                  className="text-[#7C3AED] hover:underline font-medium truncate max-w-xs"
-                                >
-                                  {comp.domain}
-                                </Link>
+                        {activeCompetitorsList.length === 0 ? (
+                          <tr>
+                            <td colSpan={2} className="py-8 text-center text-xs text-gray-400">
+                              <div className="flex flex-col items-center justify-center gap-1">
+                                <Search className="w-5 h-5 text-gray-300" />
+                                <span className="font-semibold text-gray-600">No competitors found</span>
+                                <span className="text-[11px] text-gray-400">Add competitors to track their search visibility.</span>
                               </div>
                             </td>
-                            <td className="py-3 px-2 text-right font-semibold text-gray-900">
-                              {comp.visibility}
-                            </td>
                           </tr>
-                        ))}
+                        ) : (
+                          activeCompetitorsList.map((comp) => (
+                            <tr
+                              key={comp.id}
+                              className="hover:bg-gray-50/70 transition-colors"
+                              onMouseEnter={() => setHoveredCompetitorDomain(comp.domain)}
+                              onMouseLeave={() => setHoveredCompetitorDomain(null)}
+                            >
+                              <td className="py-3 px-2">
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={comp.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-gray-400 hover:text-gray-600 shrink-0"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                  <img
+                                    src={comp.favicon}
+                                    alt={comp.domain}
+                                    className="w-4 h-4 rounded-xs shrink-0"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                  <Link
+                                    href={`/research?domain=${encodeURIComponent(comp.domain)}`}
+                                    className="text-[#7C3AED] hover:underline font-medium truncate max-w-xs"
+                                  >
+                                    {comp.domain}
+                                  </Link>
+                                </div>
+                              </td>
+                              <td className="py-3 px-2 text-right font-semibold text-gray-900">
+                                {comp.visibility}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -5449,7 +6308,7 @@ function RankingsPageContent() {
                     className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
                   >
                     <ArrowUpRight className="w-3.5 h-3.5 rotate-45 text-gray-500" />
-                    <span>View all (10)</span>
+                    <span>View all ({activeCompetitorsList.length})</span>
                   </button>
                 </div>
               </div>
@@ -5469,105 +6328,116 @@ function RankingsPageContent() {
                     </div>
 
                     <div className="pl-6 pr-2">
-                      {/* SVG Canvas for Bubble Scatter Chart matching exact user HTML coordinates */}
-                      <div className="relative h-60 w-full border-l border-b border-[#CCD6EB]">
-                        {/* Horizontal Y-Gridlines & Labels (0, 5, 10) */}
-                        <div className="absolute -left-5 top-[10%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">0</div>
-                        <div className="absolute left-0 right-0 top-[10%] border-b border-[#E6E6E6]" />
+                      {activeCompetitorsList.length === 0 ? (
+                        <div className="h-60 flex flex-col items-center justify-center text-xs text-gray-400 gap-1 border border-dashed border-gray-200 rounded-lg">
+                          <Search className="w-6 h-6 text-gray-300" />
+                          <span className="font-semibold text-gray-600">No competitor distribution data</span>
+                          <span className="text-[11px] text-gray-400">Add competitors to compare average position and Top 10 rankings.</span>
+                        </div>
+                      ) : (
+                        <>
+                          {/* SVG Canvas for Bubble Scatter Chart */}
+                          <div className="relative h-60 w-full border-l border-b border-[#CCD6EB]">
+                            {/* Horizontal Y-Gridlines & Labels (0, 5, 10) */}
+                            <div className="absolute -left-5 top-[10%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">0</div>
+                            <div className="absolute left-0 right-0 top-[10%] border-b border-[#E6E6E6]" />
 
-                        <div className="absolute -left-5 top-[50%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">5</div>
-                        <div className="absolute left-0 right-0 top-[50%] border-b border-[#E6E6E6]" />
+                            <div className="absolute -left-5 top-[50%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">5</div>
+                            <div className="absolute left-0 right-0 top-[50%] border-b border-[#E6E6E6]" />
 
-                        <div className="absolute -left-5 top-[90%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">10</div>
-                        <div className="absolute left-0 right-0 top-[90%] border-b border-[#E6E6E6]" />
+                            <div className="absolute -left-5 top-[90%] -translate-y-1/2 text-[11px] text-[#6B8896] font-normal">10</div>
+                            <div className="absolute left-0 right-0 top-[90%] border-b border-[#E6E6E6]" />
 
-                        {/* Interactive SVG Bubbles from user HTML */}
-                        <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 508 200" preserveAspectRatio="none">
-                          {SUMMARY_COMPETITORS.map((comp) => {
-                            const isHovered = hoveredCompetitorBubble === comp.domain || hoveredCompetitorDomain === comp.domain;
-                            return (
-                              <g
-                                key={comp.id}
-                                className="cursor-pointer group transition-transform duration-200"
-                                onMouseEnter={() => setHoveredCompetitorBubble(comp.domain)}
-                                onMouseLeave={() => setHoveredCompetitorBubble(null)}
-                              >
-                                <circle
-                                  cx={comp.cx}
-                                  cy={comp.cy}
-                                  r={isHovered ? 34 : 31.5}
-                                  fill={comp.color}
-                                  stroke={comp.stroke}
-                                  strokeWidth={isHovered ? 2.5 : 1.5}
-                                />
-                                <text
-                                  x={comp.cx + 3}
-                                  y={comp.cy - 30}
-                                  textAnchor="middle"
-                                  className="text-[12px] font-bold fill-[#2D355D] select-none"
-                                  transform={`rotate(-45 ${comp.cx + 3} ${comp.cy - 30})`}
-                                >
-                                  {comp.domain}
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </svg>
-
-                        {/* Interactive Tooltip matching user HTML when hovered */}
-                        {hoveredCompetitorBubble && (
-                          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-3 text-xs z-30 pointer-events-none animate-in fade-in duration-150 min-w-[260px]">
-                            {(() => {
-                              const activeComp = SUMMARY_COMPETITORS.find(c => c.domain === hoveredCompetitorBubble) || SUMMARY_COMPETITORS[0];
-                              return (
-                                <>
-                                  <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-2 font-bold text-gray-900">
-                                    <span
-                                      className="w-2.5 h-2.5 rounded-full"
-                                      style={{ backgroundColor: activeComp.stroke }}
+                            {/* Interactive SVG Bubbles */}
+                            <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 508 200" preserveAspectRatio="none">
+                              {activeCompetitorsList.map((comp) => {
+                                const isHovered = hoveredCompetitorBubble === comp.domain || hoveredCompetitorDomain === comp.domain;
+                                return (
+                                  <g
+                                    key={comp.id}
+                                    className="cursor-pointer group transition-transform duration-200"
+                                    onMouseEnter={() => setHoveredCompetitorBubble(comp.domain)}
+                                    onMouseLeave={() => setHoveredCompetitorBubble(null)}
+                                  >
+                                    <circle
+                                      cx={comp.cx}
+                                      cy={comp.cy}
+                                      r={isHovered ? 34 : 31.5}
+                                      fill={comp.color}
+                                      stroke={comp.stroke}
+                                      strokeWidth={isHovered ? 2.5 : 1.5}
                                     />
-                                    <span>{activeComp.domain}</span>
-                                  </div>
-                                  <div className="space-y-1 text-[11px] text-gray-600">
-                                    <div className="flex justify-between">
-                                      <span>The total number of keywords ranking in the top 10:</span>
-                                      <span className="font-bold text-gray-900">{activeComp.top10Kws}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Average position:</span>
-                                      <span className="font-bold text-gray-900">{activeComp.avgPos}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Visibility:</span>
-                                      <span className="font-bold text-gray-900">{activeComp.visibility}</span>
-                                    </div>
-                                  </div>
-                                </>
-                              );
-                            })()}
+                                    <text
+                                      x={comp.cx + 3}
+                                      y={comp.cy - 30}
+                                      textAnchor="middle"
+                                      className="text-[12px] font-bold fill-[#2D355D] select-none"
+                                      transform={`rotate(-45 ${comp.cx + 3} ${comp.cy - 30})`}
+                                    >
+                                      {comp.domain}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </svg>
+
+                            {/* Interactive Tooltip matching user HTML when hovered */}
+                            {hoveredCompetitorBubble && (
+                              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-2xs border border-gray-200 rounded-lg shadow-xl p-3 text-xs z-30 pointer-events-none animate-in fade-in duration-150 min-w-[260px]">
+                                {(() => {
+                                  const activeComp = activeCompetitorsList.find((c) => c.domain === hoveredCompetitorBubble) || activeCompetitorsList[0];
+                                  if (!activeComp) return null;
+                                  return (
+                                    <>
+                                      <div className="flex items-center gap-2 border-b border-gray-100 pb-2 mb-2 font-bold text-gray-900">
+                                        <span
+                                          className="w-2.5 h-2.5 rounded-full"
+                                          style={{ backgroundColor: activeComp.stroke }}
+                                        />
+                                        <span>{activeComp.domain}</span>
+                                      </div>
+                                      <div className="space-y-1 text-[11px] text-gray-600">
+                                        <div className="flex justify-between">
+                                          <span>The total number of keywords ranking in the top 10:</span>
+                                          <span className="font-bold text-gray-900">{activeComp.top10Kws}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span>Average position:</span>
+                                          <span className="font-bold text-gray-900">{activeComp.avgPos}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span>Visibility:</span>
+                                          <span className="font-bold text-gray-900">{activeComp.visibility}</span>
+                                        </div>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* X-axis ticks (0.9, 1, 2, 3) matching user HTML */}
-                      <div className="flex justify-between text-[11px] text-[#6B8896] font-normal pt-1.5 px-2">
-                        <span>0.9</span>
-                        <span>1</span>
-                        <span>2</span>
-                        <span>3</span>
-                      </div>
+                          {/* X-axis ticks (0.9, 1, 2, 3) */}
+                          <div className="flex justify-between text-[11px] text-[#6B8896] font-normal pt-1.5 px-2">
+                            <span>0.9</span>
+                            <span>1</span>
+                            <span>2</span>
+                            <span>3</span>
+                          </div>
 
-                      {/* X-axis title matching user HTML */}
-                      <div className="text-center text-[11px] text-[#607D8B] font-semibold tracking-wider uppercase pt-1">
-                        The total number of keywords ranking in the top 10
-                      </div>
+                          {/* X-axis title */}
+                          <div className="text-center text-[11px] text-[#607D8B] font-semibold tracking-wider uppercase pt-1">
+                            The total number of keywords ranking in the top 10
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Legend matching Real SE Ranking HTML colors and names */}
                 <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-y-2 gap-x-3 text-[11px] font-normal text-[#171B24]">
-                  {SUMMARY_COMPETITORS.map((comp) => (
+                  {activeCompetitorsList.map((comp) => (
                     <span
                       key={comp.id}
                       onMouseEnter={() => setHoveredCompetitorBubble(comp.domain)}

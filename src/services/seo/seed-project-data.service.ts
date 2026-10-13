@@ -22,6 +22,12 @@ export async function seedProjectData(
 
   const brand = brandName || cleanDomain.split('.')[0].toUpperCase();
 
+  const existingProject = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!existingProject) {
+    console.warn(`seedProjectData skipped: Project ${projectId} does not exist in DB.`);
+    return;
+  }
+
   // 1. Determine relevant keyword seed list based on domain or user inputs
   const keywordsToSeed: Array<{
     text: string;
@@ -128,6 +134,12 @@ export async function seedProjectData(
     }
 
     // 30 Days of Historical Daily Ranks for this keyword
+    const keywordStillExists = await prisma.keyword.findUnique({
+      where: { id: kwRecord.id },
+      select: { id: true, projectId: true },
+    });
+    if (!keywordStillExists) continue;
+
     const existingHistoryCount = await prisma.rankingHistory.count({
       where: { keywordId: kwRecord.id },
     });

@@ -91,9 +91,20 @@ export async function collectRankingsForProject(
     targetDomain: project.domain,
   }));
 
-  const checkResponse = await provider.checkRankings(requests, {
+  let checkResponse = await provider.checkRankings(requests, {
     timeoutMs: options?.timeoutMs || 20000,
   });
+
+  if (!checkResponse.success && checkResponse.error) {
+    if (provider.id === 'dataforseo' && process.env.SERPER_API_KEY) {
+      const { SerperProvider } = await import('@/lib/rankings/serper');
+      const serper = new SerperProvider();
+      if (serper.isConfigured()) {
+        console.warn(`DataForSEO returned error: ${checkResponse.error.message}. Gracefully falling back to Serper provider.`);
+        checkResponse = await serper.checkRankings(requests, { timeoutMs: options?.timeoutMs || 20000 });
+      }
+    }
+  }
 
   if (!checkResponse.success && checkResponse.error) {
     return {
@@ -133,38 +144,46 @@ export async function collectRankingsForProject(
     }
 
     // Update keyword record in database
-    await prisma.keyword.update({
-      where: { id: res.keywordId },
-      data: {
-        previousPosition: prevPos,
-        currentPosition: newPos,
-        positionChange,
-        bestPosition: bestPos,
-        worstPosition: worstPos,
-        rankedUrl: res.rankedUrl || existingKw.rankedUrl,
-        serpFeatures: JSON.stringify(res.serpFeatures || []),
-        updatedAt: now,
-      },
-    });
+    try {
+      await prisma.keyword.update({
+        where: { id: res.keywordId },
+        data: {
+          previousPosition: prevPos,
+          currentPosition: newPos,
+          positionChange,
+          bestPosition: bestPos,
+          worstPosition: worstPos,
+          rankedUrl: res.rankedUrl || existingKw.rankedUrl,
+          serpFeatures: JSON.stringify(res.serpFeatures || []),
+          updatedAt: now,
+        },
+      });
 
-    // Store historical ranking snapshot
-    await prisma.rankingHistory.create({
-      data: {
-        projectId: project.id,
-        keywordId: res.keywordId,
-        searchEngine: res.searchEngine || project.defaultSearchEngine,
-        country: project.countryCode || 'in',
-        language: project.languageCode || 'en',
-        device: res.device || project.defaultDevice,
-        position: newPos,
-        previousPosition: prevPos,
-        positionChange,
-        searchVolume: existingKw.monthlySearchVolume || 0,
-        url: res.rankedUrl || project.websiteUrl,
-        serpFeatures: JSON.stringify(res.serpFeatures || []),
-        checkedAt: now,
-      },
-    });
+      // Store historical ranking snapshot
+      await prisma.rankingHistory.create({
+        data: {
+          projectId: project.id,
+          keywordId: res.keywordId,
+          searchEngine: res.searchEngine || project.defaultSearchEngine,
+          country: project.countryCode || 'in',
+          language: project.languageCode || 'en',
+          device: res.device || project.defaultDevice,
+          position: newPos,
+          previousPosition: prevPos,
+          positionChange,
+          searchVolume: existingKw.monthlySearchVolume || 0,
+          url: res.rankedUrl || project.websiteUrl,
+          serpFeatures: JSON.stringify(res.serpFeatures || []),
+          checkedAt: now,
+        },
+      });
+    } catch (dbErr: any) {
+      if (dbErr.code === 'P2025' || dbErr.code === 'P2003') {
+        // Record was removed concurrently
+        continue;
+      }
+      throw dbErr;
+    }
   }
 
   await prisma.project.update({
@@ -181,15 +200,113 @@ export async function collectRankingsForProject(
   };
 }
 
+export interface RankingSummaryOptions {
+  timeRange?: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
+  engineFilter?: string;
+  groupFilter?: string;
+}
+
+/**
+ * Calculates start and end date boundaries for ranking queries.
+ * Validates complete end date inclusive through 23:59:59.999 UTC.
+ */
+export function calculateDateBoundaries(
+  timeRange: string = '30D',
+  customStartDate?: Date | string | null,
+  customEndDate?: Date | string | null,
+  referenceNow: Date = new Date()
+): { startDate?: Date; endDate: Date; resolvedRange: string } {
+  const tr = (timeRange || '30D').toLowerCase().trim();
+  const now = referenceNow instanceof Date && !isNaN(referenceNow.getTime()) ? referenceNow : new Date();
+
+  // Complete end date: end of day 23:59:59.999
+  let endDate = new Date(now);
+  endDate.setUTCHours(23, 59, 59, 999);
+
+  let startDate: Date | undefined;
+
+  if (tr === 'custom') {
+    if (customEndDate) {
+      const parsedEnd = new Date(customEndDate);
+      if (!isNaN(parsedEnd.getTime())) {
+        endDate = new Date(parsedEnd);
+        endDate.setUTCHours(23, 59, 59, 999);
+      }
+    }
+    if (customStartDate) {
+      const parsedStart = new Date(customStartDate);
+      if (!isNaN(parsedStart.getTime())) {
+        startDate = new Date(parsedStart);
+        startDate.setUTCHours(0, 0, 0, 0);
+      }
+    }
+    return { startDate, endDate, resolvedRange: 'custom' };
+  }
+
+  if (tr === 'all' || tr === 'all_history' || tr === 'all_available_history') {
+    return { startDate: undefined, endDate, resolvedRange: 'all' };
+  }
+
+  let days = 30;
+  let resolved = '30D';
+  if (tr === '7d' || tr === 'week' || tr === 'last_7_days') {
+    days = 7;
+    resolved = '7D';
+  } else if (tr === '30d' || tr === '1m' || tr === 'month' || tr === 'last_30_days') {
+    days = 30;
+    resolved = '30D';
+  } else if (tr === '3m' || tr === '3months' || tr === 'last_3_months') {
+    days = 90;
+    resolved = '3M';
+  } else if (tr === '6m' || tr === '6months' || tr === 'last_6_months') {
+    days = 180;
+    resolved = '6M';
+  } else if (tr === '12m' || tr === '1y' || tr === 'year' || tr === 'last_12_months') {
+    days = 365;
+    resolved = '12M';
+  } else if (tr === '2y' || tr === '2years') {
+    days = 730;
+    resolved = '2Y';
+  }
+
+  startDate = new Date(now);
+  startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+  startDate.setUTCHours(0, 0, 0, 0);
+
+  return { startDate, endDate, resolvedRange: resolved };
+}
+
 /**
  * Calculates deterministic project ranking summary and historical trends from SQLite DB
  */
 export async function getRankingSummary(
   projectId: string,
-  timeRange: string = 'month',
-  engineFilter?: string,
-  groupFilter?: string
+  timeRangeOrOptions: string | RankingSummaryOptions = 'month',
+  engineFilterParam?: string,
+  groupFilterParam?: string
 ) {
+  let timeRange = '30D';
+  let customStartDate: Date | string | undefined;
+  let customEndDate: Date | string | undefined;
+  let engineFilter: string | undefined = engineFilterParam;
+  let groupFilter: string | undefined = groupFilterParam;
+
+  if (typeof timeRangeOrOptions === 'object' && timeRangeOrOptions !== null) {
+    timeRange = timeRangeOrOptions.timeRange || '30D';
+    customStartDate = timeRangeOrOptions.startDate;
+    customEndDate = timeRangeOrOptions.endDate;
+    if (timeRangeOrOptions.engineFilter) {
+      engineFilter = timeRangeOrOptions.engineFilter;
+    }
+    if (timeRangeOrOptions.groupFilter) {
+      groupFilter = timeRangeOrOptions.groupFilter;
+    }
+  } else if (typeof timeRangeOrOptions === 'string') {
+    timeRange = timeRangeOrOptions;
+  }
+
   const project = await prisma.project.findUnique({
     where: { id: projectId },
   });
@@ -240,15 +357,20 @@ export async function getRankingSummary(
             rankedKeywords.length
           ).toFixed(1)
         )
-      : null;
+      : 0;
 
   // Bracket counts
   const top1 = keywords.filter((k) => k.currentPosition === 1).length;
+  const top2_3 = keywords.filter((k) => k.currentPosition != null && k.currentPosition >= 2 && k.currentPosition <= 3).length;
   const top3 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 3).length;
+  const top4_5 = keywords.filter((k) => k.currentPosition != null && k.currentPosition >= 4 && k.currentPosition <= 5).length;
   const top5 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 5).length;
+  const top6_10 = keywords.filter((k) => k.currentPosition != null && k.currentPosition >= 6 && k.currentPosition <= 10).length;
   const top10 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 10).length;
+  const top11_30 = keywords.filter((k) => k.currentPosition != null && k.currentPosition >= 11 && k.currentPosition <= 30).length;
   const top20 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 20).length;
   const top30 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 30).length;
+  const top31_100 = keywords.filter((k) => k.currentPosition != null && k.currentPosition >= 31 && k.currentPosition <= 100).length;
   const top50 = keywords.filter((k) => k.currentPosition != null && k.currentPosition <= 50).length;
   const top100 = rankedKeywords.length;
   const unranked = keywords.filter(
@@ -281,43 +403,248 @@ export async function getRankingSummary(
 
   const totalSearchVolume = keywords.reduce((sum, k) => sum + (k.monthlySearchVolume || 0), 0);
 
-  // Historical records for the chosen time range
-  const days = timeRange === 'week' ? 7 : timeRange === '3months' ? 90 : timeRange === 'year' ? 365 : 30;
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  // Historical records for the chosen time range with validated boundaries
+  const boundaries = calculateDateBoundaries(timeRange, customStartDate, customEndDate);
+
+  const checkedAtFilter: { gte?: Date; lte?: Date } = {};
+  if (boundaries.startDate) {
+    checkedAtFilter.gte = boundaries.startDate;
+  }
+  if (boundaries.endDate) {
+    checkedAtFilter.lte = boundaries.endDate;
+  }
 
   const historyRecords = await prisma.rankingHistory.findMany({
     where: {
       projectId: project.id,
-      checkedAt: { gte: startDate },
+      ...(Object.keys(checkedAtFilter).length > 0 ? { checkedAt: checkedAtFilter } : {}),
       ...(engineFilter ? { searchEngine: engineFilter } : {}),
     },
     orderBy: { checkedAt: 'asc' },
   });
 
-  const historyByDate: Record<string, { totalRank: number; count: number; dateStr: string }> = {};
+  interface HistoryDateBucket {
+    dateStr: string;
+    totalRank: number;
+    count: number;
+    top1: number;
+    top2_3: number;
+    top4_5: number;
+    top6_10: number;
+    top11_30: number;
+    top31_100: number;
+    unranked: number;
+    visibilityWeightSum: number;
+    trafficEstSum: number;
+  }
+
+  const historyByDate: Record<string, HistoryDateBucket> = {};
   for (const h of historyRecords) {
     const dStr = h.checkedAt.toISOString().split('T')[0];
     if (!historyByDate[dStr]) {
-      historyByDate[dStr] = { totalRank: 0, count: 0, dateStr: dStr };
+      historyByDate[dStr] = {
+        dateStr: dStr,
+        totalRank: 0,
+        count: 0,
+        top1: 0,
+        top2_3: 0,
+        top4_5: 0,
+        top6_10: 0,
+        top11_30: 0,
+        top31_100: 0,
+        unranked: 0,
+        visibilityWeightSum: 0,
+        trafficEstSum: 0,
+      };
     }
-    if (h.position && h.position > 0 && h.position <= 100) {
-      historyByDate[dStr].totalRank += h.position;
-      historyByDate[dStr].count += 1;
+    const bucket = historyByDate[dStr];
+    const pos = h.position;
+    if (pos && pos > 0 && pos <= 100) {
+      bucket.totalRank += pos;
+      bucket.count += 1;
+      if (pos === 1) bucket.top1 += 1;
+      else if (pos <= 3) bucket.top2_3 += 1;
+      else if (pos <= 5) bucket.top4_5 += 1;
+      else if (pos <= 10) bucket.top6_10 += 1;
+      else if (pos <= 30) bucket.top11_30 += 1;
+      else bucket.top31_100 += 1;
+
+      bucket.visibilityWeightSum += getVisibilityWeight(pos);
+      const ctr = CTR_CURVE[pos] || (pos <= 20 ? 0.008 : 0.001);
+      bucket.trafficEstSum += (h.searchVolume || 0) * ctr;
+    } else {
+      bucket.unranked += 1;
     }
   }
 
-  const realTrend = Object.values(historyByDate).map((entry) => {
+  const sortedDateKeys = Object.keys(historyByDate).sort();
+  const realTrend = sortedDateKeys.map((dateStr) => {
+    const entry = historyByDate[dateStr];
     const d = new Date(entry.dateStr);
     const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const avg = entry.count > 0 ? Number((entry.totalRank / entry.count).toFixed(1)) : 0;
+    const vis = totalKeywords > 0 ? Number(((entry.visibilityWeightSum / totalKeywords) * 100).toFixed(1)) : 0;
+    const traffic = Math.round(entry.trafficEstSum);
+    const top10Count = entry.top1 + entry.top2_3 + entry.top4_5 + entry.top6_10;
+    const top10Percent = totalKeywords > 0 ? Math.round((top10Count / totalKeywords) * 100) : 0;
     return {
       date: entry.dateStr,
       label,
       value: avg,
       checkedCount: entry.count,
+      visibility: vis,
+      traffic,
+      top1: entry.top1,
+      top2_3: entry.top2_3,
+      top4_5: entry.top4_5,
+      top6_10: entry.top6_10,
+      top11_30: entry.top11_30,
+      top31_100: entry.top31_100,
+      top10Count,
+      top10Percent,
+      totalRanked: entry.count,
     };
   });
+
+  // Calculate bracket changes comparing the latest trend record with previous
+  let top1Change = 0;
+  let top2_3Change = 0;
+  let top4_5Change = 0;
+  let top6_10Change = 0;
+  let top11_30Change = 0;
+  let top31_100Change = 0;
+  let averagePositionChange = 0;
+  let visibilityScoreChange = 0;
+  let trafficForecastChange = 0;
+
+  if (realTrend.length >= 2) {
+    const latest = realTrend[realTrend.length - 1];
+    const prev = realTrend[realTrend.length - 2];
+    top1Change = latest.top1 - prev.top1;
+    top2_3Change = latest.top2_3 - prev.top2_3;
+    top4_5Change = latest.top4_5 - prev.top4_5;
+    top6_10Change = latest.top6_10 - prev.top6_10;
+    top11_30Change = latest.top11_30 - prev.top11_30;
+    top31_100Change = latest.top31_100 - prev.top31_100;
+    if (prev.value > 0 && latest.value > 0) {
+      averagePositionChange = Number((prev.value - latest.value).toFixed(1));
+    }
+    visibilityScoreChange = Number((latest.visibility - prev.visibility).toFixed(1));
+    trafficForecastChange = latest.traffic - prev.traffic;
+  }
+
+  // Bracket breakdown for Improved / Declined / Unchanged keywords
+  const improvedKeywords = keywords.filter((k) => (k.positionChange || 0) > 0);
+  const declinedKeywords = keywords.filter((k) => (k.positionChange || 0) < 0);
+  const unchangedKeywords = keywords.filter((k) => (k.positionChange || 0) === 0 && k.currentPosition != null);
+
+  const getBracketCounts = (list: typeof keywords) => ({
+    top1: list.filter((k) => k.currentPosition === 1).length,
+    top2_3: list.filter((k) => k.currentPosition != null && k.currentPosition >= 2 && k.currentPosition <= 3).length,
+    top4_5: list.filter((k) => k.currentPosition != null && k.currentPosition >= 4 && k.currentPosition <= 5).length,
+    top6_10: list.filter((k) => k.currentPosition != null && k.currentPosition >= 6 && k.currentPosition <= 10).length,
+    top11_30: list.filter((k) => k.currentPosition != null && k.currentPosition >= 11 && k.currentPosition <= 30).length,
+    top31_100: list.filter((k) => k.currentPosition != null && k.currentPosition >= 31 && k.currentPosition <= 100).length,
+    over100: list.filter((k) => k.currentPosition == null || k.currentPosition > 100).length,
+  });
+
+  const improvedBrackets = getBracketCounts(improvedKeywords);
+  const declinedBrackets = getBracketCounts(declinedKeywords);
+  const unchangedBrackets = getBracketCounts(unchangedKeywords);
+
+  const serpDynamics = {
+    totalInSerp: rankedKeywords.length,
+    improvedCount: improvedKeywords.length,
+    declinedCount: declinedKeywords.length,
+    unchangedCount: unchangedKeywords.length,
+    improvedBrackets,
+    declinedBrackets,
+    unchangedBrackets,
+    jumped: {
+      count: improvedKeywords.length,
+      percentage: rankedKeywords.length > 0 ? Math.round((improvedKeywords.length / rankedKeywords.length) * 100) : 0,
+      ...improvedBrackets,
+    },
+    dropped: {
+      count: declinedKeywords.length,
+      percentage: rankedKeywords.length > 0 ? Math.round((declinedKeywords.length / rankedKeywords.length) * 100) : 0,
+      ...declinedBrackets,
+    },
+    unchanged: {
+      count: unchangedKeywords.length,
+      percentage: rankedKeywords.length > 0 ? Math.round((unchangedKeywords.length / rankedKeywords.length) * 100) : 0,
+      ...unchangedBrackets,
+    },
+  };
+
+  // Real Competitors from DB
+  const dbCompetitors = await prisma.projectCompetitor.findMany({
+    where: {
+      projectId: project.id,
+      deletedAt: null,
+    },
+    include: {
+      competitorRankings: {
+        take: 50,
+        orderBy: { checkedAt: 'desc' },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const competitors = dbCompetitors.map((comp) => {
+    const rankedPositions = comp.competitorRankings
+      .map((r) => r.position)
+      .filter((p): p is number => p != null && p > 0 && p <= 100);
+
+    const avgPosition =
+      rankedPositions.length > 0
+        ? Number((rankedPositions.reduce((a, b) => a + b, 0) / rankedPositions.length).toFixed(1))
+        : comp.avgPosition || 0;
+
+    const top10Kws = rankedPositions.filter((p) => p <= 10).length;
+    const visibilityScore =
+      totalKeywords > 0
+        ? Number(((top10Kws / totalKeywords) * 100).toFixed(1))
+        : comp.visibilityScore || 0;
+
+    return {
+      id: comp.id,
+      name: comp.name,
+      domain: comp.domain,
+      url: `https://${comp.domain}`,
+      visibility: `${visibilityScore}%`,
+      visibilityScore,
+      avgPos: avgPosition,
+      top10Kws,
+      totalKeywords: comp.totalKeywords || 0,
+      organicTraffic: comp.organicTraffic || '0',
+    };
+  });
+
+  // Real Pages from keywords
+  const pagesMap: Record<string, { url: string; count: number; totalRank: number; traffic: number }> = {};
+  for (const k of keywords) {
+    const pageUrl = k.rankedUrl || k.targetUrl || `https://${project.domain}/`;
+    if (!pagesMap[pageUrl]) {
+      pagesMap[pageUrl] = { url: pageUrl, count: 0, totalRank: 0, traffic: 0 };
+    }
+    pagesMap[pageUrl].count++;
+    if (k.currentPosition != null && k.currentPosition > 0 && k.currentPosition <= 100) {
+      pagesMap[pageUrl].totalRank += k.currentPosition;
+      const ctr = CTR_CURVE[k.currentPosition] || (k.currentPosition <= 20 ? 0.008 : 0.001);
+      pagesMap[pageUrl].traffic += (k.monthlySearchVolume || 0) * ctr;
+    }
+  }
+
+  const pages = Object.values(pagesMap)
+    .map((p) => ({
+      url: p.url,
+      totalKeywords: p.count,
+      trafficForecast: Math.round(p.traffic),
+      avgPosition: p.count > 0 && p.totalRank > 0 ? Number((p.totalRank / p.count).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.totalKeywords - a.totalKeywords);
 
   const keywordDistribution = [
     { name: 'Top 1-3', count: top3, percentage: totalKeywords > 0 ? Math.round((top3 / totalKeywords) * 100) : 0, color: '#10B981' },
@@ -331,18 +658,36 @@ export async function getRankingSummary(
   return {
     projectId: project.id,
     domain: project.domain,
+    timeRange: boundaries.resolvedRange,
+    startDate: boundaries.startDate ? boundaries.startDate.toISOString() : null,
+    endDate: boundaries.endDate.toISOString(),
     summary: {
       totalKeywords,
       averagePosition,
+      averagePositionChange,
       visibilityScore: visibility,
+      visibilityScoreChange,
       estimatedTraffic,
+      trafficForecast: estimatedTraffic,
+      trafficForecastChange,
       totalSearchVolume,
       top1,
+      top1Change,
+      top2_3,
+      top2_3Change,
       top3,
+      top4_5,
+      top4_5Change,
       top5,
+      top6_10,
+      top6_10Change,
       top10,
+      top11_30,
+      top11_30Change,
       top20,
       top30,
+      top31_100,
+      top31_100Change,
       top50,
       top100,
       unranked,
@@ -354,6 +699,9 @@ export async function getRankingSummary(
     },
     trend: realTrend,
     keywordDistribution,
+    serpDynamics,
+    competitors,
+    pages,
     keywords: keywords.map((k) => ({
       id: k.id,
       keyword: k.keywordText,

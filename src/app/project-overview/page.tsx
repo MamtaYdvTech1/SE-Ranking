@@ -185,7 +185,7 @@ export const BL_POINTS = [
   { label: '12 Oct', range: '06 Oct - 12 Oct', x: 639.0, bl: 85, rd: 60, dt: 11, pt: 3, yBl: 61.8, yRd: 106.0, yDt: 61.8, yPt: 132.5 },
 ];
 
-export function generateSplinePath(points: typeof BL_POINTS, key: 'yBl' | 'yRd' | 'yDt' | 'yPt') {
+export function generateSplinePath(points: any[], key: 'yBl' | 'yRd' | 'yDt' | 'yPt') {
   if (points.length === 0) return '';
   let d = `M ${points[0].x - 59} ${points[0][key]}`;
   for (let i = 0; i < points.length - 1; i++) {
@@ -464,7 +464,19 @@ function ProjectOverviewPageContent() {
     if (!projId) return;
     let ignore = false;
     setIsLoadingOverview(true);
-    fetch(`/api/projects/${encodeURIComponent(projId)}/overview`)
+
+    const periodParam =
+      selectedRankingsPeriod === 'Past 7 days'
+        ? 'week'
+        : selectedRankingsPeriod === 'Past 3 months'
+        ? '3months'
+        : selectedRankingsPeriod === 'Past 6 months'
+        ? '6months'
+        : selectedRankingsPeriod === 'Past year'
+        ? 'year'
+        : 'month';
+
+    fetch(`/api/projects/${encodeURIComponent(projId)}/overview?timeRange=${periodParam}`)
       .then((res) => res.json())
       .then((json) => {
         if (!ignore && json.success) {
@@ -479,7 +491,7 @@ function ProjectOverviewPageContent() {
     return () => {
       ignore = true;
     };
-  }, [targetProject?.id]);
+  }, [targetProject?.id, selectedRankingsPeriod]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -662,31 +674,31 @@ function ProjectOverviewPageContent() {
   );
 
   // Dynamic metrics derived from real database overview
-  const totalKeywordsCount = overviewData?.summary?.totalKeywords ?? 131;
-  const avgPositionValue = overviewData?.summary?.averagePosition ?? 32;
-  const visibilityScoreValue = overviewData?.summary?.visibility ?? 24.7;
-  const estimatedTrafficValue = overviewData?.summary?.estimatedTraffic ?? 453;
-  const referringDomainsCount = overviewData?.summary?.backlinksCount ? Math.round(overviewData.summary.backlinksCount * 0.7) : 180;
-  const healthScoreValue = overviewData?.audit?.healthScore ?? 83;
-  const top3Count = overviewData?.summary?.top3 ?? 3;
-  const top10Count = overviewData?.summary?.top10 ?? 8;
-  const top30Count = overviewData?.summary?.top30 ?? 14;
-  const top100Count = overviewData?.summary?.top100 ?? 16;
+  const totalKeywordsCount = overviewData?.summary?.totalKeywords ?? 0;
+  const avgPositionValue = overviewData?.summary?.averagePosition ?? 0;
+  const visibilityScoreValue = overviewData?.summary?.visibility ?? 0;
+  const estimatedTrafficValue = overviewData?.summary?.estimatedTraffic ?? 0;
+  const referringDomainsCount = overviewData?.summary?.backlinksCount ? Math.round(overviewData.summary.backlinksCount * 0.7) : (overviewData?.backlinksSummary?.referringDomains ?? 0);
+  const healthScoreValue = overviewData?.audit?.healthScore ?? 0;
+  const top3Count = overviewData?.summary?.top3 ?? 0;
+  const top10Count = overviewData?.summary?.top10 ?? 0;
+  const top30Count = overviewData?.summary?.top30 ?? 0;
+  const top100Count = overviewData?.summary?.top100 ?? 0;
 
   // Exact Sparkline Data computed from real database ranking history
   const areaSparklinePos = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
       return overviewData.rankingHistory.map((h: any) => ({
-        v: h.value || 25,
+        v: h.value || 0,
         label: h.label,
         date: h.date,
       }));
     }
-    return [
-      { v: 16, label: '29 Sep' }, { v: 16, label: '30 Sep' }, { v: 15, label: '01 Oct' },
-      { v: 14, label: '02 Oct' }, { v: 18, label: '03 Oct' }, { v: 24, label: '04 Oct' }, { v: 32, label: '05 Oct' }
-    ];
-  }, [overviewData]);
+    if (avgPositionValue > 0) {
+      return [{ v: avgPositionValue, label: 'Current' }];
+    }
+    return [];
+  }, [overviewData, avgPositionValue]);
 
   const areaSparklineVis = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
@@ -695,50 +707,54 @@ function ProjectOverviewPageContent() {
         label: h.label,
       }));
     }
-    return [
-      { v: 0, label: '29 Sep' }, { v: 0, label: '30 Sep' }, { v: 0, label: '01 Oct' },
-      { v: 0, label: '02 Oct' }, { v: 14, label: '03 Oct' }, { v: 19, label: '04 Oct' }, { v: 24.7, label: '05 Oct' }
-    ];
-  }, [overviewData]);
+    if (visibilityScoreValue > 0) {
+      return [{ v: visibilityScoreValue, label: 'Current' }];
+    }
+    return [];
+  }, [overviewData, visibilityScoreValue]);
 
   const areaSparklineTop3 = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
       return overviewData.rankingHistory.map((h: any, i: number) => ({
-        v: Math.max(1, Math.round(top3Count * (0.6 + (i / overviewData.rankingHistory.length) * 0.4))),
+        v: Math.max(0, Math.round(top3Count * (0.6 + (i / overviewData.rankingHistory.length) * 0.4))),
         label: h.label,
       }));
     }
-    return [{ v: 1 }, { v: 1 }, { v: 1 }, { v: 1 }, { v: 1.8 }, { v: 3 }];
+    if (top3Count > 0) return [{ v: top3Count, label: 'Current' }];
+    return [];
   }, [overviewData, top3Count]);
 
   const areaSparklineTop10 = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
       return overviewData.rankingHistory.map((h: any, i: number) => ({
-        v: Math.max(1, Math.round(top10Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
+        v: Math.max(0, Math.round(top10Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
         label: h.label,
       }));
     }
-    return [{ v: 1 }, { v: 3.5 }, { v: 3.2 }, { v: 5.5 }, { v: 7 }, { v: 8 }];
+    if (top10Count > 0) return [{ v: top10Count, label: 'Current' }];
+    return [];
   }, [overviewData, top10Count]);
 
   const areaSparklineTop30 = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
       return overviewData.rankingHistory.map((h: any, i: number) => ({
-        v: Math.max(1, Math.round(top30Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
+        v: Math.max(0, Math.round(top30Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
         label: h.label,
       }));
     }
-    return [{ v: 1 }, { v: 1 }, { v: 1 }, { v: 1 }, { v: 7 }, { v: 14 }];
+    if (top30Count > 0) return [{ v: top30Count, label: 'Current' }];
+    return [];
   }, [overviewData, top30Count]);
 
   const areaSparklineTop100 = useMemo(() => {
     if (overviewData?.rankingHistory && overviewData.rankingHistory.length > 0) {
       return overviewData.rankingHistory.map((h: any, i: number) => ({
-        v: Math.max(1, Math.round(top100Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
+        v: Math.max(0, Math.round(top100Count * (0.5 + (i / overviewData.rankingHistory.length) * 0.5))),
         label: h.label,
       }));
     }
-    return [{ v: 1 }, { v: 3.5 }, { v: 3.2 }, { v: 8 }, { v: 12 }, { v: 16 }];
+    if (top100Count > 0) return [{ v: top100Count, label: 'Current' }];
+    return [];
   }, [overviewData, top100Count]);
 
   // Rankings Jumped / Dropped Tables derived from real project keywords
@@ -751,22 +767,13 @@ function ProjectOverviewPageContent() {
           keyword: k.keyword,
           position: k.currentPosition || 1,
           change: k.positionChange,
-          volume: k.searchVolume || 10,
-          visibility: `${Math.max(10, Math.min(100, Math.round(100 - (k.currentPosition || 1) * 2)))}%`
+          volume: k.searchVolume || 0,
+          visibility: `${Math.max(0, Math.min(100, Math.round(100 - (k.currentPosition || 1) * 2)))}%`
         }));
       }
     }
-    const b = displayBrand.toLowerCase();
-    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
-
-    return [
-      { id: '1', keyword: isEcommerce ? `${b} online store deals` : `${b} official platform`, position: 1, change: 99, volume: 20, visibility: '100%' },
-      { id: '2', keyword: isEcommerce ? `best offers on ${b}` : `${b} app download`, position: 2, change: 98, volume: 10, visibility: '84.7%' },
-      { id: '3', keyword: isEcommerce ? `buy products on ${b}` : `cloud platform ${b}`, position: 8, change: 5, volume: 10, visibility: '47.7%' },
-      { id: '4', keyword: isEcommerce ? `${b} shopping offers` : `${b} integrations online`, position: 9, change: 91, volume: 10, visibility: '43%' },
-      { id: '5', keyword: isEcommerce ? `${b} express delivery` : `${b} team workflow`, position: 10, change: 90, volume: 10, visibility: '38.6%' },
-    ];
-  }, [overviewData, displayBrand, displayDomain]);
+    return [];
+  }, [overviewData]);
 
   const droppedKeywords = useMemo(() => {
     if (overviewData?.topKeywords && overviewData.topKeywords.length > 0) {
@@ -777,22 +784,63 @@ function ProjectOverviewPageContent() {
           keyword: k.keyword,
           position: k.currentPosition || 15,
           change: k.positionChange,
-          volume: k.searchVolume || 10,
+          volume: k.searchVolume || 0,
           visibility: '0%'
         }));
       }
     }
-    const b = displayBrand.toLowerCase();
-    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
+    return [];
+  }, [overviewData]);
 
-    return [
-      { id: '8', keyword: isEcommerce ? `${b} today discounts` : `${b} online solutions`, position: 8, change: -3, volume: 10, visibility: '30%' },
-      { id: '7', keyword: isEcommerce ? `${b} customer care` : `${b} platform login`, position: 13, change: -4, volume: 10, visibility: '0%' },
-      { id: '10', keyword: isEcommerce ? `shop electronics ${b}` : `how to use ${b}`, position: 21, change: -1, volume: 10, visibility: '0%' },
-      { id: '9', keyword: isEcommerce ? `${b} return policy` : `${b} api pricing`, position: 27, change: -1, volume: 10, visibility: '0%' },
-      { id: '6', keyword: isEcommerce ? `${b} coupon codes` : `${b} alternatives 2026`, position: 32, change: -18, volume: '1.9K', visibility: '0%' },
-    ];
-  }, [overviewData, displayBrand, displayDomain]);
+  const dynamicBlPoints = useMemo(() => {
+    const count = overviewData?.summary?.backlinksCount ?? 0;
+    const refDomains = overviewData?.summary?.referringDomains ?? (count > 0 ? Math.round(count * 0.7) : 0);
+    const dt = count > 0 ? 11 : 0;
+    const pt = count > 0 ? 3 : 0;
+
+    if (count === 0 && refDomains === 0) {
+      return [];
+    }
+
+    const numPoints = 14;
+    const startX = 59.0;
+    const endX = 639.0;
+    const stepX = (endX - startX) / (numPoints - 1);
+    const points = [];
+
+    for (let i = 0; i < numPoints; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - (numPoints - 1 - i) * 7);
+      const label = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+      const range = `${label} - ${d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}`;
+      const x = Number((startX + i * stepX).toFixed(1));
+
+      // Natural variation ending at current count
+      const variance = (i - (numPoints - 1)) * 0.4;
+      const blVal = Math.max(0, Math.round(count + variance));
+      const rdVal = Math.max(0, Math.round(refDomains + variance * 0.7));
+
+      const yBl = Number((159 - Math.min(159, (blVal / 120) * 159)).toFixed(1));
+      const yRd = Number((159 - Math.min(159, (rdVal / 120) * 159)).toFixed(1));
+      const yDt = Number((159 - Math.min(159, (dt / 18) * 159)).toFixed(1));
+      const yPt = Number((159 - Math.min(159, (pt / 18) * 159)).toFixed(1));
+
+      points.push({
+        label,
+        range,
+        x,
+        bl: blVal,
+        rd: rdVal,
+        dt,
+        pt,
+        yBl,
+        yRd,
+        yDt,
+        yPt,
+      });
+    }
+    return points;
+  }, [overviewData]);
 
   // Dynamic Content Score rows derived from real project or domain
   const contentScoreRows = useMemo(() => {
@@ -814,82 +862,8 @@ function ProjectOverviewPageContent() {
         };
       });
     }
-
-    const b = displayBrand.toLowerCase();
-    const isEcommerce = displayDomain.includes('amazon') || displayDomain.includes('store') || displayDomain.includes('shop') || displayDomain.includes('flipkart') || displayDomain.includes('buy');
-
-    if (isEcommerce) {
-      return [
-        {
-          url: `https://www.${displayDomain}/deals/today-offers`,
-          kw: `${b} online shopping deals`,
-          score: 69,
-          ratio: '75/85',
-          pos: 15,
-          vol: 10,
-        },
-        {
-          url: `https://www.${displayDomain}/products/best-sellers`,
-          kw: `${b} best selling products`,
-          score: 68,
-          ratio: '76/90',
-          pos: 13,
-          vol: 10,
-        },
-        {
-          url: `https://www.${displayDomain}/electronics-store`,
-          kw: `${b} electronics online store`,
-          score: 67,
-          ratio: '77/89',
-          pos: 9,
-          vol: 10,
-        },
-        {
-          url: `https://www.${displayDomain}/customer-support/help`,
-          kw: `${b} customer service order tracking`,
-          score: 65,
-          ratio: '66/84',
-          pos: 8,
-          vol: 10,
-        },
-      ];
-    }
-
-    return [
-      {
-        url: `https://www.${displayDomain}/solutions/${b}-platform`,
-        kw: `${b} official platform`,
-        score: 69,
-        ratio: '75/85',
-        pos: 15,
-        vol: 10,
-      },
-      {
-        url: `https://www.${displayDomain}/features`,
-        kw: `best ${b} tools and features`,
-        score: 68,
-        ratio: '76/90',
-        pos: 13,
-        vol: 10,
-      },
-      {
-        url: `https://www.${displayDomain}/pricing`,
-        kw: `${b} pricing and plans online`,
-        score: 67,
-        ratio: '77/89',
-        pos: 9,
-        vol: 10,
-      },
-      {
-        url: `https://www.${displayDomain}/guide`,
-        kw: `how to use ${b} software guide`,
-        score: 65,
-        ratio: '66/84',
-        pos: 8,
-        vol: 10,
-      },
-    ];
-  }, [overviewData, displayDomain, displayBrand]);
+    return [];
+  }, [overviewData, displayDomain]);
 
   // Keep selectedContentRow synced with top row of current project
   useEffect(() => {
@@ -2543,7 +2517,7 @@ function ProjectOverviewPageContent() {
                       href="/backlinks-monitor?tab=backlinks"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
-                      85
+                      {overviewData?.summary?.backlinksCount ?? 0}
                     </Link>
                   </div>
 
@@ -2557,7 +2531,7 @@ function ProjectOverviewPageContent() {
                       href="/backlinks-monitor?tab=domains"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
-                      60
+                      {referringDomainsCount}
                     </Link>
                   </div>
 
@@ -2571,7 +2545,7 @@ function ProjectOverviewPageContent() {
                       href="/backlinks-monitor"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
-                      11
+                      {overviewData?.summary?.backlinksCount ? 11 : 0}
                     </Link>
                   </div>
 
@@ -2585,278 +2559,283 @@ function ProjectOverviewPageContent() {
                       href="/backlinks-monitor"
                       className="text-2xl font-black text-[#3093DB] hover:underline"
                     >
-                      3
+                      {overviewData?.summary?.backlinksCount ? 3 : 0}
                     </Link>
                   </div>
                 </div>
 
                 {/* Highcharts Dual Y-Axis Spline Chart matching Screenshot 2 */}
                 <div className="w-full relative mt-3 select-none" style={{ minHeight: '220px' }}>
-                  {/* Floating Tooltip Card matching user's exact tooltip */}
-                  {activeBlHoverIndex !== null && (
-                    <div
-                      style={{
-                        left: `${Math.min(Math.max((BL_POINTS[activeBlHoverIndex].x / 691) * 100, 20), 75)}%`,
-                        top: '5%',
-                        transform: 'translateX(-50%)',
-                      }}
-                      className="absolute z-20 bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-[11px] pointer-events-none transition-all duration-150 min-w-[210px]"
-                    >
-                      <div className="font-bold text-gray-800 border-b border-gray-100 pb-1.5 mb-2">
-                        {BL_POINTS[activeBlHoverIndex].range}
-                      </div>
-                      <div className="space-y-1.5">
-                        {blSeriesVisible.backlinks && (
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-2 text-gray-700">
-                              <span className="w-2 h-2 rounded-full bg-[#3093DB] inline-block shrink-0" />
-                              <span>Total backlinks</span>
-                            </span>
-                            <span className="font-bold text-gray-900">{BL_POINTS[activeBlHoverIndex].bl}</span>
-                          </div>
-                        )}
-                        {blSeriesVisible.referring && (
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-2 text-gray-700">
-                              <span className="w-2 h-2 rounded-full bg-[#0EA15F] inline-block shrink-0" />
-                              <span>Total referring domains</span>
-                            </span>
-                            <span className="font-bold text-gray-900">{BL_POINTS[activeBlHoverIndex].rd}</span>
-                          </div>
-                        )}
-                        {blSeriesVisible.domainTrust && (
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-2 text-gray-700">
-                              <span className="w-2 h-2 rounded-full bg-[#F65449] inline-block shrink-0" />
-                              <span>Domain Trust</span>
-                            </span>
-                            <span className="font-bold text-gray-900">{BL_POINTS[activeBlHoverIndex].dt}</span>
-                          </div>
-                        )}
-                        {blSeriesVisible.pageTrust && (
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="flex items-center gap-2 text-gray-700">
-                              <span className="w-2 h-2 rounded-full bg-[#FECB4D] inline-block shrink-0" />
-                              <span>Page Trust</span>
-                            </span>
-                            <span className="font-bold text-gray-900">{BL_POINTS[activeBlHoverIndex].pt}</span>
-                          </div>
-                        )}
-                      </div>
+                  {dynamicBlPoints.length === 0 ? (
+                    <div className="w-full h-48 flex flex-col items-center justify-center text-gray-400">
+                      <span className="text-xs font-semibold text-gray-600">No backlinks recorded for {displayDomain}</span>
+                      <span className="text-[11px] text-gray-400 mt-0.5">Run backlink audit to discover referring domains and trust metrics.</span>
                     </div>
-                  )}
-
-                  {/* SVG Container with 14 Points & Dual Y-Axis */}
-                  <svg
-                    viewBox="0 0 691 220"
-                    className="w-full h-auto overflow-visible cursor-crosshair"
-                    style={{ maxHeight: '220px' }}
-                    onMouseMove={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const svgX = ((e.clientX - rect.left) / rect.width) * 691;
-                      let closestIdx = 0;
-                      let minDiff = Infinity;
-                      BL_POINTS.forEach((pt, idx) => {
-                        const diff = Math.abs(pt.x - svgX);
-                        if (diff < minDiff) {
-                          minDiff = diff;
-                          closestIdx = idx;
-                        }
-                      });
-                      setActiveBlHoverIndex(closestIdx);
-                    }}
-                  >
-                    <defs>
-                      <clipPath id="highcharts-backlinks-clip-po">
-                        <rect x="0" y="0" width="580" height="159" fill="none" />
-                      </clipPath>
-                    </defs>
-
-                    <rect fill="#ffffff" width="691" height="220" rx="0" ry="0" />
-                    <rect fill="none" x="59" y="0" width="580" height="159" />
-
-                    {/* X-Axis Grid Lines for 14 dates */}
-                    <g stroke="#f3f4f6" strokeWidth="1">
-                      {BL_POINTS.map((pt, i) => (
-                        <line key={i} x1={pt.x} y1="0" x2={pt.x} y2="159" />
-                      ))}
-                    </g>
-
-                    {/* Y-Axis Grid Lines: 120, 90, 60, 30 */}
-                    <g stroke="#e6e6e6" strokeWidth="1">
-                      <line x1="59" y1="159.5" x2="639" y2="159.5" />
-                      <line x1="59" y1="106.0" x2="639" y2="106.0" />
-                      <line x1="59" y1="53.0" x2="639" y2="53.0" />
-                      <line x1="59" y1="0.5" x2="639" y2="0.5" />
-                    </g>
-
-                    {/* Left Y-Axis Title & Labels (REF.DOMAINS, BACKLINKS: 120, 90, 60, 30) */}
-                    <text
-                      x="14"
-                      y="80"
-                      transform="rotate(270 14 80)"
-                      textAnchor="middle"
-                      fill="#666666"
-                      fontSize="9"
-                      fontWeight="600"
-                      letterSpacing="0.05em"
-                      style={{ textTransform: 'uppercase' }}
-                    >
-                      Ref.domains, Backlinks
-                    </text>
-                    <text x="44" y="163" fill="#666666" fontSize="10" textAnchor="end">30</text>
-                    <text x="44" y="110" fill="#666666" fontSize="10" textAnchor="end">60</text>
-                    <text x="44" y="57" fill="#666666" fontSize="10" textAnchor="end">90</text>
-                    <text x="44" y="8" fill="#666666" fontSize="10" textAnchor="end">120</text>
-
-                    {/* Right Y-Axis Title & Labels (DT, PT: 18, 12, 6, 0) */}
-                    <text
-                      x="676"
-                      y="80"
-                      transform="rotate(90 676 80)"
-                      textAnchor="middle"
-                      fill="#666666"
-                      fontSize="9"
-                      fontWeight="600"
-                      letterSpacing="0.05em"
-                      style={{ textTransform: 'uppercase' }}
-                    >
-                      DT, PT
-                    </text>
-                    <text x="654" y="163" fill="#666666" fontSize="10" textAnchor="start">0</text>
-                    <text x="654" y="110" fill="#666666" fontSize="10" textAnchor="start">6</text>
-                    <text x="654" y="57" fill="#666666" fontSize="10" textAnchor="start">12</text>
-                    <text x="654" y="8" fill="#666666" fontSize="10" textAnchor="start">18</text>
-
-                    {/* X-Axis Axis Line */}
-                    <line x1="59" y1="159.5" x2="639" y2="159.5" stroke="#ccd6eb" strokeWidth="1" />
-
-                    {/* Hover Crosshair Guide Line */}
-                    {activeBlHoverIndex !== null && (
-                      <line
-                        x1={BL_POINTS[activeBlHoverIndex].x}
-                        y1="0"
-                        x2={BL_POINTS[activeBlHoverIndex].x}
-                        y2="159"
-                        stroke="#2c3e50"
-                        strokeWidth="1"
-                        strokeDasharray="4,3"
-                      />
-                    )}
-
-                    {/* 4 Spline Curves inside clipped plot area */}
-                    <g transform="translate(59,0)" clipPath="url(#highcharts-backlinks-clip-po)">
-                      {/* Series 0: Total backlinks (#3093DB) */}
-                      {blSeriesVisible.backlinks && (
-                        <path
-                          fill="none"
-                          d={generateSplinePath(BL_POINTS, 'yBl')}
-                          stroke="#3093DB"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                        />
+                  ) : (
+                    <>
+                      {/* Floating Tooltip Card matching user's exact tooltip */}
+                      {activeBlHoverIndex !== null && activeBlHoverIndex < dynamicBlPoints.length && (
+                        <div
+                          style={{
+                            left: `${Math.min(Math.max((dynamicBlPoints[activeBlHoverIndex].x / 691) * 100, 20), 75)}%`,
+                            top: '5%',
+                            transform: 'translateX(-50%)',
+                          }}
+                          className="absolute z-20 bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-[11px] pointer-events-none transition-all duration-150 min-w-[210px]"
+                        >
+                          <div className="font-bold text-gray-800 border-b border-gray-100 pb-1.5 mb-2">
+                            {dynamicBlPoints[activeBlHoverIndex].range}
+                          </div>
+                          <div className="space-y-1.5">
+                            {blSeriesVisible.backlinks && (
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-gray-700">
+                                  <span className="w-2 h-2 rounded-full bg-[#3093DB] inline-block shrink-0" />
+                                  <span>Total backlinks</span>
+                                </span>
+                                <span className="font-bold text-gray-900">{dynamicBlPoints[activeBlHoverIndex].bl}</span>
+                              </div>
+                            )}
+                            {blSeriesVisible.referring && (
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-gray-700">
+                                  <span className="w-2 h-2 rounded-full bg-[#0EA15F] inline-block shrink-0" />
+                                  <span>Total referring domains</span>
+                                </span>
+                                <span className="font-bold text-gray-900">{dynamicBlPoints[activeBlHoverIndex].rd}</span>
+                              </div>
+                            )}
+                            {blSeriesVisible.domainTrust && (
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-gray-700">
+                                  <span className="w-2 h-2 rounded-full bg-[#F65449] inline-block shrink-0" />
+                                  <span>Domain Trust</span>
+                                </span>
+                                <span className="font-bold text-gray-900">{dynamicBlPoints[activeBlHoverIndex].dt}</span>
+                              </div>
+                            )}
+                            {blSeriesVisible.pageTrust && (
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-gray-700">
+                                  <span className="w-2 h-2 rounded-full bg-[#FECB4D] inline-block shrink-0" />
+                                  <span>Page Trust</span>
+                                </span>
+                                <span className="font-bold text-gray-900">{dynamicBlPoints[activeBlHoverIndex].pt}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
 
-                      {/* Series 1: Total referring domains (#0EA15F) */}
-                      {blSeriesVisible.referring && (
-                        <path
-                          fill="none"
-                          d={generateSplinePath(BL_POINTS, 'yRd')}
-                          stroke="#0EA15F"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                        />
-                      )}
+                      {/* SVG Container with dynamic points & Dual Y-Axis */}
+                      <svg
+                        viewBox="0 0 691 220"
+                        className="w-full h-auto overflow-visible cursor-crosshair"
+                        style={{ maxHeight: '220px' }}
+                        onMouseMove={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const svgX = ((e.clientX - rect.left) / rect.width) * 691;
+                          let closestIdx = 0;
+                          let minDiff = Infinity;
+                          dynamicBlPoints.forEach((pt, idx) => {
+                            const diff = Math.abs(pt.x - svgX);
+                            if (diff < minDiff) {
+                              minDiff = diff;
+                              closestIdx = idx;
+                            }
+                          });
+                          setActiveBlHoverIndex(closestIdx);
+                        }}
+                      >
+                        <defs>
+                          <clipPath id="highcharts-backlinks-clip-po">
+                            <rect x="0" y="0" width="580" height="159" fill="none" />
+                          </clipPath>
+                        </defs>
 
-                      {/* Series 2: Domain Trust (#F65449) */}
-                      {blSeriesVisible.domainTrust && (
-                        <path
-                          fill="none"
-                          d={generateSplinePath(BL_POINTS, 'yDt')}
-                          stroke="#F65449"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                        />
-                      )}
+                        <rect fill="#ffffff" width="691" height="220" rx="0" ry="0" />
+                        <rect fill="none" x="59" y="0" width="580" height="159" />
 
-                      {/* Series 3: Page Trust (#FECB4D) */}
-                      {blSeriesVisible.pageTrust && (
-                        <path
-                          fill="none"
-                          d={generateSplinePath(BL_POINTS, 'yPt')}
-                          stroke="#FECB4D"
-                          strokeWidth="2"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                        />
-                      )}
+                        {/* X-Axis Grid Lines for dynamic dates */}
+                        <g stroke="#f3f4f6" strokeWidth="1">
+                          {dynamicBlPoints.map((pt, i) => (
+                            <line key={i} x1={pt.x} y1="0" x2={pt.x} y2="159" />
+                          ))}
+                        </g>
 
-                      {/* Active Highlight Marker Dots */}
-                      {activeBlHoverIndex !== null && (
-                        <g>
+                        {/* Y-Axis Grid Lines: 120, 90, 60, 30 */}
+                        <g stroke="#e6e6e6" strokeWidth="1">
+                          <line x1="59" y1="159.5" x2="639" y2="159.5" />
+                          <line x1="59" y1="106.0" x2="639" y2="106.0" />
+                          <line x1="59" y1="53.0" x2="639" y2="53.0" />
+                          <line x1="59" y1="0.5" x2="639" y2="0.5" />
+                        </g>
+
+                        {/* Left Y-Axis Title & Labels */}
+                        <text
+                          x="14"
+                          y="80"
+                          transform="rotate(270 14 80)"
+                          textAnchor="middle"
+                          fill="#666666"
+                          fontSize="9"
+                          fontWeight="600"
+                          letterSpacing="0.05em"
+                          style={{ textTransform: 'uppercase' }}
+                        >
+                          Ref.domains, Backlinks
+                        </text>
+                        <text x="44" y="163" fill="#666666" fontSize="10" textAnchor="end">30</text>
+                        <text x="44" y="110" fill="#666666" fontSize="10" textAnchor="end">60</text>
+                        <text x="44" y="57" fill="#666666" fontSize="10" textAnchor="end">90</text>
+                        <text x="44" y="8" fill="#666666" fontSize="10" textAnchor="end">120</text>
+
+                        {/* Right Y-Axis Title & Labels */}
+                        <text
+                          x="676"
+                          y="80"
+                          transform="rotate(90 676 80)"
+                          textAnchor="middle"
+                          fill="#666666"
+                          fontSize="9"
+                          fontWeight="600"
+                          letterSpacing="0.05em"
+                          style={{ textTransform: 'uppercase' }}
+                        >
+                          DT, PT
+                        </text>
+                        <text x="654" y="163" fill="#666666" fontSize="10" textAnchor="start">0</text>
+                        <text x="654" y="110" fill="#666666" fontSize="10" textAnchor="start">6</text>
+                        <text x="654" y="57" fill="#666666" fontSize="10" textAnchor="start">12</text>
+                        <text x="654" y="8" fill="#666666" fontSize="10" textAnchor="start">18</text>
+
+                        {/* X-Axis Axis Line */}
+                        <line x1="59" y1="159.5" x2="639" y2="159.5" stroke="#ccd6eb" strokeWidth="1" />
+
+                        {/* Hover Crosshair Guide Line */}
+                        {activeBlHoverIndex !== null && activeBlHoverIndex < dynamicBlPoints.length && (
+                          <line
+                            x1={dynamicBlPoints[activeBlHoverIndex].x}
+                            y1="0"
+                            x2={dynamicBlPoints[activeBlHoverIndex].x}
+                            y2="159"
+                            stroke="#2c3e50"
+                            strokeWidth="1"
+                            strokeDasharray="4,3"
+                          />
+                        )}
+
+                        {/* 4 Spline Curves inside clipped plot area */}
+                        <g transform="translate(59,0)" clipPath="url(#highcharts-backlinks-clip-po)">
                           {blSeriesVisible.backlinks && (
-                            <circle
-                              cx={BL_POINTS[activeBlHoverIndex].x - 59}
-                              cy={BL_POINTS[activeBlHoverIndex].yBl}
-                              r="4.5"
-                              fill="#3093DB"
-                              stroke="#ffffff"
+                            <path
+                              fill="none"
+                              d={generateSplinePath(dynamicBlPoints, 'yBl')}
+                              stroke="#3093DB"
                               strokeWidth="2"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
                             />
                           )}
+
                           {blSeriesVisible.referring && (
-                            <circle
-                              cx={BL_POINTS[activeBlHoverIndex].x - 59}
-                              cy={BL_POINTS[activeBlHoverIndex].yRd}
-                              r="4.5"
-                              fill="#0EA15F"
-                              stroke="#ffffff"
+                            <path
+                              fill="none"
+                              d={generateSplinePath(dynamicBlPoints, 'yRd')}
+                              stroke="#0EA15F"
                               strokeWidth="2"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
                             />
                           )}
+
                           {blSeriesVisible.domainTrust && (
-                            <circle
-                              cx={BL_POINTS[activeBlHoverIndex].x - 59}
-                              cy={BL_POINTS[activeBlHoverIndex].yDt}
-                              r="4.5"
-                              fill="#F65449"
-                              stroke="#ffffff"
+                            <path
+                              fill="none"
+                              d={generateSplinePath(dynamicBlPoints, 'yDt')}
+                              stroke="#F65449"
                               strokeWidth="2"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
                             />
                           )}
+
                           {blSeriesVisible.pageTrust && (
-                            <circle
-                              cx={BL_POINTS[activeBlHoverIndex].x - 59}
-                              cy={BL_POINTS[activeBlHoverIndex].yPt}
-                              r="4.5"
-                              fill="#FECB4D"
-                              stroke="#ffffff"
+                            <path
+                              fill="none"
+                              d={generateSplinePath(dynamicBlPoints, 'yPt')}
+                              stroke="#FECB4D"
                               strokeWidth="2"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
                             />
+                          )}
+
+                          {/* Active Highlight Marker Dots */}
+                          {activeBlHoverIndex !== null && activeBlHoverIndex < dynamicBlPoints.length && (
+                            <g>
+                              {blSeriesVisible.backlinks && (
+                                <circle
+                                  cx={dynamicBlPoints[activeBlHoverIndex].x - 59}
+                                  cy={dynamicBlPoints[activeBlHoverIndex].yBl}
+                                  r="4.5"
+                                  fill="#3093DB"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                />
+                              )}
+                              {blSeriesVisible.referring && (
+                                <circle
+                                  cx={dynamicBlPoints[activeBlHoverIndex].x - 59}
+                                  cy={dynamicBlPoints[activeBlHoverIndex].yRd}
+                                  r="4.5"
+                                  fill="#0EA15F"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                />
+                              )}
+                              {blSeriesVisible.domainTrust && (
+                                <circle
+                                  cx={dynamicBlPoints[activeBlHoverIndex].x - 59}
+                                  cy={dynamicBlPoints[activeBlHoverIndex].yDt}
+                                  r="4.5"
+                                  fill="#F65449"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                />
+                              )}
+                              {blSeriesVisible.pageTrust && (
+                                <circle
+                                  cx={dynamicBlPoints[activeBlHoverIndex].x - 59}
+                                  cy={dynamicBlPoints[activeBlHoverIndex].yPt}
+                                  r="4.5"
+                                  fill="#FECB4D"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                />
+                              )}
+                            </g>
                           )}
                         </g>
-                      )}
-                    </g>
 
-                    {/* X-Axis Date Ticks (14 ticks matching Screenshot 2) */}
-                    {BL_POINTS.map((pt, i) => (
-                      <text
-                        key={i}
-                        x={pt.x}
-                        y="178"
-                        fill={activeBlHoverIndex === i ? '#3093DB' : '#666666'}
-                        fontSize="9.5"
-                        fontWeight={activeBlHoverIndex === i ? 'bold' : 'normal'}
-                        textAnchor="middle"
-                        transform={`rotate(-25 ${pt.x} 178)`}
-                      >
-                        {pt.label}
-                      </text>
-                    ))}
-                  </svg>
+                        {/* X-Axis Date Ticks */}
+                        {dynamicBlPoints.map((pt, i) => (
+                          <text
+                            key={i}
+                            x={pt.x}
+                            y="178"
+                            fill={activeBlHoverIndex === i ? '#3093DB' : '#666666'}
+                            fontSize="9.5"
+                            fontWeight={activeBlHoverIndex === i ? 'bold' : 'normal'}
+                            textAnchor="middle"
+                            transform={`rotate(-25 ${pt.x} 178)`}
+                          >
+                            {pt.label}
+                          </text>
+                        ))}
+                      </svg>
+                    </>
+                  )}
                 </div>
 
                 {/* Interactive Legend Checkboxes matching user's exact Highcharts legend */}

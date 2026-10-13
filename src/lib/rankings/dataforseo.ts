@@ -130,7 +130,7 @@ export class DataForSeoProvider implements RankingProvider {
         const payload = [
           {
             keyword: req.keyword,
-            location_code: 2356, // default or mapped from countryCode
+            location_code: this.mapCountryToLocationCode(req.countryCode),
             language_code: req.languageCode || 'en',
             device: req.device || 'desktop',
             depth: 100,
@@ -188,6 +188,25 @@ export class DataForSeoProvider implements RankingProvider {
         }
 
         const data = await response.json();
+
+        if (data.status_code === 40104 || data.status_code === 40100) {
+          return {
+            success: false,
+            results,
+            checkedCount: results.length,
+            rankedCount: 0,
+            unrankedCount: results.length,
+            provider: this.id,
+            checkedAt,
+            error: {
+              code: 'ACCOUNT_VERIFICATION_REQUIRED',
+              message: data.status_message || 'Please verify your account before using the API on https://app.dataforseo.com/',
+              provider: this.id,
+              statusCode: 403,
+            },
+          };
+        }
+
         const items = data.tasks?.[0]?.result?.[0]?.items || [];
 
         let position: number | null = null;
@@ -249,5 +268,27 @@ export class DataForSeoProvider implements RankingProvider {
       provider: this.id,
       checkedAt,
     };
+  }
+
+  private mapCountryToLocationCode(countryCode?: string): number {
+    const code = (countryCode || 'in').toLowerCase();
+    const map: Record<string, number> = {
+      us: 2840,
+      in: 2356,
+      uk: 2826,
+      gb: 2826,
+      ca: 2124,
+      au: 2036,
+      de: 2276,
+      fr: 2250,
+      es: 2724,
+      it: 2380,
+      nl: 2528,
+      jp: 2392,
+      br: 2076,
+      ae: 2784,
+      sg: 2702,
+    };
+    return map[code] || 2356;
   }
 }

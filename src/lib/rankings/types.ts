@@ -69,7 +69,8 @@ export type ProviderErrorCode =
   | 'NETWORK_ERROR'
   | 'MALFORMED_RESPONSE'
   | 'ENGINE_UNSUPPORTED'
-  | 'CREDITS_EXHAUSTED';
+  | 'CREDITS_EXHAUSTED'
+  | 'ACCOUNT_VERIFICATION_REQUIRED';
 
 export interface ProviderError {
   code: ProviderErrorCode;
