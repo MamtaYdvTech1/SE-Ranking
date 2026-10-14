@@ -679,14 +679,8 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
 
     // AUDIT: /api/v1/projects/:id/audit/...
     if (subPath.startsWith("audit")) {
-      const issues = await prisma.auditIssue.findMany({ where: { projectId: project.id, deletedAt: null } });
-      return successResponse({
-        items: issues,
-        page: 1,
-        pageSize: 20,
-        totalCount: issues.length,
-        totalPages: 1,
-      });
+      const { handleAuditV1 } = await import("@/lib/server/auditV1");
+      return handleAuditV1(request, method, subPath, project);
     }
 
     // TASKS: /api/v1/projects/:id/tasks

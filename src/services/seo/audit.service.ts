@@ -4,7 +4,10 @@ export interface AuditCrawlOptions {
   maxPages?: number;
   maxDepth?: number;
   timeoutMs?: number;
+  userAgent?: string;
 }
+
+export const DEFAULT_CRAWLER_USER_AGENT = 'Mozilla/5.0 (compatible; SiteAuditBot/1.0)';
 
 export interface AuditFoundResource {
   url: string;
@@ -15,7 +18,7 @@ export interface AuditFoundResource {
 
 export interface AuditFoundLink {
   url: string;
-  status: number;
+  status: number; // 0 = not checked (target was not fetched during the crawl)
   type: 'HFLNK' | 'EXT';
   sourceUrl: string;
   anchorText?: string;
@@ -23,7 +26,7 @@ export interface AuditFoundLink {
 
 export interface CoreWebVitalsItem {
   value: string;
-  status: 'Good' | 'Needs Improvement' | 'Poor';
+  status: 'Good' | 'Needs Improvement' | 'Poor' | 'Not measured';
 }
 
 export interface CoreWebVitalsMetric {
@@ -67,6 +70,10 @@ export interface AuditCrawledPageDetail {
   issuesCount: number;
   internalLinksCount?: number;
   externalLinksCount?: number;
+  canonicalUrl?: string | null;
+  robotsDirectives?: string | null;
+  imagesCount?: number;
+  imagesMissingAlt?: number;
   crawledAt?: string;
 }
 
@@ -167,7 +174,8 @@ export async function crawlAndAuditUrl(
   options?: AuditCrawlOptions
 ): Promise<AuditCrawlResult> {
   const maxPages = Math.min(40, Math.max(3, options?.maxPages || 15));
-  const maxDepth = options?.maxDepth || 2;
+  const maxDepth = options?.maxDepth ?? 2;
+  const userAgent = options?.userAgent || DEFAULT_CRAWLER_USER_AGENT;
   const timeoutMs = options?.timeoutMs || 7000;
   const startTime = Date.now();
 
@@ -213,7 +221,7 @@ export async function crawlAndAuditUrl(
       const resp = await fetch(current.url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'SE-Ranking-Bot/2.0 (+https://seranking.com/bot.html)',
+          'User-Agent': userAgent,
           Accept: 'text/html,application/xhtml+xml',
         },
         redirect: 'follow',
@@ -451,7 +459,7 @@ export async function crawlAndAuditUrl(
             const existing = resourcesMap.get(resUrl);
             resourcesMap.set(resUrl, {
               type: 'CSS',
-              size: `${Math.floor(25 + (resUrl.length % 55))} KB`,
+              size: '—',
               count: (existing?.count || 0) + 1,
             });
           } catch {}
@@ -467,7 +475,7 @@ export async function crawlAndAuditUrl(
             const existing = resourcesMap.get(resUrl);
             resourcesMap.set(resUrl, {
               type: 'JS',
-              size: `${Math.floor(40 + (resUrl.length % 90))} KB`,
+              size: '—',
               count: (existing?.count || 0) + 1,
             });
           } catch {}
@@ -483,7 +491,7 @@ export async function crawlAndAuditUrl(
             const existing = resourcesMap.get(resUrl);
             resourcesMap.set(resUrl, {
               type: 'IMG',
-              size: `${Math.floor(120 + (resUrl.length % 380))} KB`,
+              size: '—',
               count: (existing?.count || 0) + 1,
             });
           } catch {}
@@ -541,7 +549,7 @@ export async function crawlAndAuditUrl(
           if (linksList.length < 150) {
             linksList.push({
               url: resolved.href,
-              status: 200,
+              status: 0,
               type: isInternal ? 'HFLNK' : 'EXT',
               sourceUrl: current.url,
               anchorText: anchorMatch || undefined,
@@ -564,34 +572,39 @@ export async function crawlAndAuditUrl(
       issuesCount: currentUrlIssues,
       internalLinksCount,
       externalLinksCount,
+      canonicalUrl,
+      robotsDirectives,
+      imagesCount: html ? (html.match(/<img\b/gi) || []).length : 0,
+      imagesMissingAlt,
       crawledAt: new Date().toISOString(),
     });
 
     pagesCrawled++;
   }
 
-  // Synthesize Core Web Vitals based on average load time
-  const avgLoadTime = pagesCrawled > 0 ? totalLoadTimeMs / pagesCrawled : 80;
-  const lcpDesktopSec = (avgLoadTime / 1000 + 0.9).toFixed(2);
-  const lcpMobileSec = (avgLoadTime / 1000 + 1.8).toFixed(2);
-  const ttfbDesktopMs = Math.round(avgLoadTime * 0.45);
-  const ttfbMobileMs = Math.round(avgLoadTime * 0.75);
+  // Links to pages fetched during this crawl get that page's real status
+  const statusByUrl = new Map(crawledPagesList.map((p) => [p.url.split('#')[0].replace(/\/$/, ''), p.statusCode]));
+  for (const link of linksList) {
+    const known = statusByUrl.get(link.url.split('#')[0].replace(/\/$/, ''));
+    if (known != null) link.status = known;
+  }
+
+  // Only server response time is observable from a plain HTTP crawl; lab vitals need a browser (e.g. PageSpeed)
+  const avgLoadTime = pagesCrawled > 0 ? Math.round(totalLoadTimeMs / pagesCrawled) : null;
+  const notMeasured: CoreWebVitalsItem = { value: '—', status: 'Not measured' };
+  const ttfbItem: CoreWebVitalsItem =
+    avgLoadTime == null
+      ? notMeasured
+      : { value: `${avgLoadTime}ms`, status: avgLoadTime < 800 ? 'Good' : avgLoadTime < 1800 ? 'Needs Improvement' : 'Poor' };
 
   const cwvDesktop: CoreWebVitalsMetric = {
-    lcp: { value: `${lcpDesktopSec}s`, status: Number(lcpDesktopSec) < 2.5 ? 'Good' : 'Needs Improvement' },
-    cls: { value: '0.04', status: 'Good' },
-    fid: { value: '18ms', status: 'Good' },
-    ttfb: { value: `${ttfbDesktopMs}ms`, status: ttfbDesktopMs < 800 ? 'Good' : 'Needs Improvement' },
-    tti: { value: `${(Number(lcpDesktopSec) + 0.4).toFixed(2)}s`, status: 'Good' },
+    lcp: notMeasured,
+    cls: notMeasured,
+    fid: notMeasured,
+    ttfb: ttfbItem,
+    tti: notMeasured,
   };
-
-  const cwvMobile: CoreWebVitalsMetric = {
-    lcp: { value: `${lcpMobileSec}s`, status: Number(lcpMobileSec) < 2.5 ? 'Good' : 'Needs Improvement' },
-    cls: { value: '0.08', status: 'Good' },
-    fid: { value: '38ms', status: 'Good' },
-    ttfb: { value: `${ttfbMobileMs}ms`, status: ttfbMobileMs < 800 ? 'Good' : 'Needs Improvement' },
-    tti: { value: `${(Number(lcpMobileSec) + 0.6).toFixed(2)}s`, status: 'Good' },
-  };
+  const cwvMobile: CoreWebVitalsMetric = { ...cwvDesktop };
 
   // Convert resources map to array
   const resourcesList: AuditFoundResource[] = Array.from(resourcesMap.entries()).map(([url, val]) => ({
@@ -710,14 +723,15 @@ export async function crawlAndAuditProject(
         descriptionLength: page.metaDescription ? page.metaDescription.length : 0,
         h1Count: page.h1Text ? 1 : 0,
         h1Text: page.h1Text,
-        canonicalUrl: null,
-        isIndexable: page.statusCode === 200,
+        canonicalUrl: page.canonicalUrl ?? null,
+        robotsDirectives: page.robotsDirectives ?? null,
+        isIndexable: page.statusCode === 200 && !(page.robotsDirectives || '').includes('noindex'),
         depth: page.depth,
         internalLinksCount: page.internalLinksCount || 0,
         externalLinksCount: page.externalLinksCount || 0,
         brokenLinksCount: page.statusCode >= 400 ? 1 : 0,
-        imagesCount: 0,
-        imagesMissingAlt: 0,
+        imagesCount: page.imagesCount ?? 0,
+        imagesMissingAlt: page.imagesMissingAlt ?? 0,
         issuesCount: page.issuesCount,
         crawledAt: new Date(),
       },
