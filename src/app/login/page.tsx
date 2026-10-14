@@ -165,9 +165,23 @@ export default function LoginPage() {
 
         {/* Floating White Card */}
         <div className="w-full bg-white rounded-xl border border-purple-100 shadow-[0_4px_24px_rgba(124,58,237,0.08)] overflow-hidden">
+          {/* Top Auth Tab Switcher */}
+          <div className="grid grid-cols-2 p-1.5 bg-gray-50/80 border-b border-purple-100/60 gap-1.5">
+            <div className="py-2.5 text-center text-xs font-bold rounded-lg bg-white text-[#7C3AED] shadow-xs border border-purple-200/60 transition-all flex items-center justify-center gap-1.5 cursor-default">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+              Sign In
+            </div>
+            <Link
+              href="/signup"
+              className="py-2.5 text-center text-xs font-semibold rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 transition-all flex items-center justify-center gap-1.5"
+            >
+              Sign Up
+            </Link>
+          </div>
+
           {/* Card Header with Purple Heading */}
-          <div className="py-5 px-8 text-center border-b border-purple-50 bg-gradient-to-b from-purple-50/30 to-transparent">
-            <h1 className="text-[15px] font-extrabold text-[#7C3AED] tracking-wide uppercase">
+          <div className="py-4 px-8 text-center border-b border-purple-50 bg-gradient-to-b from-purple-50/30 to-transparent">
+            <h1 className="text-[14px] font-extrabold text-[#7C3AED] tracking-wide uppercase">
               SIGN IN TO YOUR ACCOUNT
             </h1>
           </div>

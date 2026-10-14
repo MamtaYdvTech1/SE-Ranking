@@ -8,6 +8,7 @@ import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { CountryFlag } from '@/components/ui/CountryFlag';
 import { validateRealEmail } from '@/lib/validation/email-validator';
 import { GoogleAccountChooserModal } from '@/components/auth/GoogleAccountChooserModal';
+import { useAuth } from '@/context/AuthContext';
 
 const SIGNUP_LANGUAGES = [
   { code: 'en', flag: 'gb', short: 'EN', label: 'English' },
@@ -23,6 +24,7 @@ const SIGNUP_LANGUAGES = [
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { signup } = useAuth();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -127,45 +129,19 @@ export default function SignUpPage() {
 
     try {
       const fullName = `${cleanFirst} ${cleanLast}`.trim();
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: cleanFirst,
-          lastName: cleanLast,
-          name: fullName,
-          email: cleanEmail,
-          password,
-          confirmPassword,
-        }),
+      const data = await signup({
+        firstName: cleanFirst,
+        lastName: cleanLast,
+        name: fullName,
+        email: cleanEmail,
+        password,
+        confirmPassword,
       });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create account.');
-      }
-
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('se_ranking_has_project');
-        localStorage.removeItem('se_ranking_active_project_id');
-        localStorage.removeItem('se_ranking_paused_projects');
-        localStorage.removeItem('se_ranking_starred_projects');
-        localStorage.removeItem('se_ranking_project_groups');
-        localStorage.removeItem('seranking_tour_completed');
-
-        localStorage.setItem('seranking_auth_status', 'logged_in');
-        sessionStorage.setItem('seranking_auth_status', 'logged_in');
-        localStorage.setItem('auth_token', data.token || 'auth-token');
-        localStorage.setItem('user_email', cleanEmail);
-        localStorage.setItem('user_name', data.user?.name || fullName || cleanEmail.split('@')[0]);
-        window.dispatchEvent(new CustomEvent('seranking_auth_change'));
-      }
 
       setSuccessMessage('Account created successfully! Welcome to your dashboard...');
       setTimeout(() => {
         window.location.href = data.redirectTo || '/projects';
-      }, 500);
+      }, 400);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(msg);
@@ -225,6 +201,20 @@ export default function SignUpPage() {
       {/* Main Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-[560px] space-y-7">
+          {/* Top Auth Tab Switcher */}
+          <div className="grid grid-cols-2 p-1.5 bg-gray-100/90 rounded-xl border border-gray-200/80 gap-1.5">
+            <Link
+              href="/login"
+              className="py-2.5 text-center text-xs font-semibold rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/60 transition-all flex items-center justify-center gap-1.5"
+            >
+              Sign In
+            </Link>
+            <div className="py-2.5 text-center text-xs font-bold rounded-lg bg-white text-[#7C3AED] shadow-xs border border-purple-200/60 transition-all flex items-center justify-center gap-1.5 cursor-default">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+              Sign Up (14-Day Free Trial)
+            </div>
+          </div>
+
           {/* Headline */}
           <div className="text-center space-y-3">
             <h1 className="text-3xl sm:text-[40px] font-extrabold text-[#111827] tracking-tight leading-tight">

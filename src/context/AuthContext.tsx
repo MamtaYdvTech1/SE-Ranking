@@ -8,6 +8,14 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (payload: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+  }) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isSuperAdmin: boolean;
@@ -87,9 +95,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const token = typeof window !== 'undefined' ? (localStorage.getItem('auth_token') || localStorage.getItem('token')) : null;
+        const headers: Record<string, string> = {};
+        if (token && token !== 'authenticated') {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch("/api/auth/me", {
           signal: controller.signal,
           cache: "no-store",
+          credentials: "include",
+          headers,
         });
         clearTimeout(timeoutId);
 
@@ -206,7 +221,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUser(userDto);
         setToken(data.token);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("seranking_auth_status", "logged_in");
+          sessionStorage.setItem("seranking_auth_status", "logged_in");
+          if (data.token) {
+            localStorage.setItem("auth_token", data.token);
+            document.cookie = `auth_token=${encodeURIComponent(data.token)}; path=/; max-age=604800; SameSite=Lax`;
+          }
+          document.cookie = `seranking_auth_status=logged_in; path=/; max-age=604800; SameSite=Lax`;
+          localStorage.setItem("user_email", u.email);
+          localStorage.setItem("user_name", u.name || u.email);
+          window.dispatchEvent(new CustomEvent("seranking_auth_change"));
+        }
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signup = async (payload: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const cleanEmail = payload.email.trim();
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create account.");
+      }
+
+      if (data.user) {
+        const u = data.user;
+        const userDto: UserDto = {
+          id: u.id,
+          email: u.email,
+          firstName: u.firstName || u.name?.split(" ")[0] || payload.firstName || "",
+          lastName: u.lastName || u.name?.split(" ").slice(1).join(" ") || payload.lastName || "",
+          fullName: u.name || payload.name || cleanEmail,
+          role: "SuperAdmin",
+          isActive: true,
+          lastLoginAt: new Date().toISOString(),
+          assignedProjectIds: [],
+        };
+        setUser(userDto);
+        setToken(data.token || "authenticated");
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("se_ranking_has_project");
+          localStorage.removeItem("se_ranking_active_project_id");
+          localStorage.removeItem("se_ranking_paused_projects");
+          localStorage.removeItem("se_ranking_starred_projects");
+          localStorage.removeItem("se_ranking_project_groups");
+          localStorage.removeItem("seranking_tour_completed");
+
+          localStorage.setItem("seranking_auth_status", "logged_in");
+          sessionStorage.setItem("seranking_auth_status", "logged_in");
+          if (data.token) {
+            localStorage.setItem("auth_token", data.token);
+            document.cookie = `auth_token=${encodeURIComponent(data.token)}; path=/; max-age=604800; SameSite=Lax`;
+          }
+          document.cookie = `seranking_auth_status=logged_in; path=/; max-age=604800; SameSite=Lax`;
+          localStorage.setItem("user_email", cleanEmail);
+          localStorage.setItem("user_name", u.name || payload.name || cleanEmail.split("@")[0]);
+          window.dispatchEvent(new CustomEvent("seranking_auth_change"));
+        }
+      }
+      return data;
     } finally {
       setIsLoading(false);
     }
@@ -270,6 +361,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isLoading,
         login,
+        signup,
         logout,
         refreshUser,
         isSuperAdmin,

@@ -241,10 +241,10 @@ export async function getProjectBacklinks(projectId: string): Promise<BacklinkSu
   const nofollowRatio = totalBacklinks > 0 ? Number((100 - dofollowRatio).toFixed(1)) : 0;
   const avgDt = dbTotalBacklinks > 0
     ? Math.min(100, Math.max(1, Math.round(totalDt / dbTotalBacklinks)))
-    : (liveSummary?.rank ? Math.min(100, Math.max(1, Math.round(liveSummary.rank / 3))) : 45);
+    : (liveSummary?.rank ? Math.min(100, Math.max(1, Math.round(liveSummary.rank / 3))) : (totalBacklinks > 0 ? 45 : 0));
   const avgPt = dbTotalBacklinks > 0
     ? Math.min(100, Math.max(1, Math.round(totalPt / dbTotalBacklinks)))
-    : (liveSummary?.rank ? Math.min(100, Math.max(1, Math.round(liveSummary.rank / 4))) : 35);
+    : (liveSummary?.rank ? Math.min(100, Math.max(1, Math.round(liveSummary.rank / 4))) : (totalBacklinks > 0 ? 35 : 0));
 
   // Top anchor texts
   const anchors = Object.entries(anchorCounts)

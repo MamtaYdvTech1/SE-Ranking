@@ -540,41 +540,7 @@ export async function getRankingSummary(
     };
   });
 
-  let finalTrend = realTrend;
-  if (finalTrend.length === 0 && totalKeywords > 0) {
-    const days = boundaries.resolvedRange === '7D' ? 7 : (boundaries.resolvedRange === '3M' ? 90 : (boundaries.resolvedRange === '6M' ? 180 : 30));
-    const now = new Date();
-    const generated: typeof realTrend = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
-      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const factor = 1 + (Math.sin(i * 0.45) * 0.04);
-      const trendAvg = averagePosition > 0 ? Number((averagePosition * factor).toFixed(1)) : 14.0;
-      const trendVis = visibility > 0 ? Number((visibility * factor).toFixed(1)) : 42.0;
-      const trendTraffic = Math.round(estimatedTraffic * factor);
-
-      generated.push({
-        date: iso,
-        label,
-        value: trendAvg,
-        checkedCount: rankedKeywords.length,
-        visibility: trendVis,
-        traffic: trendTraffic,
-        top1,
-        top2_3,
-        top4_5,
-        top6_10,
-        top11_30,
-        top31_100,
-        top10Count: top10,
-        top10Percent: totalKeywords > 0 ? Math.round((top10 / totalKeywords) * 100) : 0,
-        totalRanked: rankedKeywords.length,
-      });
-    }
-    finalTrend = generated;
-  }
+  const finalTrend = realTrend;
 
   // Calculate bracket changes comparing the latest trend record with previous
   let top1Change = 0;

@@ -90,13 +90,11 @@ export async function proxy(request: NextRequest) {
   const verifiedRawToken = await verifySessionToken(candidateToken);
   const isAuthenticated = Boolean(verifiedRawToken);
 
-  // Auth pages (/login, /signup, /register)
-  const isAuthRoute = pathname === '/login' || pathname === '/signup' || pathname === '/register';
-
-  // 4. If already authenticated and visits /login or /signup, direct them to dashboard
-  // Only redirect if there is no explicit redirect parameter indicating auth re-entry/failure
+  // 4. If authenticated and directly visiting /login, direct them to dashboard
+  // /signup and /register are always accessible so users can register new accounts anytime
+  const isLoginRoute = pathname === '/login';
   const hasRedirectParam = request.nextUrl.searchParams.has('redirect');
-  if (isAuthenticated && isAuthRoute && !hasRedirectParam) {
+  if (isAuthenticated && isLoginRoute && !hasRedirectParam) {
     return NextResponse.redirect(new URL('/projects', request.url));
   }
 
