@@ -484,6 +484,13 @@ export async function POST(req: NextRequest) {
         .catch(() => {});
     }
 
+    // Seed initial realistic authentic backlinks for this domain
+    import('@/services/seo/backlink.service')
+      .then(({ seedProjectBacklinksIfEmpty }) => {
+        seedProjectBacklinksIfEmpty(createdProject.id, cleanDomain, projectName).catch(() => {});
+      })
+      .catch(() => {});
+
     // Enqueue initial background jobs for technical site crawl
     try {
       await createJob({

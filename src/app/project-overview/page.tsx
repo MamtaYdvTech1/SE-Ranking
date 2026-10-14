@@ -57,6 +57,7 @@ import {
 import { useApp } from '@/components/providers/AppProviders';
 import { useAuth } from '@/context/AuthContext';
 import { CountryFlag } from '@/components/ui/CountryFlag';
+import { ProjectFavicon } from '@/components/ui/ProjectFavicon';
 import { GoogleLogo } from '@/components/ui/GoogleLogo';
 import {
   AiModeIcon,
@@ -3936,6 +3937,12 @@ function ProjectOverviewPageContent() {
               </Link>
               <span className="text-gray-300">/</span>
               <div className="flex items-center gap-2 font-bold text-gray-900 text-sm truncate">
+                <ProjectFavicon
+                  domain={displayDomain}
+                  name={targetProject?.brandName || targetProject?.name}
+                  size={18}
+                  className="w-4.5 h-4.5 rounded-xs shrink-0 object-contain shadow-2xs border border-gray-100 bg-white"
+                />
                 <span className="truncate">{displayDomain}</span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#0B69FF] uppercase tracking-wider">
                   Active

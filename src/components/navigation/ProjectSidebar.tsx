@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CheckSquare, TrendingUp, Link2, ShieldCheck } from "lucide-react";
 import { ProjectDetailDto } from "../../lib/types";
+import { ProjectFavicon } from "@/components/ui/ProjectFavicon";
 
 interface ProjectSidebarProps {
   project: ProjectDetailDto | null;
@@ -232,7 +233,12 @@ export function ProjectSidebar({ project, isCollapsed, onToggleCollapse }: Proje
           className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-900/80 hover:bg-slate-900 border border-slate-700/80 transition text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></span>
+            <ProjectFavicon
+              domain={project?.primaryDomain}
+              name={project?.name}
+              size={16}
+              className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
+            />
             <span className="text-xs font-semibold text-slate-100 truncate">
               {project?.primaryDomain || "Select Project"}
             </span>
@@ -252,8 +258,9 @@ export function ProjectSidebar({ project, isCollapsed, onToggleCollapse }: Proje
             <div className="text-[10px] font-semibold text-slate-400 uppercase px-2 py-1">
               Current Project
             </div>
-            <div className="px-2 py-1.5 text-xs text-white bg-slate-800 rounded font-medium truncate">
-              {project?.name} ({project?.primaryDomain})
+            <div className="px-2 py-1.5 text-xs text-white bg-slate-800 rounded font-medium truncate flex items-center gap-2">
+              <ProjectFavicon domain={project?.primaryDomain} name={project?.name} size={14} className="w-3.5 h-3.5 rounded-xs shrink-0" />
+              <span className="truncate">{project?.name} ({project?.primaryDomain})</span>
             </div>
             <Link
               href="/projects"

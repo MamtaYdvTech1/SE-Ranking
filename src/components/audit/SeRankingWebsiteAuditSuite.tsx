@@ -40,6 +40,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProviders';
+import { ProjectFavicon } from '@/components/ui/ProjectFavicon';
 
 function CodepenIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
@@ -789,6 +790,12 @@ export function SeRankingWebsiteAuditSuite() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Breadcrumb path */}
           <div className="flex items-center gap-2 text-[13px] text-[#718096]">
+            <ProjectFavicon
+              domain={domain}
+              name={domain}
+              size={16}
+              className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs border border-gray-100 bg-white"
+            />
             <Link href="/projects" className="hover:text-[#1863FD] font-medium transition-colors">
               {domain}/
             </Link>

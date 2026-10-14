@@ -229,6 +229,8 @@ function SecondarySidebarInner() {
   }, [pathname]);
 
   const projectDropdownRef = useRef<HTMLDivElement>(null);
+  const [isSectionDomainDropdownOpen, setIsSectionDomainDropdownOpen] = useState(false);
+  const sectionDomainDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -241,14 +243,20 @@ function SecondarySidebarInner() {
         setIsProjectFlyoutOpen(false);
         setHoveredSubmenu(null);
       }
+      if (
+        sectionDomainDropdownRef.current &&
+        !sectionDomainDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSectionDomainDropdownOpen(false);
+      }
     }
-    if (isProjectDropdownOpen) {
+    if (isProjectDropdownOpen || isSectionDomainDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProjectDropdownOpen]);
+  }, [isProjectDropdownOpen, isSectionDomainDropdownOpen]);
 
   // Static initial sections so SSR and initial client DOM match perfectly (fixes hydration mismatch)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -1350,72 +1358,234 @@ function SecondarySidebarInner() {
           )}
 
           {effectiveSection === 'backlinks' && (
-            <div className="p-2.5 border-b border-[#2C374A]/60">
-              <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider">
-                Target Domain
+            <div ref={sectionDomainDropdownRef} className="p-2.5 border-b border-[#2C374A]/60 relative">
+              <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider flex items-center justify-between">
+                <span>Target Domain</span>
+                <span className="text-[10px] text-purple-400 font-semibold lowercase">live</span>
               </div>
-              <div className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 flex items-center justify-between shadow-xs border border-transparent">
-                <div className="flex items-center gap-2 truncate">
-                  <Globe className="w-4 h-4 text-gray-500 shrink-0" />
+              <div
+                onClick={() => setIsSectionDomainDropdownOpen(!isSectionDomainDropdownOpen)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-900 rounded-lg px-2.5 py-1.5 flex items-center justify-between shadow-xs border border-transparent cursor-pointer transition-colors select-none"
+              >
+                <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                  <ProjectFavicon
+                    domain={activeProject?.domain || activeProject?.name || ''}
+                    name={activeProject?.name}
+                    size={16}
+                    className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
+                  />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
                     {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
               </div>
+
+              {isSectionDomainDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setIsSectionDomainDropdownOpen(false)}
+                  />
+                  <div className="absolute left-2.5 top-full mt-1.5 w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs flex flex-col p-1 max-h-[300px] overflow-y-auto">
+                    <div className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      Switch Target Domain ({displayProjects.length})
+                    </div>
+                    {displayProjects.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveProject(p);
+                          setIsSectionDomainDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                          activeProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <ProjectFavicon domain={p.domain} name={p.name} size={16} className="w-4 h-4 rounded-xs shrink-0 object-contain" />
+                          <span className="truncate text-xs">{p.domain || p.name}</span>
+                        </div>
+                        {activeProject?.id === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {effectiveSection === 'content' && (
-            <div className="p-2.5 border-b border-[#2C374A]/60">
-              <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider">
-                Content Domain
-              </div>
-              <div className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 flex items-center justify-between shadow-xs border border-transparent">
-                <div className="flex items-center gap-2 truncate">
-                  <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                  <span className="text-[13px] font-semibold text-gray-900 truncate">
-                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
-                  </span>
-                </div>
+            <div ref={sectionDomainDropdownRef} className="p-2.5 border-b border-[#2C374A]/60 relative">
+              <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider flex items-center justify-between">
+                <span>Content Domain</span>
                 <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded font-bold border border-emerald-500/20">
                   Live
                 </span>
               </div>
+              <div
+                onClick={() => setIsSectionDomainDropdownOpen(!isSectionDomainDropdownOpen)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-900 rounded-lg px-2.5 py-1.5 flex items-center justify-between shadow-xs border border-transparent cursor-pointer transition-colors select-none"
+              >
+                <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                  <ProjectFavicon
+                    domain={activeProject?.domain || activeProject?.name || ''}
+                    name={activeProject?.name}
+                    size={16}
+                    className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
+                  />
+                  <span className="text-[13px] font-semibold text-gray-900 truncate">
+                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
+                  </span>
+                </div>
+                <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
+              </div>
+
+              {isSectionDomainDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setIsSectionDomainDropdownOpen(false)}
+                  />
+                  <div className="absolute left-2.5 top-full mt-1.5 w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs flex flex-col p-1 max-h-[300px] overflow-y-auto">
+                    <div className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      Switch Content Domain ({displayProjects.length})
+                    </div>
+                    {displayProjects.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveProject(p);
+                          setIsSectionDomainDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                          activeProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <ProjectFavicon domain={p.domain} name={p.name} size={16} className="w-4 h-4 rounded-xs shrink-0 object-contain" />
+                          <span className="truncate text-xs">{p.domain || p.name}</span>
+                        </div>
+                        {activeProject?.id === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {effectiveSection === 'local-marketing' && (
-            <div className="p-2.5 border-b border-[#2C374A]/60">
+            <div ref={sectionDomainDropdownRef} className="p-2.5 border-b border-[#2C374A]/60 relative">
               <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider">
                 Business Profile
               </div>
-              <div className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 flex items-center justify-between shadow-xs border border-transparent">
-                <div className="flex items-center gap-2 truncate">
-                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+              <div
+                onClick={() => setIsSectionDomainDropdownOpen(!isSectionDomainDropdownOpen)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-900 rounded-lg px-2.5 py-1.5 flex items-center justify-between shadow-xs border border-transparent cursor-pointer transition-colors select-none"
+              >
+                <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                  <ProjectFavicon
+                    domain={activeProject?.domain || activeProject?.name || ''}
+                    name={activeProject?.name}
+                    size={16}
+                    className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
+                  />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
                     {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
               </div>
+
+              {isSectionDomainDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setIsSectionDomainDropdownOpen(false)}
+                  />
+                  <div className="absolute left-2.5 top-full mt-1.5 w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs flex flex-col p-1 max-h-[300px] overflow-y-auto">
+                    <div className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      Switch Business Profile ({displayProjects.length})
+                    </div>
+                    {displayProjects.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveProject(p);
+                          setIsSectionDomainDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                          activeProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <ProjectFavicon domain={p.domain} name={p.name} size={16} className="w-4 h-4 rounded-xs shrink-0 object-contain" />
+                          <span className="truncate text-xs">{p.domain || p.name}</span>
+                        </div>
+                        {activeProject?.id === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {effectiveSection === 'audit' && (
-            <div className="p-2.5 border-b border-[#2C374A]/60">
+            <div ref={sectionDomainDropdownRef} className="p-2.5 border-b border-[#2C374A]/60 relative">
               <div className="text-[11px] font-bold text-[#8C98A9] px-0.5 mb-1.5 uppercase tracking-wider">
                 Audited Website
               </div>
-              <div className="w-full bg-white text-gray-900 rounded-lg px-3 py-2 flex items-center justify-between shadow-xs border border-transparent">
-                <div className="flex items-center gap-2 truncate">
-                  <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div
+                onClick={() => setIsSectionDomainDropdownOpen(!isSectionDomainDropdownOpen)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-900 rounded-lg px-2.5 py-1.5 flex items-center justify-between shadow-xs border border-transparent cursor-pointer transition-colors select-none"
+              >
+                <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                  <ProjectFavicon
+                    domain={activeProject?.domain || activeProject?.name || ''}
+                    name={activeProject?.name}
+                    size={16}
+                    className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
+                  />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
                     {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
               </div>
+
+              {isSectionDomainDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setIsSectionDomainDropdownOpen(false)}
+                  />
+                  <div className="absolute left-2.5 top-full mt-1.5 w-[225px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 text-xs flex flex-col p-1 max-h-[300px] overflow-y-auto">
+                    <div className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      Switch Audited Website ({displayProjects.length})
+                    </div>
+                    {displayProjects.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveProject(p);
+                          setIsSectionDomainDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                          activeProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <ProjectFavicon domain={p.domain} name={p.name} size={16} className="w-4 h-4 rounded-xs shrink-0 object-contain" />
+                          <span className="truncate text-xs">{p.domain || p.name}</span>
+                        </div>
+                        {activeProject?.id === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
