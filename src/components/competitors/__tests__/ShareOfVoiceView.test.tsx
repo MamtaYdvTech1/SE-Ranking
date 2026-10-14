@@ -1,8 +1,9 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ShareOfVoiceView } from "../ShareOfVoiceView";
 import { CompetitorDto } from "@/lib/types";
+import { installCompetitorFetchStub, pinClock } from "./competitorFixtures";
 
 describe("ShareOfVoiceView Component", () => {
   const mockCompetitors: CompetitorDto[] = [
@@ -26,14 +27,22 @@ describe("ShareOfVoiceView Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    pinClock();
+    installCompetitorFetchStub();
     if (typeof window !== "undefined") {
       window.URL.createObjectURL = vi.fn(() => "blob:mock-url");
       window.URL.revokeObjectURL = vi.fn();
     }
   });
 
-  it("renders notice banner, breadcrumbs, action buttons, KPI cards, and domain table by default", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders notice banner, breadcrumbs, action buttons, KPI cards, and domain table by default", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     expect(screen.getByTestId("share-of-voice-view")).toBeInTheDocument();
     expect(
@@ -48,8 +57,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText("Target site")).toBeInTheDocument();
   });
 
-  it("dismisses the top notice alert banner", () => {
+  it("dismisses the top notice alert banner", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const dismissBtn = screen.getByLabelText("Dismiss notice banner");
     fireEvent.click(dismissBtn);
@@ -59,8 +69,9 @@ describe("ShareOfVoiceView Component", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("selects search engine from dropdown", () => {
+  it("selects search engine from dropdown", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const engineBtn = screen.getByText("All search engines");
     fireEvent.click(engineBtn);
@@ -71,8 +82,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText("Google Mobile (US)")).toBeInTheDocument();
   });
 
-  it("opens, interacts with, and closes the two-date comparison calendar", () => {
+  it("opens, interacts with, and closes the two-date comparison calendar", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const dateBtn = screen.getByRole("button", { name: "Select comparison dates" });
     fireEvent.click(dateBtn);
@@ -88,8 +100,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.queryByRole("dialog", { name: "Two-date comparison calendar" })).not.toBeInTheDocument();
   });
 
-  it("toggles the keyword selection section visibility", () => {
+  it("toggles the keyword selection section visibility", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const toggleBtn = screen.getByLabelText("Toggle keyword selection panel");
     expect(screen.getByLabelText("Select keywords")).toBeInTheDocument();
@@ -101,8 +114,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByLabelText("Select keywords")).toBeInTheDocument();
   });
 
-  it("opens keywords dropdown and filters by search", () => {
+  it("opens keywords dropdown and filters by search", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const kwDropdownBtn = screen.getByLabelText("Select keywords");
     fireEvent.click(kwDropdownBtn);
@@ -116,8 +130,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.queryByText("work composer download")).not.toBeInTheDocument();
   });
 
-  it("opens tags dropdown, selects tag, and applies filters", () => {
+  it("opens tags dropdown, selects tag, and applies filters", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const tagsBtn = screen.getByLabelText("Select tags");
     fireEvent.click(tagsBtn);
@@ -138,8 +153,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText(/Filters applied:/i)).toBeInTheDocument();
   });
 
-  it("resets filters when clicking CLEAR ALL", () => {
+  it("resets filters when clicking CLEAR ALL", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const clearBtn = screen.getByRole("button", { name: /CLEAR ALL/i });
     fireEvent.click(clearBtn);
@@ -147,8 +163,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText(/Filters reset: Showing all keywords/i)).toBeInTheDocument();
   });
 
-  it("filters domain table by domain search input", () => {
+  it("filters domain table by domain search input", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const domainSearch = screen.getByPlaceholderText("Search domain 🔍");
     fireEvent.change(domainSearch, { target: { value: "timedoctor" } });
@@ -157,8 +174,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.queryByText("getcomposer.org")).not.toBeInTheDocument();
   });
 
-  it("expands and collapses domain row to view nested URLs", () => {
+  it("expands and collapses domain row to view nested URLs", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     // Initially getcomposer.org is expanded (id domain-1)
     expect(screen.getByText("https://getcomposer.org/download/")).toBeInTheDocument();
@@ -174,8 +192,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText("https://getcomposer.org/download/")).toBeInTheDocument();
   });
 
-  it("opens export modal, toggles detailed breakdown, and executes export", () => {
+  it("opens export modal, toggles detailed breakdown, and executes export", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const exportBtn = screen.getByRole("button", { name: /EXPORT/i });
     fireEvent.click(exportBtn);
@@ -201,8 +220,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.getByText(/Export downloaded/i)).toBeInTheDocument();
   });
 
-  it("opens and closes Feedback modal", () => {
+  it("opens and closes Feedback modal", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     fireEvent.click(screen.getByRole("button", { name: /Feedback/i }));
 
@@ -212,8 +232,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.queryByText("Share of Voice Feedback")).not.toBeInTheDocument();
   });
 
-  it("opens and closes Notes modal", () => {
+  it("opens and closes Notes modal", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     fireEvent.click(screen.getByRole("button", { name: /Notes \(46\)/i }));
 
@@ -223,8 +244,9 @@ describe("ShareOfVoiceView Component", () => {
     expect(screen.queryByText("Project Notes (46)")).not.toBeInTheDocument();
   });
 
-  it("opens Guest Link Modal when clicking Guest link", () => {
+  it("opens Guest Link Modal when clicking Guest link", async () => {
     render(<ShareOfVoiceView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     fireEvent.click(screen.getByTitle("Get access to guest links"));
 

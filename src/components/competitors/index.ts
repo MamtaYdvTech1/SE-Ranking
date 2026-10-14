@@ -8,11 +8,7 @@ export * from './CompetitorKeywordsTab';
 export * from './CompetitorOverviewTab';
 export * from './EditCompetitorModal';
 export * from './DeleteCompetitorModal';
-export {
-  SerpCompetitorsView,
-  SERP_PROJECT_KEYWORDS,
-  generateSerpData,
-} from './SerpCompetitorsView';
+export { SerpCompetitorsView } from './SerpCompetitorsView';
 export type {
   SerpCompetitorsViewProps,
   SerpDisplayMode,
@@ -31,7 +27,6 @@ export {
   getDomainMetrics,
   ALL_DOMAIN_TAGS,
   ALL_GROUPS,
-  INITIAL_VISIBILITY_DOMAINS,
 } from './VisibilityRatingView';
 export type {
   VisibilityColumnKey,

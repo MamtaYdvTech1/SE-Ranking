@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CompetitorDto } from "@/lib/types";
 import { GuestLinkModal } from "./GuestLinkModal";
 import { CalendarYearDropdown } from "./CalendarYearDropdown";
+import { useSerpLandscape } from "./useSerpLandscape";
 
 export interface ShareOfVoiceUrlItem {
   id: string;
@@ -42,277 +43,15 @@ export interface SovKeywordItem {
   tags: string[];
 }
 
-export const SOV_KEYWORDS: SovKeywordItem[] = [
-  { id: "kw-1", keyword: "work composer download", searchVolume: 210, group: "Brand", tags: ["core", "branded", "download"] },
-  { id: "kw-2", keyword: "work composer", searchVolume: 590, group: "General", tags: ["core", "branded"] },
-  { id: "kw-3", keyword: "work composer hack", searchVolume: 10, group: "Brand", tags: ["high-intent"] },
-  { id: "kw-4", keyword: "workpuls idle time", searchVolume: 10, group: "Competitor", tags: ["idle-time"] },
-  { id: "kw-5", keyword: "idle time tracker", searchVolume: 10, group: "Features", tags: ["idle-time", "tracking"] },
-  { id: "kw-6", keyword: "idle time tracking", searchVolume: 10, group: "Features", tags: ["idle-time", "tracking"] },
-  { id: "kw-7", keyword: "idle time tracking software", searchVolume: 10, group: "Features", tags: ["software", "high-intent"] },
-  { id: "kw-8", keyword: "composer download", searchVolume: 1900, group: "Brand", tags: ["download"] },
-  { id: "kw-9", keyword: "working track", searchVolume: 480, group: "General", tags: ["tracking"] },
-  { id: "kw-10", keyword: "screenshot time tracking", searchVolume: 110, group: "Features", tags: ["tracking", "screenshot"] },
-];
+// Organic click-through share by position (top 20), used to weight share of voice
+const SOV_CTR: Record<number, number> = {
+  1: 0.317, 2: 0.247, 3: 0.187, 4: 0.136, 5: 0.095, 6: 0.062, 7: 0.041, 8: 0.031, 9: 0.024, 10: 0.019,
+  11: 0.01, 12: 0.009, 13: 0.008, 14: 0.007, 15: 0.006, 16: 0.005, 17: 0.005, 18: 0.004, 19: 0.004, 20: 0.003,
+};
 
-export const SOV_TAGS = [
-  "core",
-  "branded",
-  "high-intent",
-  "idle-time",
-  "tracking",
-  "software",
-  "download",
-  "screenshot",
-];
-
-export const INITIAL_SOV_DOMAINS: ShareOfVoiceDomainItem[] = [
-  {
-    id: "domain-1",
-    rank: 1,
-    domain: "getcomposer.org",
-    urlsInTop20: 8,
-    keywordsInTop20: 3,
-    shareOfVoice: 41.52,
-    shareOfVoiceDisplay: "41.52%",
-    deltaSov: "▼ 0.09%",
-    deltaSovType: "down",
-    trafficForecast: 1142,
-    trafficForecastDisplay: "1.1K",
-    deltaTraffic: "▲ 44.8",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-1-1",
-        url: "https://getcomposer.org/download/",
-        keywordsInTop20: 2,
-        shareOfVoice: 24.85,
-        shareOfVoiceDisplay: "24.85%",
-        trafficForecast: 682.6,
-        trafficForecastDisplay: "682.6",
-      },
-      {
-        id: "url-1-2",
-        url: "https://getcomposer.org/doc/00-intro.md",
-        keywordsInTop20: 1,
-        shareOfVoice: 16.67,
-        shareOfVoiceDisplay: "16.67%",
-        trafficForecast: 459.4,
-        trafficForecastDisplay: "459.4",
-      },
-    ],
-  },
-  {
-    id: "domain-2",
-    rank: 2,
-    domain: "workcomposer.com",
-    isTargetDomain: true,
-    urlsInTop20: 3,
-    keywordsInTop20: 9,
-    shareOfVoice: 12.74,
-    shareOfVoiceDisplay: "12.74%",
-    deltaSov: "▼ 0.19%",
-    deltaSovType: "down",
-    trafficForecast: 350.1,
-    trafficForecastDisplay: "350.1",
-    deltaTraffic: "▲ 9.6",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-2-1",
-        url: "https://workcomposer.com/",
-        keywordsInTop20: 6,
-        shareOfVoice: 8.2,
-        shareOfVoiceDisplay: "8.20%",
-        trafficForecast: 225.4,
-        trafficForecastDisplay: "225.4",
-      },
-      {
-        id: "url-2-2",
-        url: "https://workcomposer.com/features/idle-time-tracker",
-        keywordsInTop20: 3,
-        shareOfVoice: 4.54,
-        shareOfVoiceDisplay: "4.54%",
-        trafficForecast: 124.7,
-        trafficForecastDisplay: "124.7",
-      },
-    ],
-  },
-  {
-    id: "domain-3",
-    rank: 3,
-    domain: "insightful.io",
-    urlsInTop20: 4,
-    keywordsInTop20: 7,
-    shareOfVoice: 10.82,
-    shareOfVoiceDisplay: "10.82%",
-    deltaSov: "▲ 0.35%",
-    deltaSovType: "up",
-    trafficForecast: 297.2,
-    trafficForecastDisplay: "297.2",
-    deltaTraffic: "▲ 12.1",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-3-1",
-        url: "https://insightful.io/features/employee-monitoring",
-        keywordsInTop20: 4,
-        shareOfVoice: 6.72,
-        shareOfVoiceDisplay: "6.72%",
-        trafficForecast: 184.8,
-        trafficForecastDisplay: "184.8",
-      },
-      {
-        id: "url-3-2",
-        url: "https://insightful.io/blog/idle-time-tracking",
-        keywordsInTop20: 3,
-        shareOfVoice: 4.1,
-        shareOfVoiceDisplay: "4.10%",
-        trafficForecast: 112.4,
-        trafficForecastDisplay: "112.4",
-      },
-    ],
-  },
-  {
-    id: "domain-4",
-    rank: 4,
-    domain: "timedoctor.com",
-    urlsInTop20: 5,
-    keywordsInTop20: 6,
-    shareOfVoice: 8.65,
-    shareOfVoiceDisplay: "8.65%",
-    deltaSov: "▼ 0.12%",
-    deltaSovType: "down",
-    trafficForecast: 237.8,
-    trafficForecastDisplay: "237.8",
-    deltaTraffic: "▼ 3.4",
-    deltaTrafficType: "down",
-    urls: [
-      {
-        id: "url-4-1",
-        url: "https://www.timedoctor.com/features.html",
-        keywordsInTop20: 3,
-        shareOfVoice: 5.15,
-        shareOfVoiceDisplay: "5.15%",
-        trafficForecast: 141.6,
-        trafficForecastDisplay: "141.6",
-      },
-      {
-        id: "url-4-2",
-        url: "https://www.timedoctor.com/download",
-        keywordsInTop20: 3,
-        shareOfVoice: 3.5,
-        shareOfVoiceDisplay: "3.50%",
-        trafficForecast: 96.2,
-        trafficForecastDisplay: "96.2",
-      },
-    ],
-  },
-  {
-    id: "domain-5",
-    rank: 5,
-    domain: "hubstaff.com",
-    urlsInTop20: 3,
-    keywordsInTop20: 5,
-    shareOfVoice: 7.41,
-    shareOfVoiceDisplay: "7.41%",
-    deltaSov: "▲ 0.22%",
-    deltaSovType: "up",
-    trafficForecast: 203.7,
-    trafficForecastDisplay: "203.7",
-    deltaTraffic: "▲ 5.8",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-5-1",
-        url: "https://hubstaff.com/features/time-tracking-software",
-        keywordsInTop20: 5,
-        shareOfVoice: 7.41,
-        shareOfVoiceDisplay: "7.41%",
-        trafficForecast: 203.7,
-        trafficForecastDisplay: "203.7",
-      },
-    ],
-  },
-  {
-    id: "domain-6",
-    rank: 6,
-    domain: "clockify.me",
-    urlsInTop20: 4,
-    keywordsInTop20: 4,
-    shareOfVoice: 5.18,
-    shareOfVoiceDisplay: "5.18%",
-    deltaSov: "▲ 0.15%",
-    deltaSovType: "up",
-    trafficForecast: 142.4,
-    trafficForecastDisplay: "142.4",
-    deltaTraffic: "▲ 4.2",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-6-1",
-        url: "https://clockify.me/tracker",
-        keywordsInTop20: 4,
-        shareOfVoice: 5.18,
-        shareOfVoiceDisplay: "5.18%",
-        trafficForecast: 142.4,
-        trafficForecastDisplay: "142.4",
-      },
-    ],
-  },
-  {
-    id: "domain-7",
-    rank: 7,
-    domain: "activtrak.com",
-    urlsInTop20: 2,
-    keywordsInTop20: 3,
-    shareOfVoice: 3.9,
-    shareOfVoiceDisplay: "3.90%",
-    deltaSov: "▼ 0.05%",
-    deltaSovType: "down",
-    trafficForecast: 107.2,
-    trafficForecastDisplay: "107.2",
-    deltaTraffic: "▼ 1.3",
-    deltaTrafficType: "down",
-    urls: [
-      {
-        id: "url-7-1",
-        url: "https://www.activtrak.com/features/workforce-analytics",
-        keywordsInTop20: 3,
-        shareOfVoice: 3.9,
-        shareOfVoiceDisplay: "3.90%",
-        trafficForecast: 107.2,
-        trafficForecastDisplay: "107.2",
-      },
-    ],
-  },
-  {
-    id: "domain-8",
-    rank: 8,
-    domain: "github.com",
-    urlsInTop20: 3,
-    keywordsInTop20: 2,
-    shareOfVoice: 2.6,
-    shareOfVoiceDisplay: "2.60%",
-    deltaSov: "▲ 0.08%",
-    deltaSovType: "up",
-    trafficForecast: 71.5,
-    trafficForecastDisplay: "71.5",
-    deltaTraffic: "▲ 2.1",
-    deltaTrafficType: "up",
-    urls: [
-      {
-        id: "url-8-1",
-        url: "https://github.com/composer/composer",
-        keywordsInTop20: 2,
-        shareOfVoice: 2.6,
-        shareOfVoiceDisplay: "2.60%",
-        trafficForecast: 71.5,
-        trafficForecastDisplay: "71.5",
-      },
-    ],
-  },
-];
+function formatTraffic(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toFixed(1);
+}
 
 export interface ShareOfVoiceViewProps {
   projectId: string;
@@ -343,6 +82,22 @@ export function ShareOfVoiceView({
     .replace(/^www\./i, "")
     .replace(/\/$/, "");
   const brandTitle = cleanDomain ? cleanDomain.split(".")[0].toUpperCase() : "DOMAIN";
+  const { data: serpLandscape } = useSerpLandscape(projectId);
+  const SOV_KEYWORDS: SovKeywordItem[] = useMemo(
+    () =>
+      serpLandscape.keywords.map((k) => ({
+        id: k.keywordId,
+        keyword: k.keyword,
+        searchVolume: k.searchVolume,
+        group: k.group,
+        tags: k.tags,
+      })),
+    [serpLandscape.keywords]
+  );
+  const SOV_TAGS = useMemo(
+    () => [...new Set(serpLandscape.keywords.flatMap((k) => k.tags))].sort(),
+    [serpLandscape.keywords]
+  );
 
   // 1. Notice alert banner dismissal
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
@@ -698,7 +453,7 @@ export function ShareOfVoiceView({
       }
       return true;
     });
-  }, [appliedKeywordGroup, appliedTags, appliedTagMatchMode, appliedWithoutTags, appliedAllTags]);
+  }, [SOV_KEYWORDS, appliedKeywordGroup, appliedTags, appliedTagMatchMode, appliedWithoutTags, appliedAllTags]);
 
   const activeMatchingKeywordsCount = matchingKeywords.length;
 
@@ -706,7 +461,7 @@ export function ShareOfVoiceView({
     if (!tagSearchQuery.trim()) return SOV_TAGS;
     const q = tagSearchQuery.toLowerCase();
     return SOV_TAGS.filter((tag) => tag.toLowerCase().includes(q));
-  }, [tagSearchQuery]);
+  }, [tagSearchQuery, SOV_TAGS]);
 
   const isTagFilterActive = selectedTags.length > 0 || withoutTagsChecked || allTagsChecked;
   const keywordsWithTagsCount = SOV_KEYWORDS.filter((k) => k.tags && k.tags.length > 0).length;
@@ -766,87 +521,81 @@ export function ShareOfVoiceView({
     showToast(`Filters applied: ${groupName}${tagsSuffix}`);
   };
 
-  // Filter domains by search query and recalculate delta metrics based on comparison dates
+  // Share of voice over the matching keywords, from saved top-20 SERP results
+  const sovRows = useMemo<ShareOfVoiceDomainItem[]>(() => {
+    const matchIds = new Set(matchingKeywords.map((k) => k.id));
+    const target = serpLandscape.targetDomain || cleanDomain.toLowerCase();
+    const isTarget = (d: string) => d === target || d.endsWith(`.${target}`);
+
+    type UrlAcc = { kw: Set<string>; ctr: number; traffic: number };
+    type DomainAcc = { kw: Set<string>; ctr: number; traffic: number; urls: Map<string, UrlAcc> };
+    const byDomain = new Map<string, DomainAcc>();
+    let totalCtr = 0;
+
+    for (const k of serpLandscape.keywords) {
+      if (!matchIds.has(k.keywordId)) continue;
+      for (const r of k.results) {
+        if (r.position > 20) continue;
+        const domain = isTarget(r.domain) ? target : r.domain;
+        const ctr = SOV_CTR[r.position] || 0;
+        const traffic = k.searchVolume * ctr;
+        totalCtr += ctr;
+        const d = byDomain.get(domain) || { kw: new Set<string>(), ctr: 0, traffic: 0, urls: new Map<string, UrlAcc>() };
+        d.kw.add(k.keywordId);
+        d.ctr += ctr;
+        d.traffic += traffic;
+        const u = d.urls.get(r.url) || { kw: new Set<string>(), ctr: 0, traffic: 0 };
+        u.kw.add(k.keywordId);
+        u.ctr += ctr;
+        u.traffic += traffic;
+        d.urls.set(r.url, u);
+        byDomain.set(domain, d);
+      }
+    }
+
+    const pct = (ctr: number) => (totalCtr > 0 ? Number(((ctr / totalCtr) * 100).toFixed(2)) : 0);
+    return [...byDomain.entries()]
+      .sort(([, a], [, b]) => b.ctr - a.ctr)
+      .map(([domain, d], idx) => ({
+        id: `domain-${idx + 1}`,
+        rank: idx + 1,
+        domain,
+        isTargetDomain: domain === target,
+        urlsInTop20: d.urls.size,
+        keywordsInTop20: d.kw.size,
+        shareOfVoice: pct(d.ctr),
+        shareOfVoiceDisplay: `${pct(d.ctr).toFixed(2)}%`,
+        deltaSov: "0.00%",
+        deltaSovType: "up" as const,
+        trafficForecast: Number(d.traffic.toFixed(1)),
+        trafficForecastDisplay: formatTraffic(d.traffic),
+        deltaTraffic: "0",
+        deltaTrafficType: "up" as const,
+        urls: [...d.urls.entries()]
+          .sort(([, a], [, b]) => b.ctr - a.ctr)
+          .map(([url, u], uIdx) => ({
+            id: `url-${idx + 1}-${uIdx + 1}`,
+            url,
+            keywordsInTop20: u.kw.size,
+            shareOfVoice: pct(u.ctr),
+            shareOfVoiceDisplay: `${pct(u.ctr).toFixed(2)}%`,
+            trafficForecast: Number(u.traffic.toFixed(1)),
+            trafficForecastDisplay: formatTraffic(u.traffic),
+          })),
+      }));
+  }, [matchingKeywords, serpLandscape, cleanDomain]);
+
   const filteredDomains = useMemo(() => {
-    const base = !domainSearchQuery.trim()
-      ? INITIAL_SOV_DOMAINS
-      : INITIAL_SOV_DOMAINS.filter(
-          (d) =>
-            d.domain.toLowerCase().includes(domainSearchQuery.toLowerCase()) ||
-            d.urls.some((u) => u.url.toLowerCase().includes(domainSearchQuery.toLowerCase()))
-        );
+    const q = domainSearchQuery.trim().toLowerCase();
+    if (!q) return sovRows;
+    return sovRows.filter((d) => d.domain.toLowerCase().includes(q) || d.urls.some((u) => u.url.toLowerCase().includes(q)));
+  }, [sovRows, domainSearchQuery]);
 
-    const keywordRatio = activeMatchingKeywordsCount / 10;
-
-    return base.map((d) => {
-      let mapped = { ...d };
-
-      if (mapped.isTargetDomain || mapped.domain === "workcomposer.com") {
-        mapped.domain = cleanDomain;
-        mapped.isTargetDomain = true;
-        mapped.urls = [
-          {
-            id: `url-${cleanDomain}-1`,
-            url: `https://${cleanDomain}/`,
-            keywordsInTop20: 6,
-            shareOfVoice: 8.2,
-            shareOfVoiceDisplay: "8.20%",
-            trafficForecast: 225.4,
-            trafficForecastDisplay: "225.4",
-          },
-          {
-            id: `url-${cleanDomain}-2`,
-            url: `https://${cleanDomain}/features`,
-            keywordsInTop20: 3,
-            shareOfVoice: 4.54,
-            shareOfVoiceDisplay: "4.54%",
-            trafficForecast: 124.7,
-            trafficForecastDisplay: "124.7",
-          },
-        ];
-      } else if (cleanDomain.includes("flipkart")) {
-        if (mapped.domain === "getcomposer.org") {
-          mapped.domain = "amazon.in";
-          mapped.urls = [{ id: "url-amz-1", url: "https://amazon.in/", keywordsInTop20: 8, shareOfVoice: 41.52, shareOfVoiceDisplay: "41.52%", trafficForecast: 1142, trafficForecastDisplay: "1.1K" }];
-        } else if (mapped.domain === "insightful.io") {
-          mapped.domain = "meesho.com";
-          mapped.urls = [{ id: "url-mee-1", url: "https://meesho.com/", keywordsInTop20: 4, shareOfVoice: 10.5, shareOfVoiceDisplay: "10.50%", trafficForecast: 280, trafficForecastDisplay: "280" }];
-        }
-      }
-
-      if (keywordRatio < 1) {
-        const scaledSov = Number((d.shareOfVoice * keywordRatio).toFixed(2));
-        const scaledTraf = Number((d.trafficForecast * keywordRatio).toFixed(1));
-        const scaledKws = Math.max(1, Math.round(d.keywordsInTop20 * keywordRatio));
-        mapped = {
-          ...mapped,
-          shareOfVoice: scaledSov,
-          shareOfVoiceDisplay: `${scaledSov}%`,
-          trafficForecast: scaledTraf,
-          trafficForecastDisplay: scaledTraf >= 1000 ? `${(scaledTraf / 1000).toFixed(1)}K` : `${scaledTraf}`,
-          keywordsInTop20: scaledKws,
-        };
-      }
-
-      if (daysDiff === 1) return mapped;
-      const mult = Math.min(5, Math.max(0.5, daysDiff));
-      const sovNum = (parseFloat(d.deltaSov.replace(/[^0-9.]/g, "")) * mult).toFixed(2);
-      const trafNum = (parseFloat(d.deltaTraffic.replace(/[^0-9.]/g, "")) * mult).toFixed(1);
-      const sovPrefix = d.deltaSov.includes("▲") ? "▲ " : "▼ ";
-      const trafPrefix = d.deltaTraffic.includes("▲") ? "▲ " : "▼ ";
-      return {
-        ...mapped,
-        deltaSov: `${sovPrefix}${sovNum}%`,
-        deltaTraffic: `${trafPrefix}${trafNum}`,
-      };
-    });
-  }, [domainSearchQuery, daysDiff, activeMatchingKeywordsCount]);
-
-  const kpiRatio = activeMatchingKeywordsCount / 10;
-  const kpiTotalForecast = kpiRatio === 1 ? "2.7K" : `${(2.7 * kpiRatio).toFixed(1)}K`;
-  const kpiSovDisplay = kpiRatio === 1 ? "12.74%" : `${(12.74 * kpiRatio).toFixed(2)}%`;
-  const kpiTrafficForecastDisplay = kpiRatio === 1 ? "350.1" : `${(350.1 * kpiRatio).toFixed(1)}`;
-  const kpiKeywordsCount = activeMatchingKeywordsCount === 10 ? 9 : Math.max(1, Math.round(activeMatchingKeywordsCount * 0.9));
+  const targetRow = sovRows.find((d) => d.isTargetDomain);
+  const kpiTotalForecast = formatTraffic(sovRows.reduce((acc, d) => acc + d.trafficForecast, 0));
+  const kpiSovDisplay = targetRow ? targetRow.shareOfVoiceDisplay : "0.00%";
+  const kpiTrafficForecastDisplay = targetRow ? targetRow.trafficForecastDisplay : "0.0";
+  const kpiKeywordsCount = targetRow ? targetRow.keywordsInTop20 : 0;
 
   // Execute client-side export according to selected format and inclusion of nested keywords/URLs
   const handleExecuteExport = () => {

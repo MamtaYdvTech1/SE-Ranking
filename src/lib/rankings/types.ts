@@ -59,6 +59,14 @@ export interface KeywordCheckResult {
   cpc?: number | null;
   checkedAt: string;
   provider: string;
+  /** Organic results seen for this query (when the provider returns them) */
+  topResults?: SerpTopResult[];
+}
+
+export interface SerpTopResult {
+  position: number;
+  url: string;
+  domain: string;
 }
 
 export type ProviderErrorCode =

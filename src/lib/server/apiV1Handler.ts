@@ -625,56 +625,8 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
 
     // COMPETITORS: /api/v1/projects/:id/competitors/...
     if (subPath.startsWith("competitors")) {
-      if (subPath === "competitors" && method === "GET") {
-        const comps = await prisma.projectCompetitor.findMany({ where: { projectId: project.id, deletedAt: null } });
-        return successResponse(comps);
-      }
-      if (subPath === "competitors" && method === "POST") {
-        const body = await request.json();
-        const created = await prisma.projectCompetitor.create({
-          data: {
-            projectId: project.id,
-            name: body.name || body.domain || "Competitor",
-            domain: (body.domain || "competitor.com").replace(/^https?:\/\//, "").split("/")[0],
-            visibilityScore: 0,
-            avgPosition: 0,
-            commonKeywordsCount: 0,
-          },
-        });
-        return successResponse(created, 201);
-      }
-      if (subPath === "competitors/gap") {
-        const compRankings = await prisma.competitorRanking.findMany({
-          where: { projectId: project.id },
-          include: { competitor: true, keyword: true },
-        });
-        const gapKeywords = compRankings
-          .filter(
-            (r) =>
-              r.keyword &&
-              r.competitor &&
-              r.position &&
-              (r.keyword.currentPosition === null || r.keyword.currentPosition > r.position)
-          )
-          .slice(0, 25)
-          .map((r) => ({
-            id: r.id,
-            keyword: r.keyword.keywordText,
-            volume: r.keyword.monthlySearchVolume || 0,
-            competitorRank: r.position,
-            yourRank: r.keyword.currentPosition,
-            opportunityScore: 75,
-          }));
-
-        return successResponse({
-          gapKeywords,
-          totalCount: gapKeywords.length,
-        });
-      }
-      if (subPath === "competitors/visibility") {
-        const comps = await prisma.projectCompetitor.findMany({ where: { projectId: project.id, deletedAt: null } });
-        return successResponse({ competitors: comps });
-      }
+      const { handleCompetitorsV1 } = await import("@/lib/server/competitorsV1");
+      return handleCompetitorsV1(request, method, subPath, project);
     }
 
     // AUDIT: /api/v1/projects/:id/audit/...

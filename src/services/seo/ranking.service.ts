@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import { getRankingProvider } from '@/lib/rankings/provider';
-import { KeywordCheckRequest, SearchEngineType } from '@/lib/rankings/types';
+import { KeywordCheckRequest, KeywordCheckResult, SearchEngineType } from '@/lib/rankings/types';
 import { yepApiClient } from '@/lib/yepapi';
 
 // Standard organic CTR distribution curve
@@ -181,6 +181,8 @@ export async function collectRankingsForProject(
     data: { lastRankingCheckAt: now },
   });
 
+  await recordSerpCompetitors(project.id, project.domain, checkResponse.results, now);
+
   return {
     providerStatus: 'CONFIGURED',
     message: `Collected rankings for ${checkResponse.results.length} keywords.`,
@@ -188,6 +190,113 @@ export async function collectRankingsForProject(
     rankedCount,
     unrankedCount,
   };
+}
+
+function cleanHost(input: string): string {
+  return (input || '')
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split('/')[0]
+    .toLowerCase();
+}
+
+function domainMatches(resultDomain: string, target: string): boolean {
+  return resultDomain === target || resultDomain.endsWith(`.${target}`);
+}
+
+/**
+ * From the SERP results of a rank check: stores each tracked competitor's position (CompetitorRanking),
+ * refreshes competitor visibility/avg position/shared keywords, and keeps a SERP snapshot as a
+ * completed RANK_CHECK job so SERP-competitor views can aggregate every domain seen.
+ */
+async function recordSerpCompetitors(
+  projectId: string,
+  projectDomain: string,
+  results: KeywordCheckResult[],
+  checkedAt: Date
+) {
+  const withSerp = results.filter((r) => Array.isArray(r.topResults) && r.topResults.length > 0);
+  if (withSerp.length === 0) return;
+
+  try {
+    await prisma.job.create({
+      data: {
+        projectId,
+        type: 'RANK_CHECK',
+        status: 'completed',
+        attempts: 1,
+        startedAt: checkedAt,
+        completedAt: new Date(),
+        payload: JSON.stringify({
+          targetDomain: cleanHost(projectDomain),
+          checkedAt: checkedAt.toISOString(),
+          serp: withSerp.map((r) => ({
+            keywordId: r.keywordId,
+            keyword: r.keyword,
+            results: r.topResults,
+          })),
+        }),
+      },
+    });
+  } catch (err) {
+    console.warn('SERP snapshot save notice:', err);
+  }
+
+  const competitors = await prisma.projectCompetitor.findMany({
+    where: { projectId, deletedAt: null, isActive: true },
+  });
+  if (competitors.length === 0) return;
+
+  const previous = await prisma.competitorRanking.findMany({
+    where: { projectId, competitorId: { in: competitors.map((c) => c.id) } },
+    orderBy: { checkedAt: 'desc' },
+    select: { competitorId: true, keywordId: true, position: true },
+  });
+  const lastPos = new Map<string, number | null>();
+  for (const p of previous) {
+    const key = `${p.competitorId}:${p.keywordId}`;
+    if (!lastPos.has(key)) lastPos.set(key, p.position);
+  }
+
+  for (const comp of competitors) {
+    const compDomain = cleanHost(comp.domain);
+    const rows = withSerp.map((r) => {
+      const hit = r.topResults!.find((t) => domainMatches(t.domain, compDomain));
+      const prev = lastPos.get(`${comp.id}:${r.keywordId}`) ?? null;
+      const position = hit ? hit.position : null;
+      return {
+        projectId,
+        competitorId: comp.id,
+        keywordId: r.keywordId,
+        searchEngine: r.searchEngine,
+        position,
+        previousPosition: prev,
+        positionChange: prev != null && position != null ? prev - position : 0,
+        url: hit ? hit.url : null,
+        checkedAt,
+      };
+    });
+
+    try {
+      await prisma.competitorRanking.createMany({ data: rows });
+    } catch (err) {
+      console.warn('Competitor ranking save notice:', err);
+      continue;
+    }
+
+    const ranked = rows.filter((r) => r.position != null) as Array<(typeof rows)[number] & { position: number }>;
+    const visibility =
+      rows.length > 0 ? (ranked.reduce((acc, r) => acc + getVisibilityWeight(r.position), 0) / rows.length) * 100 : 0;
+    await prisma.projectCompetitor.update({
+      where: { id: comp.id },
+      data: {
+        visibilityScore: Number(visibility.toFixed(2)),
+        avgPosition: ranked.length > 0 ? Number((ranked.reduce((a, r) => a + r.position, 0) / ranked.length).toFixed(1)) : null,
+        commonKeywordsCount: ranked.length,
+        totalKeywords: rows.length,
+      },
+    });
+  }
 }
 
 export interface RankingSummaryOptions {

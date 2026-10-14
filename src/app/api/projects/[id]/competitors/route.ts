@@ -64,8 +64,9 @@ export async function GET(
                   projectId: project.id,
                   domain: item.domain,
                   name: displayName,
-                  avgPosition: item.avgPosition ? Number(item.avgPosition.toFixed(1)) : 25.0,
-                  visibilityScore: item.intersections ? Math.min(100, Math.round(item.intersections * 2.5)) : 45.0,
+                  // Visibility and our-keyword average position are filled in by the next rank check
+                  avgPosition: item.avgPosition ? Number(item.avgPosition.toFixed(1)) : null,
+                  visibilityScore: 0,
                   commonKeywordsCount: item.intersections || 0,
                   totalKeywords: item.organicCount || 0,
                   organicTraffic: item.organicEtv ? `${Math.round(item.organicEtv).toLocaleString()}/mo` : '—',

@@ -1,8 +1,9 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AddedCompetitorsView } from "../AddedCompetitorsView";
 import { CompetitorDto } from "@/lib/types";
+import { installCompetitorFetchStub, pinClock } from "./competitorFixtures";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -40,10 +41,18 @@ describe("AddedCompetitorsView Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    pinClock();
+    installCompetitorFetchStub();
   });
 
-  it("renders breadcrumbs, action buttons, and overall graph view by default", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders breadcrumbs, action buttons, and overall graph view by default", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     expect(screen.getAllByText("workcomposer.com")[0]).toBeInTheDocument();
     expect(screen.getByText("Added Competitors")).toBeInTheDocument();
@@ -52,8 +61,9 @@ describe("AddedCompetitorsView Component", () => {
     expect(screen.getByText("work composer download")).toBeInTheDocument();
   });
 
-  it("switches to detailed view and lists competitors with actions", () => {
+  it("switches to detailed view and lists competitors with actions", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     fireEvent.click(screen.getByRole("button", { name: "Detailed" }));
 
@@ -63,8 +73,9 @@ describe("AddedCompetitorsView Component", () => {
     expect(screen.getByText("Time Doctor")).toBeInTheDocument();
   });
 
-  it("switches between metric tabs on overall view", () => {
+  it("switches between metric tabs on overall view", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const trafficTab = screen.getByRole("button", { name: "TRAFFIC FORECAST" });
     fireEvent.click(trafficTab);
@@ -75,18 +86,20 @@ describe("AddedCompetitorsView Component", () => {
     expect(visTab).toHaveClass("text-blue-600");
   });
 
-  it("filters keywords by search input", () => {
+  it("filters keywords by search input", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
-    const searchInput = screen.getByPlaceholderText("Search 🔍");
+    const searchInput = screen.getByPlaceholderText("Search");
     fireEvent.change(searchInput, { target: { value: "hack" } });
 
     expect(screen.getByText("work composer hack")).toBeInTheDocument();
     expect(screen.queryByText("work composer download")).not.toBeInTheDocument();
   });
 
-  it("opens and closes the export modal", () => {
+  it("opens and closes the export modal", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const exportButton = screen.getByText("EXPORT");
     fireEvent.click(exportButton);
@@ -99,53 +112,35 @@ describe("AddedCompetitorsView Component", () => {
     expect(screen.queryByText("Export data")).not.toBeInTheDocument();
   });
 
-  it("triggers onAddCompetitor when clicking Add Competitor button", () => {
+  it("triggers onAddCompetitor when clicking Add Competitor button", async () => {
     render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const addButtons = screen.getAllByRole("button", { name: /\+ ADD COMPETITOR/i });
     fireEvent.click(addButtons[0]);
     expect(defaultProps.onAddCompetitor).toHaveBeenCalled();
   });
 
-  it("renders real myjio.com dataset with real keywords and competitor columns", () => {
-    render(<AddedCompetitorsView projectId="proj-jio" projectDomain="myjio.com" competitors={[]} />);
+  it("renders keyword rows and competitor columns from the keyword matrix", async () => {
+    render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
-    // Header limits, notes, and domain
-    expect(screen.getAllByText("myjio.com")[0]).toBeInTheDocument();
-    expect(screen.getByText("Notes (49)")).toBeInTheDocument();
-    expect(screen.getByText("5 / 5")).toBeInTheDocument();
     expect(screen.getByText("Keywords 10")).toBeInTheDocument();
-
-    // Competitor column headers and chart legend
-    expect(screen.getAllByText("Paytm.com")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("airtel.in")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("bsnl.co.in")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("mobikwik.com")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("phonepe.com")[0]).toBeInTheDocument();
-
-    // Real keywords and volumes
-    expect(screen.getByText("myjio")).toBeInTheDocument();
-    expect(screen.getByText("246K")).toBeInTheDocument();
-    expect(screen.getByText("jio recharge")).toBeInTheDocument();
-    expect(screen.getByText("1.22M")).toBeInTheDocument();
-    expect(screen.getByText("jio prepaid recharge")).toBeInTheDocument();
-    expect(screen.getByText("40.5K")).toBeInTheDocument();
+    expect(screen.getAllByText("hubstaff.com")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("timedoctor.com")[0]).toBeInTheDocument();
+    expect(screen.getByText("composer download")).toBeInTheDocument();
+    expect(screen.getByText("1.9K")).toBeInTheDocument();
   });
 
-  it("filters myjio keywords by position tier TOP 10", () => {
-    render(<AddedCompetitorsView projectId="proj-jio" projectDomain="myjio.com" competitors={[]} />);
+  it("filters keywords by competitor position tier TOP 10", async () => {
+    render(<AddedCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
-    const top10Button = screen.getByRole("button", { name: "TOP 10" });
-    fireEvent.click(top10Button);
+    fireEvent.click(screen.getByRole("button", { name: "TOP 10" }));
 
-    // Keywords with rank <= 10 should be visible
-    expect(screen.getByText("jio recharge")).toBeInTheDocument();
-    expect(screen.getByText("jio recharge online")).toBeInTheDocument();
-    expect(screen.getByText("jio mobile recharge")).toBeInTheDocument();
-    expect(screen.getByText("jio prepaid recharge")).toBeInTheDocument();
-
-    // Keywords without rank <= 10 should not be visible
-    expect(screen.queryByText("myjio login")).not.toBeInTheDocument();
-    expect(screen.queryByText("myjio account")).not.toBeInTheDocument();
+    expect(screen.getByText("work composer download")).toBeInTheDocument();
+    expect(screen.getByText("work composer")).toBeInTheDocument();
+    expect(screen.getByText("work composer hack")).toBeInTheDocument();
+    expect(screen.queryByText("idle time tracker")).not.toBeInTheDocument();
   });
 });

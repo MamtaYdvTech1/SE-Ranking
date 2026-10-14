@@ -1142,6 +1142,8 @@ export interface CompetitorVisibilityPointDto {
   visibility: number;
   averagePosition?: number | null;
   rankedKeywordsCount: number;
+  top10Count?: number;
+  estimatedTraffic?: number;
 }
 
 export interface CompetitorVisibilitySummaryDto {
@@ -1160,6 +1162,7 @@ export interface CompetitorVisibilitySummaryDto {
   unrankedCount: number;
   top20OverlapCount: number;
   top20OverlapPercentage: number;
+  estimatedTraffic?: number;
   history?: CompetitorVisibilityPointDto[];
 }
 
