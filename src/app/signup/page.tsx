@@ -58,26 +58,6 @@ export default function SignUpPage() {
 
   const currentLang = SIGNUP_LANGUAGES.find((l) => l.code === selectedLang) || SIGNUP_LANGUAGES[0];
 
-  // Dynamic Password Strength Assessment
-  const passwordStrength = useMemo(() => {
-    if (!password) return { score: 0, label: '', color: 'bg-gray-200', text: '' };
-    let score = 0;
-    if (password.length >= 8) score += 1;
-    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
-    if (/\d/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-
-    if (score <= 1) {
-      return { score: 1, label: 'Weak', color: 'bg-rose-500', text: 'text-rose-600' };
-    }
-    if (score === 2 || score === 3) {
-      return { score: 2, label: 'Fair', color: 'bg-amber-500', text: 'text-amber-600' };
-    }
-    return { score: 3, label: 'Strong', color: 'bg-emerald-500', text: 'text-emerald-600' };
-  }, [password]);
-
-  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,13 +279,13 @@ export default function SignUpPage() {
             </div>
 
             {/* Row 3: Password with Show/Hide toggle */}
-            <div className="space-y-1.5">
+            <div>
+              <label htmlFor="signup-password" className="sr-only">Password</label>
               <div className="relative">
-                <label htmlFor="signup-password" className="sr-only">Password</label>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="signup-password"
-                  placeholder="Create a strong password (min 8 chars)"
+                  placeholder="Create password (min 8 characters)"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -325,42 +305,23 @@ export default function SignUpPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-
-              {/* Password Strength Guidance */}
-              {password.length > 0 && (
-                <div className="px-1 py-1 space-y-1 text-xs">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-gray-500">Strength: <strong className={passwordStrength.text}>{passwordStrength.label}</strong></span>
-                    <span className="text-gray-400">At least 8 characters</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden flex gap-1">
-                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 1 ? passwordStrength.color : 'bg-gray-200'}`} />
-                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 2 ? passwordStrength.color : 'bg-gray-200'}`} />
-                    <div className={`h-full flex-1 rounded-full ${passwordStrength.score >= 3 ? passwordStrength.color : 'bg-gray-200'}`} />
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Row 4: Confirm Password with Show/Hide toggle */}
-            <div className="space-y-1">
+            <div>
+              <label htmlFor="signup-confirm-password" className="sr-only">Confirm Password</label>
               <div className="relative">
-                <label htmlFor="signup-confirm-password" className="sr-only">Confirm Password</label>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="signup-confirm-password"
-                  placeholder="Re-enter your password"
+                  placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
                     if (error) setError(null);
                   }}
                   autoComplete="new-password"
-                  className={`w-full h-12 px-4 pr-11 border rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none transition-all bg-white ${
-                    passwordsMismatch
-                      ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
-                      : 'border-gray-300 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]'
-                  }`}
+                  className="w-full h-12 px-4 pr-11 border border-gray-300 rounded-lg text-sm text-[#111827] placeholder:text-gray-400 focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-all bg-white"
                   required
                 />
                 <button
@@ -373,18 +334,6 @@ export default function SignUpPage() {
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-
-              {passwordsMismatch && (
-                <p className="text-[11px] text-rose-600 px-1 font-medium">
-                  Passwords do not match.
-                </p>
-              )}
-              {passwordsMatch && (
-                <p className="text-[11px] text-emerald-600 px-1 font-medium flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  <span>Passwords match</span>
-                </p>
-              )}
             </div>
 
             {/* Purple CTA Button */}
