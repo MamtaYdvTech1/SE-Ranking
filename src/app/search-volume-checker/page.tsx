@@ -90,6 +90,7 @@ function SearchVolumeCheckerContent() {
 
   const [keywordsText, setKeywordsText] = useState('');
   const [isChecking, setIsChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const [results, setResults] = useState<VolumeResult[]>([]);
   const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -143,7 +144,7 @@ function SearchVolumeCheckerContent() {
     );
   };
 
-  const handleStartCheck = (e: React.FormEvent) => {
+  const handleStartCheck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (queryCount === 0) {
       alert('Please enter at least one keyword.');
@@ -151,19 +152,60 @@ function SearchVolumeCheckerContent() {
     }
 
     setIsChecking(true);
+    setCheckError(null);
 
-    setTimeout(() => {
-      const generated: VolumeResult[] = queryLines.map((k) => {
-        const baseVol = Math.max(450, Math.floor(2800 + (k.length * 420) % 35000));
-        const cpcVal = (1.1 + (k.length * 0.18) % 6.5).toFixed(2);
-        const comp = ['Low', 'Medium', 'High'][k.length % 3];
-        const trend = `+${Math.floor(10 + (k.length * 3) % 40)}%`;
+    const batch = queryLines.slice(0, 100);
+    try {
+      const res = await fetch('/api/seo/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: batch }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        setCheckError(json?.error || `Search volume lookup failed (HTTP ${res.status}).`);
+        return;
+      }
+
+      type Metric = {
+        keyword: string;
+        volume: number;
+        cpc: number;
+        competition: number;
+        competitionLevel?: string;
+        trend?: Array<{ year: number; month: number; volume: number }>;
+      };
+      const byKeyword = new Map<string, Metric>(
+        ((json.data?.keywords || []) as Metric[]).map((m) => [m.keyword.toLowerCase(), m])
+      );
+
+      const yoyTrend = (trend?: Metric['trend']): string => {
+        if (!trend || trend.length < 2) return '—';
+        const sorted = [...trend].sort((x, y) => x.year * 12 + x.month - (y.year * 12 + y.month));
+        const latest = sorted[sorted.length - 1];
+        const yearAgo = sorted.find((t) => t.year === latest.year - 1 && t.month === latest.month) || sorted[0];
+        if (!yearAgo.volume) return '—';
+        const pct = Math.round(((latest.volume - yearAgo.volume) / yearAgo.volume) * 100);
+        return `${pct >= 0 ? '+' : ''}${pct}%`;
+      };
+
+      const fetched: VolumeResult[] = batch.map((k) => {
+        const m = byKeyword.get(k.toLowerCase());
+        if (!m) return { keyword: k, volume: 0, cpc: '—', competition: '—', trend: '—' };
+        const level =
+          m.competitionLevel
+            ? m.competitionLevel.charAt(0).toUpperCase() + m.competitionLevel.slice(1).toLowerCase()
+            : m.competition < 0.33
+            ? 'Low'
+            : m.competition < 0.66
+            ? 'Medium'
+            : 'High';
         return {
           keyword: k,
-          volume: baseVol,
-          cpc: `$${cpcVal}`,
-          competition: comp,
-          trend,
+          volume: m.volume ?? 0,
+          cpc: m.cpc ? `$${m.cpc.toFixed(2)}` : '—',
+          competition: level,
+          trend: yoyTrend(m.trend),
         };
       });
 
@@ -176,14 +218,17 @@ function SearchVolumeCheckerContent() {
         countryCode: selectedCountry.code,
         region: regionInput || 'All regions',
         source,
-        keywordsCount: queryLines.length,
-        results: generated,
+        keywordsCount: batch.length,
+        results: fetched,
       };
 
       setHistory((prev) => [newHistoryItem, ...prev]);
-      setResults(generated);
+      setResults(fetched);
+    } catch {
+      setCheckError('Network error while checking search volumes.');
+    } finally {
       setIsChecking(false);
-    }, 1000);
+    }
   };
 
   const handleExportCsv = (customResults?: VolumeResult[]) => {
@@ -685,6 +730,11 @@ function SearchVolumeCheckerContent() {
                     </button>
                   </div>
                 </form>
+                {checkError && (
+                  <div className="mt-3 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs">
+                    {checkError}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -806,16 +856,6 @@ function SearchVolumeCheckerContent() {
               >
                 Go to Pricing Plans
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  alert('Added $10 demo search volume credit to current balance!');
-                  setIsTopUpModalOpen(false);
-                }}
-                className="py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-              >
-                Add $10 Demo Credit
-              </button>
             </div>
           </div>
         </div>

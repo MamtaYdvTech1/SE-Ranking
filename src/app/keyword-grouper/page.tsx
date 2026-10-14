@@ -20,7 +20,6 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { SUPPORTED_COUNTRIES } from '@/lib/constants';
-import { useApp } from '@/components/providers/AppProviders';
 
 interface ClusterGroup {
   id: string;
@@ -43,10 +42,6 @@ function KeywordGrouperContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = searchParams?.get('tab') || 'settings';
-  const { activeProject, projects } = useApp();
-  const domainName = (activeProject?.domain || (projects && projects[0]?.domain) || '')
-    .replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  const brandName = domainName ? domainName.split('.')[0].toUpperCase() : 'PROJECT';
 
   const [showInfo, setShowInfo] = useState(true);
   const [reportTitle, setReportTitle] = useState('');
@@ -59,6 +54,7 @@ function KeywordGrouperContent() {
   const [searchVolumeCheck, setSearchVolumeCheck] = useState<'check' | 'no_check'>('check');
   const [queriesText, setQueriesText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [groupError, setGroupError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Grouped clusters & history state
@@ -73,50 +69,7 @@ function KeywordGrouperContent() {
         // ignore
       }
     }
-    return [
-      {
-        id: 'group_init_1',
-        title: `${brandName} Search Strategy & High-Intent Clusters`,
-        date: 'Oct 02, 2026',
-        queryCount: 12,
-        accuracy: 3,
-        engine: 'Google',
-        clusters: [
-          {
-            id: 'c1',
-            name: `${brandName} Core Product Queries`,
-            totalVolume: 8400,
-            keywords: [
-              { text: 'best time tracking software for agencies', volume: 2900, similarity: 88 },
-              { text: 'employee time tracking app for mac', volume: 2400, similarity: 84 },
-              { text: 'automatic employee timesheet generator', volume: 1800, similarity: 82 },
-              { text: 'how to track billable client hours', volume: 1300, similarity: 79 },
-            ],
-          },
-          {
-            id: 'c2',
-            name: 'Productivity & Activity Monitoring',
-            totalVolume: 7200,
-            keywords: [
-              { text: 'remote worker activity monitor', volume: 2100, similarity: 86 },
-              { text: 'remote team productivity tracker', volume: 2800, similarity: 89 },
-              { text: 'work hours tracker with screenshots', volume: 1500, similarity: 83 },
-              { text: 'employee screenshot monitoring app', volume: 800, similarity: 80 },
-            ],
-          },
-          {
-            id: 'c3',
-            name: 'Attendance & Shift Management',
-            totalVolume: 5100,
-            keywords: [
-              { text: 'gps employee attendance app', volume: 1900, similarity: 85 },
-              { text: 'attendance punch in punch out software', volume: 2100, similarity: 87 },
-              { text: 'automated attendance tracking software', volume: 1100, similarity: 81 },
-            ],
-          },
-        ],
-      },
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -158,8 +111,8 @@ function KeywordGrouperContent() {
     );
   };
 
-  // Real Dynamic Clustering Algorithm
-  const handleStartGrouping = (e: React.FormEvent) => {
+  // SERP-similarity clustering via /api/seo/keyword-grouper
+  const handleStartGrouping = async (e: React.FormEvent) => {
     e.preventDefault();
     if (queryCount === 0) {
       alert('Please enter at least one search query to cluster.');
@@ -167,55 +120,31 @@ function KeywordGrouperContent() {
     }
 
     setIsProcessing(true);
-
-    setTimeout(() => {
-      // Dynamic semantic & keyword token grouping
-      const generatedClusters: Record<string, { text: string; volume: number; similarity: number }[]> = {};
-
-      queryLines.forEach((query) => {
-        const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
-        let assignedGroup = '';
-
-        if (words.some((w) => ['time', 'tracking', 'timesheet', 'hours'].includes(w))) {
-          assignedGroup = 'Time Tracking & Timesheets';
-        } else if (words.some((w) => ['productivity', 'activity', 'monitoring', 'screenshot', 'screenshots'].includes(w))) {
-          assignedGroup = 'Productivity & Activity Monitoring';
-        } else if (words.some((w) => ['attendance', 'punch', 'attendance'].includes(w))) {
-          assignedGroup = 'Attendance & Shift Management';
-        } else if (words.some((w) => ['remote', 'worker', 'team', 'agencies', 'developers'].includes(w))) {
-          assignedGroup = 'Remote Team & Agency Tools';
-        } else {
-          assignedGroup = `${words[0] || 'General'} Core Group`;
-        }
-
-        if (!generatedClusters[assignedGroup]) {
-          generatedClusters[assignedGroup] = [];
-        }
-
-        const baseVol = Math.max(350, Math.floor(2400 + (query.length * 320) % 9800));
-        const sim = Math.min(98, Math.max(68, Math.floor(75 + accuracy * 2.5 + (query.length % 15))));
-
-        generatedClusters[assignedGroup].push({
-          text: query,
-          volume: searchVolumeCheck === 'check' ? baseVol : 0,
-          similarity: sim,
-        });
+    setGroupError(null);
+    try {
+      const res = await fetch('/api/seo/keyword-grouper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keywords: queryLines.slice(0, 100),
+          accuracy,
+          method,
+          checkVolume: searchVolumeCheck === 'check',
+        }),
       });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        setGroupError(json?.error || `Keyword grouping failed (HTTP ${res.status}).`);
+        return;
+      }
+      if (json.volumeError) setGroupError(`Grouped without search volumes: ${json.volumeError}`);
 
-      const clusterList: ClusterGroup[] = Object.entries(generatedClusters).map(
-        ([name, items], idx) => ({
-          id: `cluster_${idx + 1}`,
-          name,
-          keywords: items,
-          totalVolume: items.reduce((acc, curr) => acc + curr.volume, 0),
-        })
-      );
-
+      const clusterList: ClusterGroup[] = json.clusters;
       const newRecord: GroupingHistoryRecord = {
         id: `group_${Date.now()}`,
         title: reportTitle.trim() || 'Custom Clustered Search Queries',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        queryCount: queryLines.length,
+        queryCount: Math.min(queryLines.length, 100),
         accuracy,
         engine: searchEngine,
         clusters: clusterList,
@@ -224,9 +153,12 @@ function KeywordGrouperContent() {
       setClusters(clusterList);
       setHistory((prev) => [newRecord, ...prev]);
       setSelectedReport(newRecord);
-      setIsProcessing(false);
       router.push('/keyword-grouper?tab=results');
-    }, 1200);
+    } catch {
+      setGroupError('Network error while grouping keywords.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleExportCsv = (record?: GroupingHistoryRecord) => {
@@ -723,6 +655,9 @@ function KeywordGrouperContent() {
               </button>
             </div>
           </form>
+          {groupError && (
+            <div className="mt-3 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs">{groupError}</div>
+          )}
         </div>
       )}
     </div>

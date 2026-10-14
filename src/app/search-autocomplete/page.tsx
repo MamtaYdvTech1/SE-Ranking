@@ -128,6 +128,7 @@ export default function SearchAutocompletePage() {
   const [addAlpha, setAddAlpha] = useState(false);
   const [addDigits, setAddDigits] = useState(false);
   const [addQuestions, setAddQuestions] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [level1, setLevel1] = useState(true);
   const [level2, setLevel2] = useState(false);
 
@@ -190,7 +191,7 @@ export default function SearchAutocompletePage() {
 
   const combinationsCount = calculateCombinations();
 
-  const handleStartSearch = (e: React.FormEvent) => {
+  const handleStartSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const rawQueries = queryText
       .split(/[\r\n]+/)
@@ -200,82 +201,41 @@ export default function SearchAutocompletePage() {
     if (rawQueries.length === 0) return;
 
     setIsSearching(true);
-
-    setTimeout(() => {
-      const generated: AutocompleteItem[] = [];
-      const prefixes = addQuestions ? ['how to', 'what is', 'best', 'where can i find', 'why use', 'can i get'] : ['best', 'top', 'online'];
-      const suffixes = [
-        'pricing',
-        'software',
-        'free download',
-        'tutorial',
-        'for beginners',
-        'services',
-        'examples',
-        'strategy',
-        'automation',
-        'checklist 2026',
-        'near me',
-        'alternatives',
-        'benefits and features',
-      ];
-
-      let idCounter = 1;
-
-      rawQueries.forEach((q) => {
-        // Direct root query
-        generated.push({
-          id: `ac-${idCounter++}`,
-          keyword: q,
-          volume: 0,
-          cpc: 0,
-          difficulty: 0,
-          source: engine,
-        });
-
-        // Prefix questions
-        prefixes.forEach((p) => {
-          generated.push({
-            id: `ac-${idCounter++}`,
-            keyword: `${p} ${q}`,
-            volume: 0,
-            cpc: 0,
-            difficulty: 0,
-            source: engine,
-          });
-        });
-
-        // Suffix completions
-        suffixes.slice(0, depth * 4).forEach((s) => {
-          generated.push({
-            id: `ac-${idCounter++}`,
-            keyword: `${q} ${s}`,
-            volume: 0,
-            cpc: 0,
-            difficulty: 0,
-            source: engine,
-          });
-        });
-
-        // Alphabetical extensions if checked
-        if (addAlpha) {
-          ['a', 'b', 'c', 'd', 'e'].forEach((char) => {
-            generated.push({
-              id: `ac-${idCounter++}`,
-              keyword: `${q} ${char}`,
-              volume: 0,
-              cpc: 0,
-              difficulty: 0,
-              source: engine,
-            });
-          });
-        }
+    setSearchError(null);
+    try {
+      const res = await fetch('/api/seo/autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          queries: rawQueries.slice(0, 10),
+          engine,
+          country: selectedCountry.code,
+          depth,
+          addQuestions,
+          addAlpha,
+        }),
       });
-
-      setResults(generated);
-      setSelectedItems(new Set(generated.map((g) => g.id)));
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        setSearchError(json?.error || `Autocomplete lookup failed (HTTP ${res.status}).`);
+        return;
+      }
+      // Autocomplete returns phrases only; volume/CPC/KD need a keyword metrics lookup
+      const items: AutocompleteItem[] = (json.results as Array<{ keyword: string }>).map((r, idx) => ({
+        id: `ac-${idx + 1}`,
+        keyword: r.keyword,
+        volume: 0,
+        cpc: 0,
+        difficulty: 0,
+        source: engine,
+      }));
+      setResults(items);
+      setSelectedItems(new Set(items.map((g) => g.id)));
+    } catch {
+      setSearchError('Network error while fetching autocomplete suggestions.');
+    } finally {
       setIsSearching(false);
-    }, 850);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -599,6 +559,9 @@ export default function SearchAutocompletePage() {
               </button>
             </div>
           </form>
+          {searchError && (
+            <div className="mt-3 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs">{searchError}</div>
+          )}
         </div>
 
         {/* Real Autocomplete Results Table */}
@@ -711,12 +674,15 @@ export default function SearchAutocompletePage() {
                           <span className="hover:text-[#0B69FF] transition-colors">{item.keyword}</span>
                         </td>
                         <td className="px-4 py-3 text-right font-medium text-gray-800">
-                          {item.volume.toLocaleString()}
+                          {item.volume ? item.volume.toLocaleString() : '—'}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-gray-600">
-                          ${item.cpc.toFixed(2)}
+                          {item.cpc ? `$${item.cpc.toFixed(2)}` : '—'}
                         </td>
                         <td className="px-4 py-3 text-center">
+                          {!item.difficulty ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                               item.difficulty < 30
@@ -728,6 +694,7 @@ export default function SearchAutocompletePage() {
                           >
                             {item.difficulty}%
                           </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">
