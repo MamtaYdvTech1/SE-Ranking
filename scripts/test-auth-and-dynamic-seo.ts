@@ -4,7 +4,7 @@ dotenv.config({ path: '.env' });
 
 import { prisma } from '../src/lib/db/prisma';
 
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = process.argv[2] || process.env.TEST_URL || 'http://localhost:3000';
 
 async function run() {
   console.log(`Starting Auth & Dynamic SEO Verification against ${BASE_URL}...`);
