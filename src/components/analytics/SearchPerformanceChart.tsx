@@ -55,7 +55,7 @@ export function SearchPerformanceChart({
   totalImpressions,
   avgCtr,
   avgPosition,
-  domain = 'myjio.com',
+  domain = '',
 }: SearchPerformanceChartProps) {
   const [timeframe, setTimeframe] = useState<'7d' | '14d' | '28d'>('14d');
   const [showClicks, setShowClicks] = useState(true);

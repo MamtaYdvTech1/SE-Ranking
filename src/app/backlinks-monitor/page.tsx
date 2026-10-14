@@ -51,7 +51,7 @@ function BacklinkMonitorInner() {
   const currentTab = searchParams?.get('tab') || 'backlinks';
 
   const cleanDomain = useMemo(() => {
-    if (!activeProject?.domain) return 'myjio.com';
+    if (!activeProject?.domain) return '';
     return activeProject.domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
   }, [activeProject?.domain]);
 
@@ -64,7 +64,10 @@ function BacklinkMonitorInner() {
   // Fetch real project backlinks
   useEffect(() => {
     async function fetchMonitorData() {
-      if (!activeProject?.id) return;
+      if (!activeProject?.id) {
+        setBacklinks([]);
+        return;
+      }
       try {
         setIsLoading(true);
         const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/backlinks`);
@@ -92,64 +95,7 @@ function BacklinkMonitorInner() {
         setIsLoading(false);
       }
 
-      // Fallback realistic dataset tailored to project
-      setBacklinks([
-        {
-          id: 'mb-1',
-          sourceUrl: `https://techradar.com/best-productivity-apps/${cleanDomain}`,
-          targetUrl: `https://${cleanDomain}/features`,
-          anchorText: `${cleanDomain} reviews`,
-          domainTrust: 88,
-          pageTrust: 52,
-          isDoFollow: true,
-          status: 'NEW',
-          discoveredAt: 'Oct 06, 2026',
-        },
-        {
-          id: 'mb-2',
-          sourceUrl: `https://g2.com/products/${cleanDomain}/competitors`,
-          targetUrl: `https://${cleanDomain}/`,
-          anchorText: cleanDomain,
-          domainTrust: 91,
-          pageTrust: 64,
-          isDoFollow: true,
-          status: 'ACTIVE',
-          discoveredAt: 'Sep 28, 2026',
-        },
-        {
-          id: 'mb-3',
-          sourceUrl: `https://medium.com/@productivitygeek/top-tools-2026`,
-          targetUrl: `https://${cleanDomain}/features/analytics`,
-          anchorText: 'powerful tracking system',
-          domainTrust: 84,
-          pageTrust: 41,
-          isDoFollow: true,
-          status: 'ACTIVE',
-          discoveredAt: 'Sep 15, 2026',
-        },
-        {
-          id: 'mb-4',
-          sourceUrl: `https://capterra.com/p/184912/${cleanDomain}`,
-          targetUrl: `https://${cleanDomain}/pricing`,
-          anchorText: `${cleanDomain} pricing plans`,
-          domainTrust: 89,
-          pageTrust: 58,
-          isDoFollow: false,
-          status: 'ACTIVE',
-          discoveredAt: 'Aug 22, 2026',
-        },
-        {
-          id: 'mb-5',
-          sourceUrl: `https://hubspot.com/blog/remote-team-management`,
-          targetUrl: `https://${cleanDomain}/remote-work`,
-          anchorText: 'automated timesheet tracking',
-          domainTrust: 93,
-          pageTrust: 61,
-          isDoFollow: true,
-          status: 'LOST',
-          discoveredAt: 'Jul 10, 2026',
-        },
-      ]);
+      setBacklinks([]);
     }
 
     fetchMonitorData();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { verifyProjectAccess } from "@/lib/server/projectAuth";
 import { CompetitorGapItemDto, CompetitorGapResponseDto } from "@/lib/types";
-import { dataForSeoClient } from "@/services/seo/dataforseo.client";
+import { yepApiClient } from "@/lib/yepapi";
 
 export async function GET(
   req: NextRequest,
@@ -114,7 +114,7 @@ export async function GET(
       statusCode: 200,
       timestamp: new Date().toISOString(),
       data: responseData,
-      providerConfigured: dataForSeoClient.isConfigured(),
+      providerConfigured: yepApiClient.isConfigured(),
       projectId: project.id,
     });
   } catch (err: unknown) {

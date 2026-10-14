@@ -2396,7 +2396,7 @@ function ProjectsDashboardPageContent() {
             <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#171B24]">
               {chartProjects.map((p, pIdx) => {
                 const color = getProjectChartColor(p, pIdx);
-                const cleanD = (p.domain || p.name || 'flipkart.com').replace(/^https?:\/\//, '').replace(/\/$/, '');
+                const cleanD = (p.domain || p.name || 'project').replace(/^https?:\/\//, '').replace(/\/$/, '');
                 return (
                   <div key={p.id} className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />

@@ -3,4 +3,6 @@ export * from './provider';
 export * from './google';
 export * from './bing';
 export * from './serpapi';
+export * from './yepapi';
 export * from './dataforseo';
+

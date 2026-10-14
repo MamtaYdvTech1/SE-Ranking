@@ -42,29 +42,39 @@ export async function POST(
       );
     }
 
-    // 2. Perform real live ranking recheck via SEO provider (Serper.dev)
+    // 2. Perform real live ranking recheck via SEO provider (YepAPI)
     const { collectRankingsForProject } = await import('@/services/seo/ranking.service');
     const result = await collectRankingsForProject(project.id, { timeoutMs: 25000 });
 
-    // Ensure keywords have realistic search volumes if DataForSEO is unconfigured or pending
+    // Ensure keywords without volume metrics are enriched via YepAPI
     const keywords = await prisma.keyword.findMany({
       where: { projectId: project.id, deletedAt: null },
     });
 
-    let updatedCount = result.checkedCount || keywords.length;
-    for (const kw of keywords) {
-      if (!kw.monthlySearchVolume || kw.monthlySearchVolume === 0) {
-        // Deterministic realistic volume based on keyword text length and relevance
-        const kwHash = kw.keywordText.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
-        const realisticVol = Math.max(250, (kwHash * 37) % 18000 + 450);
-        await prisma.keyword.update({
-          where: { id: kw.id },
-          data: {
-            monthlySearchVolume: realisticVol,
-            keywordDifficulty: (kwHash % 45) + 20,
-            cpcUsd: Number((1.2 + (kwHash % 40) * 0.1).toFixed(2)),
-          },
-        });
+    const unmeasuredKeywords = keywords.filter((k) => !k.monthlySearchVolume || k.monthlySearchVolume === 0);
+    if (unmeasuredKeywords.length > 0) {
+      try {
+        const { yepApiClient } = await import('@/lib/yepapi');
+        if (yepApiClient.isConfigured()) {
+          const kwRes = await yepApiClient.getKeywords({
+            keywords: unmeasuredKeywords.map((k) => k.keywordText),
+            language: project.languageCode || 'en',
+          });
+          if (kwRes.ok && kwRes.data?.keywords) {
+            for (const item of kwRes.data.keywords) {
+              await prisma.keyword.updateMany({
+                where: { projectId: project.id, keywordText: item.keyword },
+                data: {
+                  monthlySearchVolume: item.volume ?? 0,
+                  keywordDifficulty: item.difficulty ?? 0,
+                  cpcUsd: item.cpc ?? 0,
+                },
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Keyword metric enrichment warning:', err);
       }
     }
 
@@ -76,6 +86,8 @@ export async function POST(
         updatedAt: new Date(),
       },
     });
+
+    const updatedCount = result.checkedCount || keywords.length;
 
     return NextResponse.json({
       success: true,

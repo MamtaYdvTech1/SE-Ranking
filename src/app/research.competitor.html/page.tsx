@@ -29,8 +29,8 @@ export default function CompetitiveResearchReportPage() {
   const { activeProject } = useApp();
   const displayDomain = activeProject?.domain
     ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    : 'amazon.in';
-  const displayBrand = activeProject?.brandName || activeProject?.name || (displayDomain.split('.')[0].charAt(0).toUpperCase() + displayDomain.split('.')[0].slice(1));
+    : '';
+  const displayBrand = activeProject?.brandName || activeProject?.name || (displayDomain ? (displayDomain.split('.')[0].charAt(0).toUpperCase() + displayDomain.split('.')[0].slice(1)) : 'Domain');
 
   const [activeTab, setActiveTab] = useState<'overview' | 'keywords' | 'rankchanges' | 'competitors' | 'country' | 'pages' | 'subdomains' | 'compare'>('overview');
   const [searchScope, setSearchScope] = useState('base_domain');

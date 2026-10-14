@@ -269,7 +269,7 @@ const OCT_09_RAW_DOMAINS: string[] = [
 ];
 
 export function SeRankingSerpCompetitors({
-  projectDomain = 'in.pinterest.com',
+  projectDomain = '',
   projectId,
   addedCompetitors = [],
   onAddCompetitor,

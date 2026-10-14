@@ -36,8 +36,21 @@ export function SeRankingBacklinksOverallChart({ data }: SeRankingBacklinksOvera
   const [showPageTrust, setShowPageTrust] = useState(false);
   const [showOrganicTraffic, setShowOrganicTraffic] = useState(false);
 
-  // Hover state (default to index 7: '24 Aug - 30 Aug' matching Screenshot 2)
-  const [hoverIndex, setHoverIndex] = useState<number | null>(7);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(data && data.length > 0 ? Math.min(7, data.length - 1) : null);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white border border-[#E3E6EE] rounded-xl shadow-2xs p-8 text-center">
+        <h3 className="text-sm font-bold text-[#2E2E30] text-left mb-6">Overall</h3>
+        <div className="py-10 text-gray-500">
+          <p className="text-sm font-semibold text-gray-700">No historical backlink dynamics yet</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Historical trends will be tracked as backlink synchronization runs for this project.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const svgWidth = 1077;
   const svgHeight = 220;
@@ -50,29 +63,36 @@ export function SeRankingBacklinksOverallChart({ data }: SeRankingBacklinksOvera
   const chartH = svgHeight - paddingTop - paddingBottom;
 
   // Scales
-  // Left Y-axis (Ref domains): 56 to 68 (step 4: 56, 60, 64, 68)
-  const minRef = 56;
-  const maxRef = 68;
+  const refVals = data.map((d) => Number(d.refDomains) || 0);
+  const blVals = data.map((d) => Number(d.backlinks) || 0);
+  const maxRefVal = Math.max(...refVals, 1);
+  const minRefVal = Math.min(...refVals, 0);
+  const minRef = Math.max(0, Math.floor(minRefVal * 0.9));
+  const maxRef = Math.max(minRef + 4, Math.ceil(maxRefVal * 1.1));
+
   const getYLeft = (val: number) => {
     const clamped = Math.max(minRef, Math.min(maxRef, val));
-    return paddingTop + chartH - ((clamped - minRef) / (maxRef - minRef)) * chartH;
+    return paddingTop + chartH - ((clamped - minRef) / (maxRef - minRef || 1)) * chartH;
   };
 
-  // Right Y-axis (Backlinks): 84 to 102 (step 6: 84, 90, 96, 102)
-  const minBl = 84;
-  const maxBl = 102;
+  const maxBlVal = Math.max(...blVals, 1);
+  const minBlVal = Math.min(...blVals, 0);
+  const minBl = Math.max(0, Math.floor(minBlVal * 0.9));
+  const maxBl = Math.max(minBl + 4, Math.ceil(maxBlVal * 1.1));
+
   const getYRight = (val: number) => {
     const clamped = Math.max(minBl, Math.min(maxBl, val));
-    return paddingTop + chartH - ((clamped - minBl) / (maxBl - minBl)) * chartH;
+    return paddingTop + chartH - ((clamped - minBl) / (maxBl - minBl || 1)) * chartH;
   };
 
   const getX = (idx: number) => {
+    if (data.length <= 1) return paddingLeft + chartW / 2;
     return paddingLeft + (idx / (data.length - 1)) * chartW;
   };
 
   // Generate smooth SVG paths
   const makePath = (getYFn: (val: number) => number, key: keyof OverallDataPoint) => {
-    const pts = data.map((d, i) => ({ x: getX(i), y: getYFn(Number(d[key])) }));
+    const pts = data.map((d, i) => ({ x: getX(i), y: getYFn(Number(d[key]) || 0) }));
     return pts.reduce((acc, curr, i, arr) => {
       if (i === 0) return `M ${curr.x} ${curr.y}`;
       const prev = arr[i - 1];
@@ -89,8 +109,9 @@ export function SeRankingBacklinksOverallChart({ data }: SeRankingBacklinksOvera
   const dtPath = makePath((v) => getYLeft(v * 4), 'dt');
   const ptPath = makePath((v) => getYLeft(v * 15), 'pt');
 
-  const activePoint = hoverIndex !== null ? data[hoverIndex] : null;
-  const activeX = hoverIndex !== null ? getX(hoverIndex) : 0;
+  const safeHoverIndex = hoverIndex !== null && hoverIndex < data.length ? hoverIndex : null;
+  const activePoint = safeHoverIndex !== null ? data[safeHoverIndex] : null;
+  const activeX = safeHoverIndex !== null ? getX(safeHoverIndex) : 0;
 
   return (
     <div className="bg-white border border-[#E3E6EE] rounded-xl shadow-2xs overflow-hidden">
@@ -204,17 +225,23 @@ export function SeRankingBacklinksOverallChart({ data }: SeRankingBacklinksOvera
               );
             })}
 
-            {/* Left Y-axis labels (Total Ref Domains: 68, 64, 60, 56) */}
-            <text x={paddingLeft - 10} y={paddingTop + 4} textAnchor="end" fill="#3093DB" fontSize="11" fontWeight="500">68</text>
-            <text x={paddingLeft - 10} y={paddingTop + (1 / 3) * chartH + 4} textAnchor="end" fill="#3093DB" fontSize="11" fontWeight="500">64</text>
-            <text x={paddingLeft - 10} y={paddingTop + (2 / 3) * chartH + 4} textAnchor="end" fill="#3093DB" fontSize="11" fontWeight="500">60</text>
-            <text x={paddingLeft - 10} y={paddingTop + chartH + 4} textAnchor="end" fill="#3093DB" fontSize="11" fontWeight="500">56</text>
+            {/* Left Y-axis labels */}
+            {[0, 1, 2, 3].map((step) => {
+              const val = Math.round(maxRef - (step / 3) * (maxRef - minRef));
+              const y = paddingTop + (step / 3) * chartH + 4;
+              return (
+                <text key={`l-${step}`} x={paddingLeft - 10} y={y} textAnchor="end" fill="#3093DB" fontSize="11" fontWeight="500">{val}</text>
+              );
+            })}
 
-            {/* Right Y-axis labels (Total Backlinks: 102, 96, 90, 84) */}
-            <text x={svgWidth - paddingRight + 10} y={paddingTop + 4} textAnchor="start" fill="#0EA15F" fontSize="11" fontWeight="500">102</text>
-            <text x={svgWidth - paddingRight + 10} y={paddingTop + (1 / 3) * chartH + 4} textAnchor="start" fill="#0EA15F" fontSize="11" fontWeight="500">96</text>
-            <text x={svgWidth - paddingRight + 10} y={paddingTop + (2 / 3) * chartH + 4} textAnchor="start" fill="#0EA15F" fontSize="11" fontWeight="500">90</text>
-            <text x={svgWidth - paddingRight + 10} y={paddingTop + chartH + 4} textAnchor="start" fill="#0EA15F" fontSize="11" fontWeight="500">84</text>
+            {/* Right Y-axis labels */}
+            {[0, 1, 2, 3].map((step) => {
+              const val = Math.round(maxBl - (step / 3) * (maxBl - minBl));
+              const y = paddingTop + (step / 3) * chartH + 4;
+              return (
+                <text key={`r-${step}`} x={svgWidth - paddingRight + 10} y={y} textAnchor="start" fill="#0EA15F" fontSize="11" fontWeight="500">{val}</text>
+              );
+            })}
 
             {/* Vertical grid lines & X-axis dates */}
             {data.map((d, i) => {
@@ -469,11 +496,25 @@ interface SeRankingNewLostBarChartProps {
 export function SeRankingNewLostBarChart({
   title,
   data,
-  defaultHoverIndex = 11, // '21 Sep 2026 - 27 Sep 2026' matching Screenshot 3
+  defaultHoverIndex = 11,
 }: SeRankingNewLostBarChartProps) {
   const [period, setPeriod] = useState<'7D' | '1M' | '3M' | '6M' | '12M'>('3M');
   const [groupBy, setGroupBy] = useState<'Weeks' | 'Days'>('Weeks');
-  const [hoverIdx, setHoverIdx] = useState<number | null>(defaultHoverIndex);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(data && data.length > 0 ? Math.min(defaultHoverIndex, data.length - 1) : null);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white border border-[#E3E6EE] rounded-xl shadow-2xs p-6 text-center flex flex-col justify-between min-h-[220px]">
+        <div className="p-1 border-b border-[#E3E6EE] flex items-center justify-between mb-4">
+          <h4 className="text-xs font-bold text-[#2E2E30]">{title}</h4>
+        </div>
+        <div className="py-12 text-gray-400 text-xs">
+          <p className="font-semibold text-gray-600">No new or lost links recorded</p>
+          <p className="text-gray-400 mt-1">Changes will be shown here as link status updates are tracked.</p>
+        </div>
+      </div>
+    );
+  }
 
   const svgWidth = 508;
   const svgHeight = 220;
@@ -486,20 +527,22 @@ export function SeRankingNewLostBarChart({
   const chartH = svgHeight - paddingTop - paddingBottom;
   const zeroY = paddingTop + chartH / 2;
 
-  // Y scale range from -2.4 to +2.4
-  const minY = -2.4;
-  const maxY = 2.4;
+  // Dynamic Y scale range
+  const allAbs = data.map((d) => Math.max(Math.abs(d.newCount || 0), Math.abs(d.lostCount || 0), Math.abs(d.change || 0)));
+  const maxAbs = Math.max(...allAbs, 1);
+  const maxY = Math.max(2, Math.ceil(maxAbs * 1.2 * 10) / 10);
+  const minY = -maxY;
   const getY = (val: number) => {
-    return paddingTop + chartH - ((val - minY) / (maxY - minY)) * chartH;
+    return paddingTop + chartH - ((val - minY) / (maxY - minY || 1)) * chartH;
   };
 
-  const barWidth = 14;
-  const colStep = chartW / data.length;
+  const barWidth = Math.min(14, Math.max(4, chartW / ((data.length || 1) * 2)));
+  const colStep = chartW / (data.length || 1);
 
   // Path for Change line
   const changePts = data.map((d, i) => {
     const x = paddingLeft + i * colStep + colStep / 2;
-    const y = getY(d.change);
+    const y = getY(d.change || 0);
     return { x, y };
   });
 
@@ -513,8 +556,9 @@ export function SeRankingNewLostBarChart({
     return `${acc} C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${curr.x} ${curr.y}`;
   }, '');
 
-  const active = hoverIdx !== null ? data[hoverIdx] : null;
-  const activeX = hoverIdx !== null ? paddingLeft + hoverIdx * colStep + colStep / 2 : 0;
+  const active = hoverIdx !== null && hoverIdx < data.length ? data[hoverIdx] : null;
+  const activeX = hoverIdx !== null && hoverIdx < data.length ? paddingLeft + hoverIdx * colStep + colStep / 2 : 0;
+  const yTicks = [-maxY, -Math.round((maxY / 2) * 10) / 10, 0, Math.round((maxY / 2) * 10) / 10, maxY];
 
   return (
     <div className="bg-white border border-[#E3E6EE] rounded-xl shadow-2xs overflow-hidden flex flex-col justify-between">
@@ -564,7 +608,7 @@ export function SeRankingNewLostBarChart({
           onMouseLeave={() => setHoverIdx(defaultHoverIndex)}
         >
           {/* Grid lines */}
-          {[-2.4, -1.2, 0, 1.2, 2.4].map((v) => {
+          {yTicks.map((v) => {
             const y = getY(v);
             return (
               <g key={v}>

@@ -5,7 +5,7 @@
 
 import { RankingProvider, EngineCapability } from './types';
 import { SerpApiProvider } from './serpapi';
-import { DataForSeoProvider } from './dataforseo';
+import { YepApiRankingProvider } from './yepapi';
 import { SerperProvider } from './serper';
 
 let cachedProvider: RankingProvider | null = null;
@@ -17,20 +17,20 @@ export function getRankingProvider(): RankingProvider {
 
   const configuredProvider = (process.env.RANKING_PROVIDER || '').toLowerCase().trim();
 
-  if (configuredProvider === 'dataforseo') {
-    cachedProvider = new DataForSeoProvider();
-  } else if (configuredProvider === 'serper' || (!configuredProvider && process.env.SERPER_API_KEY)) {
+  if (configuredProvider === 'yepapi' || (!configuredProvider && process.env.YEPAPI_KEY)) {
+    cachedProvider = new YepApiRankingProvider();
+  } else if (configuredProvider === 'serper' || process.env.SERPER_API_KEY) {
     cachedProvider = new SerperProvider();
   } else if (configuredProvider === 'serpapi' || process.env.SERPAPI_API_KEY) {
     cachedProvider = new SerpApiProvider();
   } else {
-    // Default to DataForSEO if credentials exist, otherwise Serper or SerpApi
-    if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
-      cachedProvider = new DataForSeoProvider();
+    // Default to YepAPI if credentials exist, otherwise Serper or SerpApi
+    if (process.env.YEPAPI_KEY) {
+      cachedProvider = new YepApiRankingProvider();
     } else if (process.env.SERPER_API_KEY) {
       cachedProvider = new SerperProvider();
     } else {
-      cachedProvider = new SerpApiProvider();
+      cachedProvider = new YepApiRankingProvider();
     }
   }
 

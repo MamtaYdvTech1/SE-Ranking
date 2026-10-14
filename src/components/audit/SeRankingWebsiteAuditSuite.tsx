@@ -85,8 +85,8 @@ export function GoogleColorIcon({ className = 'w-4 h-4' }: { className?: string 
 // ============================================================================
 
 export function getCleanDomain(rawDomain?: string | null): string {
-  if (!rawDomain) return 'jio.com';
-  return rawDomain.replace(/^https?:\/\//i, '').replace(/\/+$/, '') || 'jio.com';
+  if (!rawDomain) return '';
+  return rawDomain.replace(/^https?:\/\//i, '').replace(/\/+$/, '') || '';
 }
 
 export function generateAuditPagesForDomain(rawDomain?: string | null) {
@@ -521,10 +521,13 @@ export function SeRankingWebsiteAuditSuite() {
 
   // Check local storage or existing database audit for current project/domain
   useEffect(() => {
-    if (!cleanDomain) return;
+    // Reset state immediately on project or domain change so previous audit never leaks
+    setLiveAuditData(null);
+    if (!cleanDomain || !activeProject?.id) return;
 
+    const storageKey = `seranking_audit_${activeProject.id}_${cleanDomain}`;
     try {
-      const cached = localStorage.getItem(`seranking_audit_${cleanDomain}`);
+      const cached = localStorage.getItem(storageKey);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object') {
@@ -534,40 +537,38 @@ export function SeRankingWebsiteAuditSuite() {
       }
     } catch {}
 
-    if (activeProject?.id) {
-      let isCancelled = false;
-      fetch(`/api/projects/${activeProject.id}/audit`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then(async (auditOverview) => {
-          if (isCancelled || !auditOverview?.success) return;
-          const pagesRes = await fetch(`/api/projects/${activeProject.id}/audit/pages`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-          const issuesRes = await fetch(`/api/projects/${activeProject.id}/audit/issues`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    let isCancelled = false;
+    fetch(`/api/projects/${activeProject.id}/audit`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(async (auditOverview) => {
+        if (isCancelled || !auditOverview?.success) return;
+        const pagesRes = await fetch(`/api/projects/${activeProject.id}/audit/pages`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+        const issuesRes = await fetch(`/api/projects/${activeProject.id}/audit/issues`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
-          if (!isCancelled && pagesRes?.pages?.length > 0) {
-            const dbAudit = {
-              healthScore: auditOverview.summary.healthScore,
-              pagesCrawled: auditOverview.summary.pagesCrawled,
-              issuesFound: auditOverview.summary.totalIssues,
-              criticalIssues: auditOverview.summary.errors,
-              warnings: auditOverview.summary.warnings,
-              notices: auditOverview.summary.notices,
-              pages: pagesRes.pages,
-              issues: issuesRes?.issues || [],
-              resources: generateAuditResourcesForDomain(cleanDomain),
-              links: generateAuditLinksForDomain(cleanDomain),
-            };
-            setLiveAuditData(dbAudit);
-            try {
-              localStorage.setItem(`seranking_audit_${cleanDomain}`, JSON.stringify(dbAudit));
-            } catch {}
-          }
-        })
-        .catch(() => {});
+        if (!isCancelled && pagesRes?.pages?.length > 0) {
+          const dbAudit = {
+            healthScore: auditOverview.summary.healthScore,
+            pagesCrawled: auditOverview.summary.pagesCrawled,
+            issuesFound: auditOverview.summary.totalIssues,
+            criticalIssues: auditOverview.summary.errors,
+            warnings: auditOverview.summary.warnings,
+            notices: auditOverview.summary.notices,
+            pages: pagesRes.pages,
+            issues: issuesRes?.issues || [],
+            resources: generateAuditResourcesForDomain(cleanDomain),
+            links: generateAuditLinksForDomain(cleanDomain),
+          };
+          setLiveAuditData(dbAudit);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(dbAudit));
+          } catch {}
+        }
+      })
+      .catch(() => {});
 
-      return () => {
-        isCancelled = true;
-      };
-    }
+    return () => {
+      isCancelled = true;
+    };
   }, [cleanDomain, activeProject?.id]);
 
   // Live Re-audit Crawler execution
@@ -671,7 +672,9 @@ export function SeRankingWebsiteAuditSuite() {
     triggerReaudit(formatted);
   };
 
-  // Merge Live or Fallback Data
+  // Authentic Project Audit Data (Strictly isolated by Project ID)
+  const hasAuditData = Boolean(liveAuditData && liveAuditData.pagesCrawled > 0);
+
   const currentPagesList = useMemo(() => {
     if (liveAuditData?.pages?.length > 0) {
       return liveAuditData.pages.map((p: any) => ({
@@ -683,22 +686,22 @@ export function SeRankingWebsiteAuditSuite() {
         respTime: `${((p.loadTimeMs || 80) / 1000).toFixed(2)}s`,
       }));
     }
-    return generateAuditPagesForDomain(domain);
-  }, [liveAuditData, domain]);
+    return [];
+  }, [liveAuditData]);
 
   const currentResourcesList = useMemo(() => {
     if (liveAuditData?.resources?.length > 0) {
       return liveAuditData.resources;
     }
-    return generateAuditResourcesForDomain(domain);
-  }, [liveAuditData, domain]);
+    return [];
+  }, [liveAuditData]);
 
   const currentLinksList = useMemo(() => {
     if (liveAuditData?.links?.length > 0) {
       return liveAuditData.links;
     }
-    return generateAuditLinksForDomain(domain);
-  }, [liveAuditData, domain]);
+    return [];
+  }, [liveAuditData]);
 
   const imgCount = useMemo(() => currentResourcesList.filter((r: any) => r.type === 'IMG').length, [currentResourcesList]);
   const cssCount = useMemo(() => currentResourcesList.filter((r: any) => r.type === 'CSS').length, [currentResourcesList]);
@@ -721,15 +724,15 @@ export function SeRankingWebsiteAuditSuite() {
         desc: i.description,
       }));
     }
-    return DETAILED_ISSUES;
+    return [];
   }, [liveAuditData]);
 
-  const currentHealthScore = liveAuditData?.healthScore ?? 70;
-  const currentPagesCrawled = liveAuditData?.pagesCrawled ?? 96;
-  const currentIssuesFound = liveAuditData?.issuesFound ?? 798;
-  const currentErrorsCount = liveAuditData?.criticalIssues ?? 287;
-  const currentWarningsCount = liveAuditData?.warnings ?? 288;
-  const currentNoticesCount = liveAuditData?.notices ?? 223;
+  const currentHealthScore = liveAuditData?.healthScore ?? null;
+  const currentPagesCrawled = liveAuditData?.pagesCrawled ?? 0;
+  const currentIssuesFound = liveAuditData?.issuesFound ?? 0;
+  const currentErrorsCount = liveAuditData?.criticalIssues ?? 0;
+  const currentWarningsCount = liveAuditData?.warnings ?? 0;
+  const currentNoticesCount = liveAuditData?.notices ?? 0;
 
   // Filtered pages
   const filteredPages = useMemo(() => {

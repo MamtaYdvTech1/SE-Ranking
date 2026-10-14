@@ -34,7 +34,7 @@ export function CompetitorWorkspace({ projectId, initialTab = "added" }: Competi
     activeProject?.domain ||
     projects?.find((p) => p.id === projectId)?.domain ||
     projects?.[0]?.domain ||
-    "flipkart.com";
+    "";
 
   const [competitors, setCompetitors] = useState<CompetitorDto[]>([]);
   const [projectDomain, setProjectDomain] = useState<string>(currentAppDomain);

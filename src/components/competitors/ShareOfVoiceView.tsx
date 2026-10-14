@@ -335,14 +335,14 @@ function formatComparisonDate(d: Date): string {
 
 export function ShareOfVoiceView({
   projectId,
-  projectDomain = "flipkart.com",
+  projectDomain = "",
   competitors = [],
 }: ShareOfVoiceViewProps) {
-  const cleanDomain = (projectDomain || "flipkart.com")
+  const cleanDomain = (projectDomain || "")
     .replace(/^https?:\/\//i, "")
     .replace(/^www\./i, "")
     .replace(/\/$/, "");
-  const brandTitle = cleanDomain.split(".")[0].toUpperCase();
+  const brandTitle = cleanDomain ? cleanDomain.split(".")[0].toUpperCase() : "DOMAIN";
 
   // 1. Notice alert banner dismissal
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);

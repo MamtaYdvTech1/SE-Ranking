@@ -96,17 +96,6 @@ export async function collectRankingsForProject(
   });
 
   if (!checkResponse.success && checkResponse.error) {
-    if (provider.id === 'dataforseo' && process.env.SERPER_API_KEY) {
-      const { SerperProvider } = await import('@/lib/rankings/serper');
-      const serper = new SerperProvider();
-      if (serper.isConfigured()) {
-        console.warn(`DataForSEO returned error: ${checkResponse.error.message}. Gracefully falling back to Serper provider.`);
-        checkResponse = await serper.checkRankings(requests, { timeoutMs: options?.timeoutMs || 20000 });
-      }
-    }
-  }
-
-  if (!checkResponse.success && checkResponse.error) {
     return {
       providerStatus: 'CONFIGURED',
       message: checkResponse.error.message || 'Provider failed to return rankings.',
@@ -326,21 +315,65 @@ export async function getRankingSummary(
   });
 
   if (keywords.length === 0) {
-    try {
-      const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
-      await seedProjectData(project.id, project.domain, project.brandName || project.name);
-      keywords = await prisma.keyword.findMany({
-        where: {
-          projectId: project.id,
-          deletedAt: null,
-          ...(engineFilter ? { searchEngine: engineFilter } : {}),
-          ...(groupFilter && groupFilter !== 'All groups' ? { groupName: groupFilter } : {}),
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-    } catch (seedErr) {
-      console.warn('Auto-seed project keywords notice:', seedErr);
-    }
+    return {
+      projectId: project.id,
+      domain: project.domain,
+      summary: {
+        totalKeywords: 0,
+        top1: 0,
+        top1Change: 0,
+        top2_3: 0,
+        top2_3Change: 0,
+        top3: 0,
+        top4_5: 0,
+        top4_5Change: 0,
+        top5: 0,
+        top6_10: 0,
+        top6_10Change: 0,
+        top10: 0,
+        top11_30: 0,
+        top11_30Change: 0,
+        top20: 0,
+        top30: 0,
+        top31_100: 0,
+        top31_100Change: 0,
+        top50: 0,
+        top100: 0,
+        unranked: 0,
+        improved: 0,
+        declined: 0,
+        unchanged: 0,
+        averagePosition: 0,
+        averagePositionChange: 0,
+        visibilityScore: 0,
+        visibilityScoreChange: 0,
+        totalSearchVolume: 0,
+        estimatedTraffic: 0,
+        trafficForecast: 0,
+        trafficForecastChange: 0,
+      },
+      keywordDistribution: [
+        { range: 'Top 1', count: 0, percentage: 0 },
+        { range: 'Top 2-3', count: 0, percentage: 0 },
+        { range: 'Top 4-10', count: 0, percentage: 0 },
+        { range: 'Top 11-20', count: 0, percentage: 0 },
+        { range: 'Top 21-50', count: 0, percentage: 0 },
+        { range: 'Top 51-100', count: 0, percentage: 0 },
+        { range: '100+', count: 0, percentage: 0 },
+      ],
+      trend: [],
+      serpDynamics: {
+        jumpedCount: 0,
+        droppedCount: 0,
+        unchangedCount: 0,
+        jumpedList: [],
+        droppedList: [],
+        unchangedList: [],
+      },
+      competitors: [],
+      pages: [],
+      keywords: [],
+    };
   }
 
   const totalKeywords = keywords.length;

@@ -17,6 +17,8 @@ export async function GET(
     const summary = await getProjectBacklinks(id);
     return NextResponse.json({
       success: true,
+      provider: 'YepAPI',
+      timestamp: new Date().toISOString(),
       data: summary,
     });
   } catch (err: unknown) {

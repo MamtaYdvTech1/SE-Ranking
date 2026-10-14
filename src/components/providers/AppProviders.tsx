@@ -117,6 +117,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   };
 
   const setActiveProject = (p: ProjectData | null) => {
+    queryClient.clear();
     setActiveProjectState(p);
     if (typeof window !== 'undefined') {
       if (p) {
@@ -128,6 +129,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         localStorage.setItem('se_ranking_has_project', 'false');
         setHasCreatedProjectState(false);
       }
+      window.dispatchEvent(new CustomEvent('seranking_project_change', { detail: p }));
     }
   };
 

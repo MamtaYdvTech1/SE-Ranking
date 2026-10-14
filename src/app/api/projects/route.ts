@@ -446,57 +446,30 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Seed comprehensive, realistic domain-tailored SEO data across all modules
-    import('@/services/seo/seed-project-data.service')
-      .then(({ seedProjectData }) =>
-        seedProjectData(createdProject.id, cleanDomain, projectName, initialKeywords)
-      )
-      .catch((seedErr) => console.warn('Initial project seed warning:', seedErr));
-
-    const isRealSeoMode = process.env.SEO_PROVIDER_MODE === 'real';
-    if (isRealSeoMode) {
-      // Real SEO mode: fetch real search volume from DataForSEO or provide realistic volumes
+    // Project-isolated initialization: only real data for this specific project
+    if (initialKeywords.length > 0) {
       try {
-        const { dataForSeoClient } = await import('@/services/seo/dataforseo.client');
-        let svUpdated = false;
-        if (dataForSeoClient.isConfigured() && initialKeywords.length > 0) {
-          const svRes = await dataForSeoClient.getSearchVolume(
-            initialKeywords,
-            resolvedCountryCode,
-            languageCode
-          );
-          if (svRes.success && Array.isArray(svRes.data) && svRes.data.length > 0) {
-            for (const item of svRes.data) {
+        const { yepApiClient } = await import('@/lib/yepapi');
+        if (yepApiClient.isConfigured()) {
+          const kwRes = await yepApiClient.getKeywords({
+            keywords: initialKeywords,
+            language: languageCode || 'en',
+          });
+          if (kwRes.ok && kwRes.data && Array.isArray(kwRes.data.keywords) && kwRes.data.keywords.length > 0) {
+            for (const item of kwRes.data.keywords) {
               await prisma.keyword.updateMany({
                 where: { projectId: createdProject.id, keywordText: item.keyword },
                 data: {
-                  monthlySearchVolume: item.searchVolume || 500,
-                  cpcUsd: item.cpc || 1.5,
-                  keywordDifficulty: item.competition || 30,
+                  monthlySearchVolume: item.volume ?? 0,
+                  cpcUsd: item.cpc ?? 0,
+                  keywordDifficulty: item.difficulty ?? 0,
                 },
               });
             }
-            svUpdated = true;
-          }
-        }
-
-        // If DataForSEO could not provide metrics, assign realistic keyword metrics
-        if (!svUpdated && initialKeywords.length > 0) {
-          for (const kw of initialKeywords) {
-            const kwHash = kw.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-            const realisticVol = Math.max(250, (kwHash * 43) % 15000 + 350);
-            await prisma.keyword.updateMany({
-              where: { projectId: createdProject.id, keywordText: kw.trim() },
-              data: {
-                monthlySearchVolume: realisticVol,
-                keywordDifficulty: (kwHash % 40) + 25,
-                cpcUsd: Number((1.2 + (kwHash % 35) * 0.08).toFixed(2)),
-              },
-            });
           }
         }
       } catch (err) {
-        console.warn('Live search volume fetch warning:', err);
+        console.warn('Initial search volume fetch warning:', err);
       }
     }
 

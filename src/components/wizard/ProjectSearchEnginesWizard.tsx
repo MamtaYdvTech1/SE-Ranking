@@ -49,7 +49,7 @@ export interface ProjectSearchEnginesWizardProps {
 export function ProjectSearchEnginesWizard({
   isOpen,
   onClose,
-  projectDomain = 'in.pinterest.com',
+  projectDomain = '',
   initialTab = 'search-engines',
   onEngineAdded,
   onPromptAdded,

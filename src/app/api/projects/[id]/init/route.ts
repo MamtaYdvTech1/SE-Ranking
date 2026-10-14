@@ -26,43 +26,22 @@ export async function POST(
     const isRealSeoMode = process.env.SEO_PROVIDER_MODE === 'real' || process.env.NODE_ENV === 'production';
     const kwTexts = keywords.map((k: any) => k.keywordText);
 
-    // 2. Fetch real search volume from DataForSEO if configured, or provide realistic volumes
+    // 2. Fetch real search volume from YepAPI if configured
     try {
-      const { dataForSeoClient } = await import('@/services/seo/dataforseo.client');
-      let svUpdated = false;
-      if (dataForSeoClient.isConfigured() && kwTexts.length > 0) {
-        const svRes = await dataForSeoClient.getSearchVolume(
-          kwTexts,
-          project.countryCode || 'us',
-          project.languageCode || 'en'
-        );
-        if (svRes.success && Array.isArray(svRes.data) && svRes.data.length > 0) {
-          for (const item of svRes.data) {
+      const { yepApiClient } = await import('@/lib/yepapi');
+      if (yepApiClient.isConfigured() && kwTexts.length > 0) {
+        const kwRes = await yepApiClient.getKeywords({
+          keywords: kwTexts,
+          language: project.languageCode || 'en',
+        });
+        if (kwRes.ok && kwRes.data && Array.isArray(kwRes.data.keywords) && kwRes.data.keywords.length > 0) {
+          for (const item of kwRes.data.keywords) {
             await prisma.keyword.updateMany({
               where: { projectId: project.id, keywordText: item.keyword },
               data: {
-                monthlySearchVolume: item.searchVolume || 500,
-                cpcUsd: item.cpc || 1.5,
-                keywordDifficulty: item.competition || 30,
-              },
-            });
-          }
-          svUpdated = true;
-        }
-      }
-
-      // If DataForSEO could not provide metrics (e.g. unverified/limited credentials), set realistic keyword search volumes
-      if (!svUpdated && kwTexts.length > 0) {
-        for (const kw of keywords) {
-          if (!kw.monthlySearchVolume || kw.monthlySearchVolume === 0) {
-            const kwHash = kw.keywordText.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
-            const realisticVol = Math.max(250, (kwHash * 43) % 15000 + 350);
-            await prisma.keyword.update({
-              where: { id: kw.id },
-              data: {
-                monthlySearchVolume: realisticVol,
-                keywordDifficulty: (kwHash % 40) + 25,
-                cpcUsd: Number((1.2 + (kwHash % 35) * 0.08).toFixed(2)),
+                monthlySearchVolume: item.volume ?? 0,
+                cpcUsd: item.cpc ?? 0,
+                keywordDifficulty: item.difficulty ?? 0,
               },
             });
           }
@@ -72,15 +51,7 @@ export async function POST(
       console.warn('Init live search volume fetch warning:', err);
     }
 
-    // 3. Seed domain-tailored history and records for all workspace modules
-    try {
-      const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
-      await seedProjectData(project.id, project.domain, project.brandName || project.name, kwTexts);
-    } catch (seedErr) {
-      console.warn('Project data seeding warning:', seedErr);
-    }
-
-    // 4. Background technical SEO website audit and ranking collection
+    // 3. Background technical SEO website audit and ranking collection
     let auditResult = null;
     let rankingResult = null;
     if (project.websiteAudit) {

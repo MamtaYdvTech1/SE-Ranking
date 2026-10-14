@@ -19,9 +19,22 @@ import {
 } from 'lucide-react';
 import { SeRankingDualCalendar } from './SeRankingDualCalendar';
 
+export interface CompetitorItem {
+  id: string;
+  domain: string;
+  visibility: number;
+  avgPosition: number;
+  commonKeywords: number;
+  totalKeywords: number;
+  organicTraffic: string;
+  backlinks: string;
+  tag: string;
+}
+
 export interface SeRankingShareOfVoiceProps {
   projectDomain?: string;
   projectId?: string;
+  addedCompetitors?: CompetitorItem[];
   showToast?: (msg: string) => void;
   onOpenGuestLink?: () => void;
   onOpenFeedback?: () => void;
@@ -52,346 +65,10 @@ export interface SovRow {
   expandedUrls?: SovUrl[];
 }
 
-export const REAL_SOV_ROWS: SovRow[] = [
-  {
-    id: 1,
-    domain: 'www.jio.com',
-    urls: 84,
-    kw: 142,
-    sov: '96.7%',
-    sovValue: 96.7,
-    traffic: '1.3M',
-    trafficValue: 1300000,
-    isYou: true,
-    expandedUrls: [
-      {
-        id: 'u1',
-        url: 'https://www.jio.com/',
-        keywordsInTop20: 68,
-        shareOfVoice: '48.2%',
-        sovValue: 48.2,
-        trafficForecast: '628.5K',
-        trafficValue: 628500,
-      },
-      {
-        id: 'u2',
-        url: 'https://www.jio.com/selfcare/recharge/mobility/',
-        keywordsInTop20: 34,
-        shareOfVoice: '24.1%',
-        sovValue: 24.1,
-        trafficForecast: '314.2K',
-        trafficValue: 314200,
-      },
-      {
-        id: 'u3',
-        url: 'https://www.jio.com/plans/',
-        keywordsInTop20: 21,
-        shareOfVoice: '11.5%',
-        sovValue: 11.5,
-        trafficForecast: '150.1K',
-        trafficValue: 150100,
-      },
-      {
-        id: 'u4',
-        url: 'https://www.jio.com/fiber/',
-        keywordsInTop20: 15,
-        shareOfVoice: '5.8%',
-        sovValue: 5.8,
-        trafficForecast: '75.8K',
-        trafficValue: 75800,
-      },
-      {
-        id: 'u5',
-        url: 'https://www.jio.com/5g/',
-        keywordsInTop20: 12,
-        shareOfVoice: '3.2%',
-        sovValue: 3.2,
-        trafficForecast: '41.7K',
-        trafficValue: 41700,
-      },
-      {
-        id: 'u6',
-        url: 'https://www.jio.com/selfcare/login/',
-        keywordsInTop20: 8,
-        shareOfVoice: '1.6%',
-        sovValue: 1.6,
-        trafficForecast: '20.9K',
-        trafficValue: 20900,
-      },
-      {
-        id: 'u7',
-        url: 'https://www.jio.com/help/faq',
-        keywordsInTop20: 6,
-        shareOfVoice: '0.9%',
-        sovValue: 0.9,
-        trafficForecast: '11.7K',
-        trafficValue: 11700,
-      },
-      {
-        id: 'u8',
-        url: 'https://www.jio.com/apps/myjio',
-        keywordsInTop20: 5,
-        shareOfVoice: '0.7%',
-        sovValue: 0.7,
-        trafficForecast: '9.1K',
-        trafficValue: 9100,
-      },
-      {
-        id: 'u9',
-        url: 'https://www.jio.com/jcms/esim/',
-        keywordsInTop20: 3,
-        shareOfVoice: '0.4%',
-        sovValue: 0.4,
-        trafficForecast: '5.2K',
-        trafficValue: 5200,
-      },
-      {
-        id: 'u10',
-        url: 'https://www.jio.com/business/',
-        keywordsInTop20: 2,
-        shareOfVoice: '0.3%',
-        sovValue: 0.3,
-        trafficForecast: '3.9K',
-        trafficValue: 3900,
-      },
-    ],
-  },
-  {
-    id: 2,
-    domain: 'rechargemojo.com',
-    urls: 14,
-    kw: 26,
-    sov: '1.2%',
-    sovValue: 1.2,
-    traffic: '15.8K',
-    trafficValue: 15800,
-    isYou: false,
-  },
-  {
-    id: 3,
-    domain: 'paytm.com',
-    urls: 18,
-    kw: 31,
-    sov: '0.8%',
-    sovValue: 0.8,
-    traffic: '10.4K',
-    trafficValue: 10400,
-    isYou: false,
-  },
-  {
-    id: 4,
-    domain: 'www.paisabazaar.com',
-    urls: 12,
-    kw: 22,
-    sov: '0.4%',
-    sovValue: 0.4,
-    traffic: '5.2K',
-    trafficValue: 5200,
-    isYou: false,
-  },
-  {
-    id: 5,
-    domain: 'play.google.com',
-    urls: 11,
-    kw: 19,
-    sov: '0.3%',
-    sovValue: 0.3,
-    traffic: '3.9K',
-    trafficValue: 3900,
-    isYou: false,
-  },
-  {
-    id: 6,
-    domain: 'apps.apple.com',
-    urls: 8,
-    kw: 14,
-    sov: '0.2%',
-    sovValue: 0.2,
-    traffic: '2.6K',
-    trafficValue: 2600,
-    isYou: false,
-  },
-  {
-    id: 7,
-    domain: 'rechargebatteries.org',
-    urls: 7,
-    kw: 11,
-    sov: '0.1%',
-    sovValue: 0.1,
-    traffic: '1.3K',
-    trafficValue: 1300,
-    isYou: false,
-  },
-  {
-    id: 8,
-    domain: 'indiapostgdsonline.cept.gov.in',
-    urls: 5,
-    kw: 9,
-    sov: '0.1%',
-    sovValue: 0.1,
-    traffic: '1.1K',
-    trafficValue: 1100,
-    isYou: false,
-  },
-  {
-    id: 9,
-    domain: 'www.airtel.in',
-    urls: 6,
-    kw: 10,
-    sov: '0.08%',
-    sovValue: 0.08,
-    traffic: '980',
-    trafficValue: 980,
-    isYou: false,
-  },
-  {
-    id: 10,
-    domain: 'www.myvi.in',
-    urls: 5,
-    kw: 8,
-    sov: '0.05%',
-    sovValue: 0.05,
-    traffic: '650',
-    trafficValue: 650,
-    isYou: false,
-  },
-  {
-    id: 11,
-    domain: 'www.phonepe.com',
-    urls: 4,
-    kw: 7,
-    sov: '0.04%',
-    sovValue: 0.04,
-    traffic: '520',
-    trafficValue: 520,
-    isYou: false,
-  },
-  {
-    id: 12,
-    domain: 'www.amazon.in',
-    urls: 4,
-    kw: 6,
-    sov: '0.03%',
-    sovValue: 0.03,
-    traffic: '390',
-    trafficValue: 390,
-    isYou: false,
-  },
-  {
-    id: 13,
-    domain: 'www.mobikwik.com',
-    urls: 3,
-    kw: 5,
-    sov: '0.02%',
-    sovValue: 0.02,
-    traffic: '260',
-    trafficValue: 260,
-    isYou: false,
-  },
-  {
-    id: 14,
-    domain: 'www.freecharge.in',
-    urls: 3,
-    kw: 4,
-    sov: '0.02%',
-    sovValue: 0.02,
-    traffic: '240',
-    trafficValue: 240,
-    isYou: false,
-  },
-  {
-    id: 15,
-    domain: 'www.bajajfinserv.in',
-    urls: 2,
-    kw: 4,
-    sov: '0.01%',
-    sovValue: 0.01,
-    traffic: '180',
-    trafficValue: 180,
-    isYou: false,
-  },
-  {
-    id: 16,
-    domain: 'www.google.com',
-    urls: 2,
-    kw: 3,
-    sov: '0.01%',
-    sovValue: 0.01,
-    traffic: '150',
-    trafficValue: 150,
-    isYou: false,
-  },
-  {
-    id: 17,
-    domain: 'en.wikipedia.org',
-    urls: 2,
-    kw: 3,
-    sov: '0.01%',
-    sovValue: 0.01,
-    traffic: '130',
-    trafficValue: 130,
-    isYou: false,
-  },
-  {
-    id: 18,
-    domain: 'www.cred.club',
-    urls: 1,
-    kw: 2,
-    sov: '0.01%',
-    sovValue: 0.01,
-    traffic: '110',
-    trafficValue: 110,
-    isYou: false,
-  },
-  {
-    id: 19,
-    domain: 'www.tataneu.com',
-    urls: 1,
-    kw: 2,
-    sov: '0.008%',
-    sovValue: 0.008,
-    traffic: '95',
-    trafficValue: 95,
-    isYou: false,
-  },
-  {
-    id: 20,
-    domain: 'www.sbi.co.in',
-    urls: 1,
-    kw: 1,
-    sov: '0.005%',
-    sovValue: 0.005,
-    traffic: '65',
-    trafficValue: 65,
-    isYou: false,
-  },
-  {
-    id: 21,
-    domain: '>20 myjio.com',
-    urls: 1,
-    kw: 1,
-    sov: '0.003%',
-    sovValue: 0.003,
-    traffic: '40',
-    trafficValue: 40,
-    isYou: false,
-  },
-  {
-    id: 22,
-    domain: 'Other competitors',
-    urls: 24,
-    kw: 35,
-    sov: '0.03%',
-    sovValue: 0.03,
-    traffic: '420',
-    trafficValue: 420,
-    isYou: false,
-  },
-];
-
 export function SeRankingShareOfVoice({
-  projectDomain = 'myjio.com',
+  projectDomain = '',
   projectId,
+  addedCompetitors = [],
   showToast = () => {},
   onOpenGuestLink = () => {},
   onOpenFeedback = () => {},
@@ -409,27 +86,62 @@ export function SeRankingShareOfVoice({
 
   const cleanDomain = projectDomain
     ? projectDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase()
-    : 'www.jio.com';
+    : '';
 
   const baseRows = useMemo<SovRow[]>(() => {
-    return REAL_SOV_ROWS.map((r, i) => {
-      if (i === 0) {
-        // Adapt target domain to match active project
-        const displayDomain = cleanDomain.includes('jio') ? 'www.jio.com' : cleanDomain;
-        const mappedUrls = r.expandedUrls?.map((u) => ({
-          ...u,
-          url: u.url.replace(/www\.jio\.com/g, displayDomain),
-        }));
-        return {
-          ...r,
-          domain: displayDomain,
-          isYou: true,
-          expandedUrls: mappedUrls,
-        };
-      }
-      return r;
+    if (!cleanDomain) return [];
+
+    const youRow: SovRow = {
+      id: 1,
+      domain: cleanDomain,
+      urls: 1,
+      kw: 0,
+      sov: '100%',
+      sovValue: 100,
+      traffic: '—',
+      trafficValue: 0,
+      isYou: true,
+      expandedUrls: [
+        {
+          id: 'u1',
+          url: `https://${cleanDomain}/`,
+          keywordsInTop20: 0,
+          shareOfVoice: '100%',
+          sovValue: 100,
+          trafficForecast: '—',
+          trafficValue: 0,
+        },
+      ],
+    };
+
+    const compRows: SovRow[] = (addedCompetitors || []).map((c, i) => {
+      const sovScore = c.visibility || 0;
+      return {
+        id: i + 2,
+        domain: c.domain,
+        urls: 1,
+        kw: c.totalKeywords || c.commonKeywords || 0,
+        sov: `${sovScore}%`,
+        sovValue: sovScore,
+        traffic: c.organicTraffic || '—',
+        trafficValue: 0,
+        isYou: false,
+        expandedUrls: [
+          {
+            id: `comp-u-${i + 1}`,
+            url: `https://${c.domain}/`,
+            keywordsInTop20: c.commonKeywords || 0,
+            shareOfVoice: `${sovScore}%`,
+            sovValue: sovScore,
+            trafficForecast: c.organicTraffic || '—',
+            trafficValue: 0,
+          },
+        ],
+      };
     });
-  }, [cleanDomain]);
+
+    return [youRow, ...compRows];
+  }, [cleanDomain, addedCompetitors]);
 
   const filteredRows = useMemo(() => {
     let rows = [...baseRows];
@@ -665,7 +377,7 @@ export function SeRankingShareOfVoice({
             />
           </div>
           <span className="text-[11px] text-[#8F94A6] font-medium">
-            Showing {filteredRows.length} of {REAL_SOV_ROWS.length} domains
+            Showing {filteredRows.length} of {baseRows.length} domains
           </span>
         </div>
 
@@ -878,6 +590,14 @@ export function SeRankingShareOfVoice({
                   </React.Fragment>
                 );
               })}
+              {filteredRows.length <= 1 && (
+                <tr>
+                  <td colSpan={5} className="py-6 px-4 text-center text-gray-500 bg-gray-50/40">
+                    <p className="font-semibold text-xs text-gray-700">No competitors added yet for {cleanDomain || 'this project'}.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Add up to 5 competitors in the "Added Competitors" tab to view Share of Voice comparison.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

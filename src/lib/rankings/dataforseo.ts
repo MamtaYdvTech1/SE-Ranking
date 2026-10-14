@@ -1,37 +1,30 @@
 /**
- * DataForSEO Live SERP Ranking Provider
- * Real organic ranking checking via DataForSEO SERP API v3
+ * DataForSEO Live SERP Ranking Provider (MIGRATED TO YEPAPI)
+ *
+ * NOTE: DataForSEO has been fully decommissioned and migrated to YepAPI.
+ * This class delegates all ranking checks to YepApiRankingProvider.
  */
 
 import {
   RankingProvider,
   KeywordCheckRequest,
   ProviderCheckResponse,
-  KeywordCheckResult,
   EngineCapability,
 } from './types';
-import { urlMatchesTarget } from './google';
+import { YepApiRankingProvider } from './yepapi';
+import { yepApiClient } from '@/lib/yepapi';
 
 export class DataForSeoProvider implements RankingProvider {
   readonly id = 'dataforseo';
-  readonly name = 'DataForSEO SERP v3';
+  readonly name = 'DataForSEO (Migrated to YepAPI)';
 
-  private login: string | undefined;
-  private password: string | undefined;
-  private baseUrl = 'https://api.dataforseo.com/v3/serp';
-
-  constructor() {
-    this.login = process.env.DATAFORSEO_LOGIN;
-    this.password = process.env.DATAFORSEO_PASSWORD || process.env.DATAFORSEO_API_KEY;
-  }
+  private yepProvider = new YepApiRankingProvider();
 
   isConfigured(): boolean {
-    return Boolean(
-      this.login &&
-      this.login.trim() !== '' &&
-      this.password &&
-      this.password.trim() !== '' &&
-      !this.login.includes('your_')
+    return yepApiClient.isConfigured() || Boolean(
+      process.env.DATAFORSEO_LOGIN &&
+      process.env.DATAFORSEO_PASSWORD &&
+      !process.env.DATAFORSEO_LOGIN.includes('your_')
     );
   }
 
@@ -45,7 +38,7 @@ export class DataForSeoProvider implements RankingProvider {
         supportsDesktop: true,
         supportsMobile: true,
         supportsSerpFeatures: true,
-        notes: configured ? 'Active via DataForSEO' : 'Requires DATAFORSEO_LOGIN & PASSWORD',
+        notes: configured ? 'Active via YepAPI' : 'Requires YEPAPI_KEY',
       },
       {
         engine: 'bing',
@@ -54,7 +47,7 @@ export class DataForSeoProvider implements RankingProvider {
         supportsDesktop: true,
         supportsMobile: true,
         supportsSerpFeatures: true,
-        notes: configured ? 'Active via DataForSEO' : 'Requires DATAFORSEO_LOGIN & PASSWORD',
+        notes: configured ? 'Active via YepAPI' : 'Requires YEPAPI_KEY',
       },
       {
         engine: 'yahoo',
@@ -63,7 +56,7 @@ export class DataForSeoProvider implements RankingProvider {
         supportsDesktop: true,
         supportsMobile: true,
         supportsSerpFeatures: false,
-        notes: configured ? 'Active via DataForSEO' : 'Requires DATAFORSEO_LOGIN & PASSWORD',
+        notes: configured ? 'Active via YepAPI' : 'Requires YEPAPI_KEY',
       },
       {
         engine: 'youtube',
@@ -72,7 +65,7 @@ export class DataForSeoProvider implements RankingProvider {
         supportsDesktop: true,
         supportsMobile: true,
         supportsSerpFeatures: false,
-        notes: configured ? 'Active via DataForSEO' : 'Requires DATAFORSEO_LOGIN & PASSWORD',
+        notes: configured ? 'Active via YepAPI' : 'Requires YEPAPI_KEY',
       },
       {
         engine: 'google-ai-overview',
@@ -81,7 +74,7 @@ export class DataForSeoProvider implements RankingProvider {
         supportsDesktop: true,
         supportsMobile: true,
         supportsSerpFeatures: true,
-        notes: 'Requires SerpApi provider mode',
+        notes: 'Supported via YepAPI',
       },
       {
         engine: 'chatgpt',
@@ -99,196 +92,6 @@ export class DataForSeoProvider implements RankingProvider {
     requests: KeywordCheckRequest[],
     options?: { timeoutMs?: number }
   ): Promise<ProviderCheckResponse> {
-    const checkedAt = new Date().toISOString();
-
-    if (!this.isConfigured()) {
-      return {
-        success: false,
-        results: [],
-        checkedCount: 0,
-        rankedCount: 0,
-        unrankedCount: 0,
-        provider: this.id,
-        checkedAt,
-        error: {
-          code: 'PROVIDER_UNCONFIGURED',
-          message:
-            'DataForSEO credentials are not configured. Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in environment variables.',
-          provider: this.id,
-          statusCode: 400,
-        },
-      };
-    }
-
-    const timeout = options?.timeoutMs || 20000;
-    const authHeader = 'Basic ' + Buffer.from(`${this.login}:${this.password}`).toString('base64');
-    const results: KeywordCheckResult[] = [];
-
-    for (const req of requests) {
-      try {
-        const enginePath = req.searchEngine === 'bing' ? 'bing/organic/live/regular' : 'google/organic/live/regular';
-        const payload = [
-          {
-            keyword: req.keyword,
-            location_code: this.mapCountryToLocationCode(req.countryCode),
-            language_code: req.languageCode || 'en',
-            device: req.device || 'desktop',
-            depth: 100,
-          },
-        ];
-
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeout);
-
-        const response = await fetch(`${this.baseUrl}/${enginePath}`, {
-          method: 'POST',
-          headers: {
-            Authorization: authHeader,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-
-        if (response.status === 401 || response.status === 403) {
-          return {
-            success: false,
-            results,
-            checkedCount: results.length,
-            rankedCount: results.filter((r) => r.position !== null).length,
-            unrankedCount: results.filter((r) => r.position === null).length,
-            provider: this.id,
-            checkedAt,
-            error: {
-              code: 'INVALID_API_KEY',
-              message: 'Invalid DataForSEO credentials.',
-              provider: this.id,
-              statusCode: 401,
-            },
-          };
-        }
-
-        if (response.status === 429) {
-          return {
-            success: false,
-            results,
-            checkedCount: results.length,
-            rankedCount: results.filter((r) => r.position !== null).length,
-            unrankedCount: results.filter((r) => r.position === null).length,
-            provider: this.id,
-            checkedAt,
-            error: {
-              code: 'RATE_LIMITED',
-              message: 'DataForSEO rate limit exceeded.',
-              provider: this.id,
-              statusCode: 429,
-            },
-          };
-        }
-
-        const data = await response.json();
-
-        if (data.status_code === 40104 || data.status_code === 40100) {
-          return {
-            success: false,
-            results,
-            checkedCount: results.length,
-            rankedCount: 0,
-            unrankedCount: results.length,
-            provider: this.id,
-            checkedAt,
-            error: {
-              code: 'ACCOUNT_VERIFICATION_REQUIRED',
-              message: data.status_message || 'Please verify your account before using the API on https://app.dataforseo.com/',
-              provider: this.id,
-              statusCode: 403,
-            },
-          };
-        }
-
-        const items = data.tasks?.[0]?.result?.[0]?.items || [];
-
-        let position: number | null = null;
-        let rankedUrl: string | null = null;
-        let title: string | null = null;
-        let snippet: string | null = null;
-
-        for (const item of items) {
-          if (item.type === 'organic' && urlMatchesTarget(item.url, req.targetDomain)) {
-            position = item.rank_absolute || item.rank_group || null;
-            rankedUrl = item.url;
-            title = item.title;
-            snippet = item.description;
-            break;
-          }
-        }
-
-        results.push({
-          keywordId: req.keywordId,
-          keyword: req.keyword,
-          searchEngine: req.searchEngine,
-          countryCode: req.countryCode,
-          device: req.device || 'desktop',
-          position: position && position <= 100 ? position : null,
-          rankedUrl,
-          title,
-          snippet,
-          serpFeatures: [],
-          checkedAt,
-          provider: this.id,
-        });
-      } catch (err: unknown) {
-        const isAbort = err instanceof Error && err.name === 'AbortError';
-        return {
-          success: false,
-          results,
-          checkedCount: results.length,
-          rankedCount: results.filter((r) => r.position !== null).length,
-          unrankedCount: results.filter((r) => r.position === null).length,
-          provider: this.id,
-          checkedAt,
-          error: {
-            code: isAbort ? 'TIMEOUT' : 'NETWORK_ERROR',
-            message: err instanceof Error ? err.message : 'DataForSEO connection failure',
-            provider: this.id,
-            statusCode: isAbort ? 504 : 502,
-          },
-        };
-      }
-    }
-
-    const rankedCount = results.filter((r) => r.position !== null).length;
-    return {
-      success: true,
-      results,
-      checkedCount: results.length,
-      rankedCount,
-      unrankedCount: results.length - rankedCount,
-      provider: this.id,
-      checkedAt,
-    };
-  }
-
-  private mapCountryToLocationCode(countryCode?: string): number {
-    const code = (countryCode || 'in').toLowerCase();
-    const map: Record<string, number> = {
-      us: 2840,
-      in: 2356,
-      uk: 2826,
-      gb: 2826,
-      ca: 2124,
-      au: 2036,
-      de: 2276,
-      fr: 2250,
-      es: 2724,
-      it: 2380,
-      nl: 2528,
-      jp: 2392,
-      br: 2076,
-      ae: 2784,
-      sg: 2702,
-    };
-    return map[code] || 2356;
+    return this.yepProvider.checkRankings(requests, options);
   }
 }

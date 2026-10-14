@@ -293,13 +293,13 @@ export function GoogleIndiaEngineBadge() {
 
 export function ProjectInsightsView({
   projectId,
-  projectDomain = "flipkart.com",
+  projectDomain = "",
 }: ProjectInsightsViewProps) {
-  const cleanDomain = (projectDomain || "flipkart.com")
+  const cleanDomain = (projectDomain || "")
     .replace(/^https?:\/\//i, "")
     .replace(/^www\./i, "")
     .replace(/\/$/, "");
-  const brand = cleanDomain.split(".")[0] || "brand";
+  const brand = cleanDomain ? (cleanDomain.split(".")[0] || "brand") : "project";
   const brandCap = brand.charAt(0).toUpperCase() + brand.slice(1);
 
   // Banner dismiss state

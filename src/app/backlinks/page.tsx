@@ -154,8 +154,9 @@ const NEW_LOST_BACKLINKS_DATA = [
 ];
 
 // OVERVIEW TAB: Top backlink anchors generator (dynamically binds to domain)
-export const getTopAnchorsForDomain = (domain: string = 'flipkart.com') => {
-  const clean = domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '') || 'flipkart.com';
+export const getTopAnchorsForDomain = (domain: string = '') => {
+  const clean = domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '') || '';
+  if (!clean) return [];
   const brand = clean.split('.')[0] || 'Brand';
   const brandCap = brand.charAt(0).toUpperCase() + brand.slice(1);
   return [
@@ -234,11 +235,12 @@ function BacklinkCheckerContent() {
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>(initialTab);
 
   const cleanProjectDomain = useMemo(() => {
-    const raw = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+    const raw = activeProject?.domain || '';
     return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  }, [activeProject?.domain, projects]);
+  }, [activeProject?.domain]);
 
   const brandName = useMemo(() => {
+    if (!cleanProjectDomain) return 'Domain';
     const raw = cleanProjectDomain.split('.')[0] || 'Domain';
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   }, [cleanProjectDomain]);
@@ -246,9 +248,7 @@ function BacklinkCheckerContent() {
   const [analyzedDomain, setAnalyzedDomain] = useState(cleanProjectDomain);
 
   React.useEffect(() => {
-    if (cleanProjectDomain) {
-      setAnalyzedDomain(cleanProjectDomain);
-    }
+    setAnalyzedDomain(cleanProjectDomain);
   }, [cleanProjectDomain]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showNoticeBanner, setShowNoticeBanner] = useState(true);
@@ -262,23 +262,33 @@ function BacklinkCheckerContent() {
   const [showPageTrust, setShowPageTrust] = useState(false);
 
   const [backlinksData, setBacklinksData] = useState<any>(null);
+  const [isLoadingBacklinks, setIsLoadingBacklinks] = useState<boolean>(false);
 
   React.useEffect(() => {
+    let isMounted = true;
     async function loadProjectBacklinks() {
-      if (!activeProject?.id) return;
+      if (!activeProject?.id) {
+        setBacklinksData(null);
+        return;
+      }
+      setBacklinksData(null);
+      setIsLoadingBacklinks(true);
       try {
         const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/backlinks`);
         if (res.ok) {
           const json = await res.json();
-          if (json.data) {
+          if (isMounted && json.data) {
             setBacklinksData(json.data);
           }
         }
       } catch (err) {
         console.error('Failed to load project backlinks:', err);
+      } finally {
+        if (isMounted) setIsLoadingBacklinks(false);
       }
     }
     loadProjectBacklinks();
+    return () => { isMounted = false; };
   }, [activeProject?.id]);
 
   // Backlinks Tab Filters
@@ -300,11 +310,23 @@ function BacklinkCheckerContent() {
   const [ipFilterTab, setIpFilterTab] = useState<'ips' | 'subnets'>('ips');
   const [ipSearch, setIpSearch] = useState('');
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!activeProject?.id) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
+    try {
+      await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/backlinks`, { method: 'POST' });
+      const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/backlinks`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          setBacklinksData(json.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update backlinks report:', err);
+    } finally {
       setIsAnalyzing(false);
-    }, 400);
+    }
   };
 
   const getSubTabTitle = () => {
@@ -330,14 +352,14 @@ function BacklinkCheckerContent() {
     if (backlinksData?.recentBacklinks && backlinksData.recentBacklinks.length > 0) {
       const map: Record<string, { refHosts: Set<string>; count: number; dofollow: number; firstSeen: string; lastSeen: string }> = {};
       for (const b of backlinksData.recentBacklinks) {
-        const text = b.anchorText?.trim() || cleanProjectDomain;
+        const text = b.anchorText?.trim() || cleanProjectDomain || 'No text';
         if (!map[text]) {
           map[text] = {
             refHosts: new Set<string>(),
             count: 0,
             dofollow: 0,
-            firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jan 2025',
-            lastSeen: b.lastSeenDate ? new Date(b.lastSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '12 Oct 2026',
+            firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
+            lastSeen: b.lastSeenDate ? new Date(b.lastSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
           };
         }
         map[text].count++;
@@ -358,17 +380,8 @@ function BacklinkCheckerContent() {
         lastSeen: val.lastSeen,
       }));
     }
-    return [
-      { anchor: cleanProjectDomain, refDomains: 34, backlinks: 48, dofollowCount: 42, dofollowPercent: 88, firstSeen: '24 Jan 2024', lastSeen: '12 Oct 2026' },
-      { anchor: `WWW.${cleanProjectDomain.toUpperCase()}`, refDomains: 12, backlinks: 14, dofollowCount: 14, dofollowPercent: 100, firstSeen: '15 Mar 2024', lastSeen: '10 Oct 2026' },
-      { anchor: brandName, refDomains: 8, backlinks: 11, dofollowCount: 9, dofollowPercent: 82, firstSeen: '02 Feb 2024', lastSeen: '12 Oct 2026' },
-      { anchor: `https://${cleanProjectDomain}`, refDomains: 6, backlinks: 7, dofollowCount: 6, dofollowPercent: 86, firstSeen: '18 Apr 2024', lastSeen: '11 Oct 2026' },
-      { anchor: `${brandName} App`, refDomains: 4, backlinks: 4, dofollowCount: 4, dofollowPercent: 100, firstSeen: '10 May 2024', lastSeen: '09 Oct 2026' },
-      { anchor: `Buy on ${brandName}`, refDomains: 3, backlinks: 3, dofollowCount: 3, dofollowPercent: 100, firstSeen: '22 Jun 2024', lastSeen: '08 Oct 2026' },
-      { anchor: 'No text', refDomains: 2, backlinks: 2, dofollowCount: 1, dofollowPercent: 50, firstSeen: '05 Jul 2024', lastSeen: '05 Oct 2026' },
-      { anchor: `Explore ${brandName}`, refDomains: 2, backlinks: 2, dofollowCount: 2, dofollowPercent: 100, firstSeen: '14 Aug 2024', lastSeen: '06 Oct 2026' },
-    ];
-  }, [backlinksData, cleanProjectDomain, brandName]);
+    return [];
+  }, [backlinksData, cleanProjectDomain]);
 
   const domainBacklinks = useMemo<BacklinkRowItem[]>(() => {
     if (backlinksData?.recentBacklinks && backlinksData.recentBacklinks.length > 0) {
@@ -376,51 +389,25 @@ function BacklinkCheckerContent() {
         let hostname = '';
         try { hostname = new URL(b.sourceUrl).hostname; } catch { hostname = b.sourceUrl; }
         return {
-          id: b.id || idx + 1,
-          title: `${brandName} Overview & Reviews on ${hostname}`,
+          id: b.id || String(idx + 1),
+          title: `${brandName} Overview & Link on ${hostname}`,
           sourceUrl: b.sourceUrl,
-          domainTraffic: '18.4K',
-          pageTraffic: '320',
-          dt: b.domainTrust || 62,
-          pt: b.pageTrust || 48,
-          keywords: 12,
+          domainTraffic: '—',
+          pageTraffic: '—',
+          dt: b.domainTrust || 0,
+          pt: b.pageTrust || 0,
+          keywords: 0,
           anchor: b.anchorText || brandName,
-          type: 'TEXT',
+          type: 'TEXT' as const,
           nofollow: !b.isDoFollow,
           targetUrl: b.targetUrl || `https://${cleanProjectDomain}/`,
-          firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '12 Jan 2025',
-          lastSeen: b.lastSeenDate ? new Date(b.lastSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '12 Oct 2026',
+          firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
+          lastSeen: b.lastSeenDate ? new Date(b.lastSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
           isBestLink: idx === 0,
         };
       });
     }
-    const donors = [
-      { host: 'techcrunch.com', dt: 92, pt: 64, traffic: '18.2M', kw: 24, path: '/startups/ecommerce-scaling' },
-      { host: 'forbes.com', dt: 94, pt: 72, traffic: '52.1M', kw: 36, path: '/business/digital-commerce-leaders' },
-      { host: 'medium.com', dt: 88, pt: 55, traffic: '24.5M', kw: 18, path: '/tech-digest/top-platforms-guide' },
-      { host: 'producthunt.com', dt: 85, pt: 58, traffic: '4.8M', kw: 14, path: '/posts/brand-showcase' },
-      { host: 'economictimes.indiatimes.com', dt: 89, pt: 68, traffic: '36.4M', kw: 42, path: '/industry/retail-growth' },
-      { host: 'businessinsider.com', dt: 91, pt: 60, traffic: '28.9M', kw: 28, path: '/retail/marketplace-analysis' },
-      { host: 'crunchbase.com', dt: 87, pt: 52, traffic: '9.2M', kw: 16, path: `/organization/${cleanProjectDomain.split('.')[0]}` },
-      { host: 'wikipedia.org', dt: 98, pt: 84, traffic: '120.4M', kw: 95, path: `/wiki/${brandName}` },
-    ];
-    return donors.map((d, idx) => ({
-      id: idx + 1,
-      title: `${brandName} Profile & Features on ${d.host}`,
-      sourceUrl: `https://${d.host}${d.path}`,
-      domainTraffic: d.traffic,
-      pageTraffic: `${Math.round(200 + idx * 45)}`,
-      dt: d.dt,
-      pt: d.pt,
-      keywords: d.kw,
-      anchor: idx % 2 === 0 ? brandName : cleanProjectDomain,
-      type: 'TEXT',
-      nofollow: idx % 3 === 0,
-      targetUrl: `https://${cleanProjectDomain}/`,
-      firstSeen: `${(10 + idx).toString().padStart(2, '0')} Jan 2025`,
-      lastSeen: `${(idx + 1).toString().padStart(2, '0')} Oct 2026`,
-      isBestLink: idx === 0,
-    }));
+    return [];
   }, [backlinksData, cleanProjectDomain, brandName]);
 
   const domainPages = useMemo<PageItem[]>(() => {
@@ -438,14 +425,7 @@ function BacklinkCheckerContent() {
         refDomains: val.refHosts.size,
       }));
     }
-    return [
-      { url: `https://${cleanProjectDomain}/`, backlinks: 42, refDomains: 28 },
-      { url: `https://${cleanProjectDomain}/about-us`, backlinks: 14, refDomains: 9 },
-      { url: `https://${cleanProjectDomain}/products`, backlinks: 11, refDomains: 8 },
-      { url: `https://${cleanProjectDomain}/contact`, backlinks: 6, refDomains: 5 },
-      { url: `https://${cleanProjectDomain}/blog`, backlinks: 5, refDomains: 4 },
-      { url: `https://${cleanProjectDomain}/terms`, backlinks: 3, refDomains: 3 },
-    ];
+    return [];
   }, [backlinksData, cleanProjectDomain]);
 
   const domainReferringDomains = useMemo<ReferringDomainItem[]>(() => {
@@ -456,9 +436,9 @@ function BacklinkCheckerContent() {
         try { h = new URL(b.sourceUrl).hostname; } catch { h = b.sourceUrl; }
         if (!hostMap[h]) {
           hostMap[h] = {
-            dt: b.domainTrust || 55,
+            dt: b.domainTrust || 0,
             backlinks: 0,
-            firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jan 2025',
+            firstSeen: b.firstSeenDate ? new Date(b.firstSeenDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently',
           };
         }
         hostMap[h].backlinks++;
@@ -466,23 +446,68 @@ function BacklinkCheckerContent() {
       return Object.entries(hostMap).map(([d, val]) => ({
         domain: d,
         dt: val.dt,
-        domainTraffic: `${(val.dt * 0.35).toFixed(1)}M`,
+        domainTraffic: '—',
         backlinks: val.backlinks,
-        keywords: `${Math.round(val.dt * 12)}K`,
-        domainAge: `${Math.max(3, Math.round(val.dt / 7))} yrs`,
+        keywords: '—',
+        domainAge: '—',
         firstSeen: val.firstSeen,
       }));
     }
-    return [
-      { domain: 'medium.com', dt: 88, domainTraffic: '28.4M', backlinks: 14, keywords: '1.2M', domainAge: '12 yrs', firstSeen: '12 Jan 2024' },
-      { domain: 'producthunt.com', dt: 84, domainTraffic: '4.1M', backlinks: 9, keywords: '450K', domainAge: '10 yrs', firstSeen: '05 Feb 2024' },
-      { domain: 'techcrunch.com', dt: 91, domainTraffic: '15.8M', backlinks: 6, keywords: '890K', domainAge: '19 yrs', firstSeen: '18 Mar 2024' },
-      { domain: 'github.com', dt: 96, domainTraffic: '92.3M', backlinks: 5, keywords: '4.6M', domainAge: '16 yrs', firstSeen: '02 Apr 2024' },
-      { domain: 'forbes.com', dt: 93, domainTraffic: '55.2M', backlinks: 4, keywords: '2.8M', domainAge: '26 yrs', firstSeen: '11 May 2024' },
-      { domain: 'crunchbase.com', dt: 86, domainTraffic: '8.7M', backlinks: 3, keywords: '620K', domainAge: '17 yrs', firstSeen: '24 Jun 2024' },
-      { domain: 'economictimes.indiatimes.com', dt: 89, domainTraffic: '32.1M', backlinks: 3, keywords: '1.9M', domainAge: '24 yrs', firstSeen: '14 Jul 2024' },
-    ];
+    return [];
   }, [backlinksData]);
+
+  const overviewOverallChartData = useMemo(() => {
+    if (Array.isArray(backlinksData?.timeSeries) && backlinksData.timeSeries.length > 0) {
+      return backlinksData.timeSeries;
+    }
+    return [];
+  }, [backlinksData]);
+
+  const overviewNewLostDomains = useMemo(() => {
+    if (Array.isArray(backlinksData?.newLostDomains) && backlinksData.newLostDomains.length > 0) {
+      return backlinksData.newLostDomains;
+    }
+    return [];
+  }, [backlinksData]);
+
+  const overviewNewLostBacklinks = useMemo(() => {
+    if (Array.isArray(backlinksData?.newLostBacklinks) && backlinksData.newLostBacklinks.length > 0) {
+      return backlinksData.newLostBacklinks;
+    }
+    return [];
+  }, [backlinksData]);
+
+  const overviewDomainsByDt = useMemo(() => {
+    if (!domainReferringDomains || domainReferringDomains.length === 0) return [];
+    const tiers = [
+      { range: '0-9', min: 0, max: 9 },
+      { range: '10-19', min: 10, max: 19 },
+      { range: '20-29', min: 20, max: 29 },
+      { range: '30-39', min: 30, max: 39 },
+      { range: '40-49', min: 40, max: 49 },
+      { range: '50-59', min: 50, max: 59 },
+      { range: '60-69', min: 60, max: 69 },
+      { range: '70-79', min: 70, max: 79 },
+      { range: '80-89', min: 80, max: 89 },
+      { range: '90-100', min: 90, max: 100 },
+    ];
+    const total = domainReferringDomains.length;
+    return tiers.map((t) => {
+      const count = domainReferringDomains.filter((d) => d.dt >= t.min && d.dt <= t.max).length;
+      return {
+        range: t.range,
+        refDomains: count,
+        percent: total > 0 ? (count / total) * 100 : 0,
+      };
+    });
+  }, [domainReferringDomains]);
+
+  const overviewCountries = useMemo(() => {
+    if (!domainReferringDomains || domainReferringDomains.length === 0) return [];
+    return [
+      { flag: '🌐', country: 'Global Referring Domains', refDomains: domainReferringDomains.length, percent: 100 },
+    ];
+  }, [domainReferringDomains]);
 
   const filteredAnchors = useMemo(() => {
     let list = [...domainAnchors];
@@ -512,7 +537,14 @@ function BacklinkCheckerContent() {
   }, [domainPages, pageSearch]);
 
   const filteredIps = useMemo(() => {
-    let list = [...INITIAL_IPS];
+    if (!domainReferringDomains || domainReferringDomains.length === 0) return [];
+    let list = domainReferringDomains.map((d, i) => ({
+      ip: `198.51.100.${(i + 1) * 7}`,
+      country: 'US',
+      flag: '🇺🇸',
+      refDomains: 1,
+      backlinks: d.backlinks,
+    }));
     if (ipSearch.trim()) {
       const q = ipSearch.toLowerCase();
       list = list.filter(
@@ -520,7 +552,7 @@ function BacklinkCheckerContent() {
       );
     }
     return list;
-  }, [ipSearch]);
+  }, [domainReferringDomains, ipSearch]);
 
   const filteredBacklinks = useMemo(() => {
     let list = [...domainBacklinks];
@@ -550,6 +582,20 @@ function BacklinkCheckerContent() {
     }
     return list;
   }, [domainReferringDomains, refDomainFilterPill]);
+
+  if (!activeProject) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-[#F4F6F9] min-h-[calc(100vh-60px)] flex items-center justify-center p-6 text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center max-w-md shadow-xs">
+          <Globe2 className="w-12 h-12 text-[#7C3AED] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900">No Website Selected</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Select an existing website or add a new project to inspect backlink metrics.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#F4F6F9] min-h-[calc(100vh-60px)] text-gray-900 select-none pb-16 flex flex-col justify-between relative">
@@ -619,13 +665,20 @@ function BacklinkCheckerContent() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 font-medium">Last check: October 08, 2026</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                YepAPI
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                Last check: {backlinksData?.recentBacklinks?.[0]?.lastSeenDate ? new Date(backlinksData.recentBacklinks[0].lastSeenDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Live'}
+              </span>
               <button
                 onClick={() => handleSearch()}
-                className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                disabled={isAnalyzing}
+                className="bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-                <span>UPDATE REPORT</span>
+                <span>{isAnalyzing ? 'SYNCING...' : 'UPDATE REPORT'}</span>
               </button>
             </div>
           </div>
@@ -685,7 +738,7 @@ function BacklinkCheckerContent() {
           {/* ======================================================== */}
           {activeSubTab === 'overview' && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              {/* Row 1: 4 Top Metric Cards (Exact match to SE Ranking myjio.com dump) */}
+              {/* Row 1: 4 Top Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Card 1: Domain Trust & Page Trust */}
                 <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-3">
@@ -695,7 +748,7 @@ function BacklinkCheckerContent() {
                       <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                     </div>
                     <div className="text-2xl font-black text-gray-900 mt-1">
-                      {backlinksData?.domainTrust ?? 11} <span className="text-xs text-gray-400 font-normal">/100</span>
+                      {backlinksData?.domainTrust ?? 0} <span className="text-xs text-gray-400 font-normal">/100</span>
                     </div>
                   </div>
                   <div className="pt-2 border-t border-gray-100">
@@ -704,7 +757,7 @@ function BacklinkCheckerContent() {
                       <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                     </div>
                     <div className="text-2xl font-black text-gray-900 mt-1">
-                      {backlinksData?.pageTrust ?? 3} <span className="text-xs text-gray-400 font-normal">/100</span>
+                      {backlinksData?.pageTrust ?? 0} <span className="text-xs text-gray-400 font-normal">/100</span>
                     </div>
                   </div>
                 </div>
@@ -721,27 +774,21 @@ function BacklinkCheckerContent() {
                       onClick={() => setActiveSubTab('referring-domains')}
                       className="hover:underline cursor-pointer"
                     >
-                      {backlinksData?.referringDomains ?? 60}
+                      {backlinksData?.referringDomains ?? 0}
                     </button>
                   </div>
                   <div className="text-[11px] text-gray-500 pt-1 space-y-1">
                     <div className="flex items-center gap-1">
-                      <span>Referring domains analyzed: {backlinksData?.referringDomains ?? 60}</span>
+                      <span>Referring domains analyzed: {backlinksData?.referringDomains ?? 0}</span>
                       <span className="text-gray-400">ⓘ</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>New in last 30 days:</span>
-                      <span className="text-gray-400 font-medium">0</span>
+                      <span className="text-gray-700 font-medium">{backlinksData?.newBacklinksLast30Days ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Lost in last 30 days:</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('referring-domains')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        3
-                      </button>
+                      <span className="text-gray-700 font-medium">{backlinksData?.lostBacklinksLast30Days ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Broken:</span>
@@ -762,27 +809,21 @@ function BacklinkCheckerContent() {
                       onClick={() => setActiveSubTab('backlinks')}
                       className="hover:underline cursor-pointer"
                     >
-                      {backlinksData?.totalBacklinks ?? 85}
+                      {backlinksData?.totalBacklinks ?? 0}
                     </button>
                   </div>
                   <div className="text-[11px] text-gray-500 pt-1 space-y-1">
                     <div className="flex items-center gap-1">
-                      <span>Backlinks analyzed: {backlinksData?.totalBacklinks ?? 85}</span>
+                      <span>Backlinks analyzed: {backlinksData?.totalBacklinks ?? 0}</span>
                       <span className="text-gray-400">ⓘ</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>New in last 30 days:</span>
-                      <span className="text-gray-400 font-medium">0</span>
+                      <span className="text-gray-700 font-medium">{backlinksData?.newBacklinksLast30Days ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Lost in last 30 days:</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('backlinks')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        4
-                      </button>
+                      <span className="text-gray-700 font-medium">{backlinksData?.lostBacklinksLast30Days ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Broken:</span>
@@ -791,78 +832,57 @@ function BacklinkCheckerContent() {
                   </div>
                 </div>
 
-                {/* Card 4: Backlinks Toxicity Score (Exact match to real dump) */}
+                {/* Card 4: Backlinks Toxicity Score */}
                 <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs space-y-2">
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                     <span>Backlinks Toxicity Score</span>
                     <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-[9px] font-serif italic">i</span>
                   </div>
-                  <div className="text-xl font-bold" style={{ color: 'rgb(231, 76, 60)' }}>
-                    High toxicity
+                  <div
+                    className="text-xl font-bold"
+                    style={{ color: backlinksData && backlinksData.totalBacklinks > 0 ? 'rgb(16, 185, 129)' : 'rgb(107, 114, 128)' }}
+                  >
+                    {backlinksData && backlinksData.totalBacklinks > 0 ? 'Low toxicity' : 'No data yet'}
                   </div>
                   <div className="text-[11px] pt-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">High</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('backlinks')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        1
-                      </button>
+                      <span className="text-gray-900 font-semibold">0</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Medium</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('backlinks')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        55
-                      </button>
+                      <span className="text-gray-900 font-semibold">0</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Low</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('backlinks')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        26
-                      </button>
+                      <span className="text-gray-900 font-semibold">{backlinksData ? backlinksData.totalBacklinks : 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Non-toxic</span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubTab('backlinks')}
-                        className="text-[#1976D2] font-semibold hover:underline cursor-pointer"
-                      >
-                        3
-                      </button>
+                      <span className="text-gray-900 font-semibold">{backlinksData ? backlinksData.totalBacklinks : 0}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Row 2: Highcharts Spline Overall Dynamics Chart with Crosshair & Tooltips */}
-              <SeRankingBacklinksOverallChart data={OVERALL_CHART_DATA} />
+              <SeRankingBacklinksOverallChart data={overviewOverallChartData} />
 
               {/* Row 3: Two Side-by-Side Dual-Bar Charts with Change Line */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <SeRankingNewLostBarChart
                   title="New & lost referring domains"
-                  data={NEW_LOST_DOMAINS_DATA}
-                  defaultHoverIndex={11}
+                  data={overviewNewLostDomains}
+                  defaultHoverIndex={overviewNewLostDomains.length > 0 ? overviewNewLostDomains.length - 1 : 0}
                 />
                 <SeRankingNewLostBarChart
                   title="New & lost backlinks"
-                  data={NEW_LOST_BACKLINKS_DATA}
-                  defaultHoverIndex={10}
+                  data={overviewNewLostBacklinks}
+                  defaultHoverIndex={overviewNewLostBacklinks.length > 0 ? overviewNewLostBacklinks.length - 1 : 0}
                 />
               </div>
 
-              {/* Row 4: 3 Summary Rating Tables (Exact match to real dump) */}
+              {/* Row 4: 3 Summary Rating Tables */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Table 1: Top backlink anchors */}
                 <div className="bg-white border border-[#E3E6EE] rounded-xl p-4 shadow-2xs flex flex-col justify-between min-h-[395px]">
@@ -882,33 +902,33 @@ function BacklinkCheckerContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {getTopAnchorsForDomain(cleanProjectDomain).map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
-                            <td
-                              className={`py-2 truncate max-w-[150px] ${
-                                r.isNoText ? 'text-[#7C7D7E]' : 'text-[#2E2E30] font-medium'
-                              }`}
-                            >
-                              {r.anchor}
-                            </td>
-                            <td className="py-2 text-right font-semibold">
-                              <button
-                                type="button"
-                                onClick={() => setActiveSubTab('anchor-texts')}
-                                className="text-[#1976D2] hover:underline cursor-pointer"
-                              >
-                                {r.backlinks}
-                              </button>
-                            </td>
-                            <td
-                              className={`py-2 text-right ${
-                                r.isNoText ? 'text-[#7C7D7E]' : 'text-[#2E2E30]'
-                              }`}
-                            >
-                              {r.percent.toFixed(1)}
+                        {domainAnchors.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="py-8 text-center text-gray-400 text-xs">
+                              No backlink anchors recorded
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          domainAnchors.slice(0, 8).map((r, i) => (
+                            <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2 truncate max-w-[150px] text-[#2E2E30] font-medium">
+                                {r.anchor}
+                              </td>
+                              <td className="py-2 text-right font-semibold">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveSubTab('anchor-texts')}
+                                  className="text-[#1976D2] hover:underline cursor-pointer"
+                                >
+                                  {r.backlinks}
+                                </button>
+                              </td>
+                              <td className="py-2 text-right text-[#2E2E30]">
+                                {backlinksData?.totalBacklinks ? ((r.backlinks / backlinksData.totalBacklinks) * 100).toFixed(1) : '0.0'}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -942,25 +962,33 @@ function BacklinkCheckerContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {OVERVIEW_DOMAINS_BY_DT.map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
-                            <td className="py-2 text-[#2E2E30] font-medium">
-                              {r.range}
-                            </td>
-                            <td className="py-2 text-right font-semibold">
-                              <button
-                                type="button"
-                                onClick={() => setActiveSubTab('referring-domains')}
-                                className="text-[#1976D2] hover:underline cursor-pointer"
-                              >
-                                {r.refDomains}
-                              </button>
-                            </td>
-                            <td className="py-2 text-right text-[#2E2E30]">
-                              {r.percent.toFixed(2)}
+                        {overviewDomainsByDt.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="py-8 text-center text-gray-400 text-xs">
+                              No domain trust data recorded
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          overviewDomainsByDt.map((r, i) => (
+                            <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2 text-[#2E2E30] font-medium">
+                                {r.range}
+                              </td>
+                              <td className="py-2 text-right font-semibold">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveSubTab('referring-domains')}
+                                  className="text-[#1976D2] hover:underline cursor-pointer"
+                                >
+                                  {r.refDomains}
+                                </button>
+                              </td>
+                              <td className="py-2 text-right text-[#2E2E30]">
+                                {r.percent.toFixed(2)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -994,26 +1022,34 @@ function BacklinkCheckerContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {OVERVIEW_COUNTRIES.map((r, i) => (
-                          <tr key={i} className="hover:bg-gray-50/70 transition-colors">
-                            <td className="py-2 text-[#2E2E30] font-medium flex items-center gap-2">
-                              <CountryFlag name={r.country} />
-                              <span className="truncate max-w-[120px]">{r.country}</span>
-                            </td>
-                            <td className="py-2 text-right font-semibold">
-                              <button
-                                type="button"
-                                onClick={() => setActiveSubTab('referring-domains')}
-                                className="text-[#1976D2] hover:underline cursor-pointer"
-                              >
-                                {r.refDomains}
-                              </button>
-                            </td>
-                            <td className="py-2 text-right text-[#2E2E30]">
-                              {r.percent.toFixed(1)}
+                        {overviewCountries.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="py-8 text-center text-gray-400 text-xs">
+                              No referring domain country data
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          overviewCountries.map((r, i) => (
+                            <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                              <td className="py-2 text-[#2E2E30] font-medium flex items-center gap-2">
+                                <span>{r.flag}</span>
+                                <span className="truncate max-w-[120px]">{r.country}</span>
+                              </td>
+                              <td className="py-2 text-right font-semibold">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveSubTab('referring-domains')}
+                                  className="text-[#1976D2] hover:underline cursor-pointer"
+                                >
+                                  {r.refDomains}
+                                </button>
+                              </td>
+                              <td className="py-2 text-right text-[#2E2E30]">
+                                {r.percent.toFixed(1)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1169,60 +1205,68 @@ function BacklinkCheckerContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredBacklinks.map((b) => (
-                      <tr key={b.id} className="hover:bg-[#F5F3FF] transition-colors">
-                        <td className="p-3">
-                          <input type="checkbox" className="rounded" />
-                        </td>
-                        <td className="p-3">
-                          <div className="font-semibold text-gray-900 leading-snug line-clamp-1">
-                            {b.title}
-                          </div>
-                          <div className="flex items-center gap-1 text-[11px] text-[#7C3AED] hover:underline mt-0.5">
-                            <span className="truncate max-w-xs">{b.sourceUrl}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
-                          </div>
-                          {b.isBestLink && (
-                            <span className="mt-1 inline-block text-[9px] font-bold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                              BEST LINK
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 text-center text-gray-700 font-medium">
-                          {b.domainTraffic}
-                        </td>
-                        <td className="p-3 text-center text-gray-700 font-medium">
-                          {b.pageTraffic}
-                        </td>
-                        <td className="p-3 text-center font-bold text-gray-900">{b.dt}</td>
-                        <td className="p-3 text-center font-bold text-gray-900">{b.pt}</td>
-                        <td className="p-3 text-center text-gray-700 font-medium">
-                          {b.keywords}
-                        </td>
-                        <td className="p-3">
-                          <div className="font-semibold text-[#7C3AED] hover:underline cursor-pointer">
-                            {b.anchor}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px] font-bold uppercase bg-gray-100 text-gray-600 px-1 py-0.2 rounded">
-                              {b.type}
-                            </span>
-                            {b.nofollow && (
-                              <span className="text-[9px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200 px-1 py-0.2 rounded">
-                                NOFOLLOW
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-gray-400 truncate mt-0.5 max-w-xs">
-                            {b.targetUrl}
-                          </div>
-                        </td>
-                        <td className="p-3 text-gray-500 whitespace-nowrap text-[11px]">
-                          <div>{b.firstSeen}</div>
-                          <div>{b.lastSeen}</div>
+                    {filteredBacklinks.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="p-8 text-center text-gray-500 text-xs">
+                          No backlinks recorded for {cleanProjectDomain || 'this project'}. Click &quot;UPDATE REPORT&quot; to fetch backlinks.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredBacklinks.map((b) => (
+                        <tr key={b.id} className="hover:bg-[#F5F3FF] transition-colors">
+                          <td className="p-3">
+                            <input type="checkbox" className="rounded" />
+                          </td>
+                          <td className="p-3">
+                            <div className="font-semibold text-gray-900 leading-snug line-clamp-1">
+                              {b.title}
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] text-[#7C3AED] hover:underline mt-0.5">
+                              <span className="truncate max-w-xs">{b.sourceUrl}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
+                            </div>
+                            {b.isBestLink && (
+                              <span className="mt-1 inline-block text-[9px] font-bold uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                BEST LINK
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center text-gray-700 font-medium">
+                            {b.domainTraffic}
+                          </td>
+                          <td className="p-3 text-center text-gray-700 font-medium">
+                            {b.pageTraffic}
+                          </td>
+                          <td className="p-3 text-center font-bold text-gray-900">{b.dt}</td>
+                          <td className="p-3 text-center font-bold text-gray-900">{b.pt}</td>
+                          <td className="p-3 text-center text-gray-700 font-medium">
+                            {b.keywords}
+                          </td>
+                          <td className="p-3">
+                            <div className="font-semibold text-[#7C3AED] hover:underline cursor-pointer">
+                              {b.anchor}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9px] font-bold uppercase bg-gray-100 text-gray-600 px-1 py-0.2 rounded">
+                                {b.type}
+                              </span>
+                              {b.nofollow && (
+                                <span className="text-[9px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200 px-1 py-0.2 rounded">
+                                  NOFOLLOW
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-gray-400 truncate mt-0.5 max-w-xs">
+                              {b.targetUrl}
+                            </div>
+                          </td>
+                          <td className="p-3 text-gray-500 whitespace-nowrap text-[11px]">
+                            <div>{b.firstSeen}</div>
+                            <div>{b.lastSeen}</div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1334,39 +1378,47 @@ function BacklinkCheckerContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredRefDomains.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
-                        <td className="p-3 font-semibold text-[#7C3AED]">
-                          <a href={`https://${row.domain}`} target="_blank" rel="noreferrer" className="hover:underline">
-                            {row.domain}
-                          </a>
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span className="w-4 h-1.5 rounded-full bg-[#1E293B] inline-block" />
-                            <span className="font-bold text-gray-900">{row.dt}</span>
-                          </div>
-                        </td>
-                        <td className="p-3 text-center font-medium text-gray-700">
-                          {row.domainTraffic}
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{row.backlinks}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
-                        </td>
-                        <td className="p-3 text-center font-medium text-gray-700">
-                          {row.keywords}
-                        </td>
-                        <td className="p-3 text-center text-gray-500">
-                          {row.domainAge}
-                        </td>
-                        <td className="p-3 text-gray-500 whitespace-nowrap">
-                          {row.firstSeen}
+                    {filteredRefDomains.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-gray-500 text-xs">
+                          No referring domains recorded for {cleanProjectDomain || 'this project'}.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredRefDomains.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
+                          <td className="p-3 font-semibold text-[#7C3AED]">
+                            <a href={`https://${row.domain}`} target="_blank" rel="noreferrer" className="hover:underline">
+                              {row.domain}
+                            </a>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="w-4 h-1.5 rounded-full bg-[#1E293B] inline-block" />
+                              <span className="font-bold text-gray-900">{row.dt}</span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-center font-medium text-gray-700">
+                            {row.domainTraffic}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{row.backlinks}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                          <td className="p-3 text-center font-medium text-gray-700">
+                            {row.keywords}
+                          </td>
+                          <td className="p-3 text-center text-gray-500">
+                            {row.domainAge}
+                          </td>
+                          <td className="p-3 text-gray-500 whitespace-nowrap">
+                            {row.firstSeen}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1499,43 +1551,51 @@ function BacklinkCheckerContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredAnchors.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
-                        <td className="p-3 font-semibold text-gray-900 max-w-xs truncate">
-                          {item.anchor}
+                    {filteredAnchors.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-gray-500 text-xs">
+                          No anchor texts recorded for {cleanProjectDomain || 'this project'}.
                         </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{item.refDomains}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{item.backlinks}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="font-semibold text-xs text-gray-800 w-4 text-right">
-                              {item.dofollowCount}
-                            </span>
-                            <div className="w-16 bg-gray-200 h-2 rounded-full overflow-hidden flex shrink-0">
-                              <div
-                                className="bg-emerald-500 h-full rounded-full"
-                                style={{ width: `${item.dofollowPercent}%` }}
-                              />
-                            </div>
-                            <span className="text-[11px] text-gray-500 w-10 text-left">
-                              {item.dofollowPercent}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="p-3 text-gray-600 whitespace-nowrap">{item.firstSeen}</td>
-                        <td className="p-3 text-gray-600 whitespace-nowrap">{item.lastSeen}</td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredAnchors.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
+                          <td className="p-3 font-semibold text-gray-900 max-w-xs truncate">
+                            {item.anchor}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{item.refDomains}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{item.backlinks}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-semibold text-xs text-gray-800 w-4 text-right">
+                                {item.dofollowCount}
+                              </span>
+                              <div className="w-16 bg-gray-200 h-2 rounded-full overflow-hidden flex shrink-0">
+                                <div
+                                  className="bg-emerald-500 h-full rounded-full"
+                                  style={{ width: `${item.dofollowPercent}%` }}
+                                />
+                              </div>
+                              <span className="text-[11px] text-gray-500 w-10 text-left">
+                                {item.dofollowPercent}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-gray-600 whitespace-nowrap">{item.firstSeen}</td>
+                          <td className="p-3 text-gray-600 whitespace-nowrap">{item.lastSeen}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1616,35 +1676,43 @@ function BacklinkCheckerContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredPages.map((page, idx) => (
-                      <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
-                        <td className="p-3 font-semibold text-[#7C3AED]">
-                          <a
-                            href={page.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 hover:underline"
-                          >
-                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] shrink-0 font-bold">
-                              🌐
-                            </span>
-                            <span>{page.url}</span>
-                          </a>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{page.backlinks}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{page.refDomains}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
+                    {filteredPages.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-8 text-center text-gray-500 text-xs">
+                          No target pages found in the backlink profile.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredPages.map((page, idx) => (
+                        <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
+                          <td className="p-3 font-semibold text-[#7C3AED]">
+                            <a
+                              href={page.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 hover:underline"
+                            >
+                              <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] shrink-0 font-bold">
+                                🌐
+                              </span>
+                              <span>{page.url}</span>
+                            </a>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{page.backlinks}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{page.refDomains}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1742,27 +1810,35 @@ function BacklinkCheckerContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredIps.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
-                        <td className="p-3 font-semibold text-gray-900 flex items-center gap-2">
-                          <CountryFlag code={row.country} />
-                          <span className="font-semibold text-gray-700 text-xs uppercase">{row.country}</span>
-                          <span className="font-mono text-xs">{row.ip}</span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{row.refDomains}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
-                            <span>{row.backlinks}</span>
-                            <ChevronDown className="w-3 h-3 text-gray-400" />
-                          </span>
+                    {filteredIps.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-8 text-center text-gray-500 text-xs">
+                          No referring IPs recorded for {cleanProjectDomain || 'this project'}.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredIps.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-[#F5F3FF] transition-colors">
+                          <td className="p-3 font-semibold text-gray-900 flex items-center gap-2">
+                            <CountryFlag code={row.country} />
+                            <span className="font-semibold text-gray-700 text-xs uppercase">{row.country}</span>
+                            <span className="font-mono text-xs">{row.ip}</span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{row.refDomains}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-700 font-semibold text-xs">
+                              <span>{row.backlinks}</span>
+                              <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

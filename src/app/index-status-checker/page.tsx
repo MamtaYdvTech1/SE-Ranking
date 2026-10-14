@@ -44,7 +44,7 @@ function IndexStatusCheckerContent() {
   const isResultsTab = searchParams.get('tab') === 'results';
 
   const cleanDomain = useMemo(() => {
-    const raw = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+    const raw = activeProject?.domain || (projects && projects[0]?.domain) || '';
     return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
   }, [activeProject?.domain, projects]);
 

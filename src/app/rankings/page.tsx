@@ -495,7 +495,7 @@ const toRankNum = (r: number | string | null | undefined): number | null => {
 };
 
 const generateDynamicKeywordsForDomain = (targetDomain: string): TeamsKeywordItem[] => {
-  const clean = (targetDomain || 'flipkart.com').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase();
+  const clean = (targetDomain || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase();
   const brand = clean.split('.')[0] || 'brand';
   const brandCap = brand.charAt(0).toUpperCase() + brand.slice(1);
 
@@ -943,9 +943,9 @@ function RankingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentProject = activeProject || projects[0] || null;
-  const domain = currentProject?.domain || 'flipkart.com';
+  const domain = currentProject?.domain || '';
   const cleanDomain = useMemo(() => {
-    return (domain || 'flipkart.com')
+    return (domain || '')
       .replace(/^https?:\/\//i, '')
       .replace(/^www\./i, '')
       .replace(/\/.*$/, '')
@@ -1870,7 +1870,7 @@ function RankingsPageContent() {
 
   const handlePerformExport = () => {
     setIsExportModalOpen(false);
-    const domainName = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
+    const domainName = activeProject?.domain || (projects && projects[0]?.domain) || 'project';
     const dateStr = '2026-10-12';
 
     if (selectedExportFormat === 'csv') {
@@ -2225,14 +2225,14 @@ function RankingsPageContent() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(`Rankings updated for ${data.checkedCount} keywords!`);
+        showToast(data.message || `Rankings updated via YepAPI for ${data.checkedCount} keywords!`);
         fetchRankingsData();
       } else {
-        showToast(`Rankings updated for ${selectedIds?.length || keywords.length} keywords!`);
+        showToast(data.message || data.error || 'Provider failed to update rankings.');
         fetchRankingsData();
       }
     } catch {
-      showToast(`Rankings updated for ${selectedIds?.length || keywords.length} keywords!`);
+      showToast('Network error while requesting ranking check.');
       fetchRankingsData();
     } finally {
       setIsRechecking(false);
@@ -7435,7 +7435,7 @@ function RankingsPageContent() {
       <ProjectSearchEnginesWizard
         isOpen={isAddEngineModalOpen}
         onClose={() => setIsAddEngineModalOpen(false)}
-        projectDomain={activeProject?.domain || 'in.pinterest.com'}
+        projectDomain={activeProject?.domain || ''}
         initialTab="search-engines"
         onEngineAdded={(newEngine) => {
           const added = {

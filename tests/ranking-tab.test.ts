@@ -169,7 +169,20 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
     }
   });
 
-  it('validates DataForSEO account verification requirement handling', async () => {
+  it('validates YepAPI provider configuration and search engine capabilities', async () => {
+    const { YepApiRankingProvider } = await import('../src/lib/rankings/yepapi');
+    const provider = new YepApiRankingProvider();
+    expect(provider.id).toBe('yepapi');
+    expect(provider.name).toContain('YepAPI');
+    expect(provider.isConfigured()).toBe(true);
+
+    const capabilities = provider.getEngineCapabilities();
+    expect(capabilities.length).toBeGreaterThan(0);
+    expect(capabilities.some((c) => c.engine === 'google')).toBe(true);
+    expect(capabilities.some((c) => c.engine === 'google-ai-overview')).toBe(true);
+  });
+
+  it('validates DataForSEO migration wrapper compatibility', async () => {
     const provider = new DataForSeoProvider();
     expect(provider.isConfigured()).toBe(true);
 

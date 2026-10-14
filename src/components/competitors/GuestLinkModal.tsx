@@ -30,7 +30,7 @@ export function GuestLinkModal({
   isOpen,
   onClose,
   projectId,
-  projectDomain = "flipkart.com",
+  projectDomain = "",
   hideSearchVolume = false,
   setHideSearchVolume,
   includeFilterSort = true,

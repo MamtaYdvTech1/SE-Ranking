@@ -11,15 +11,25 @@ export default function CompetitiveResearchGooglePage() {
   const { activeProject } = useApp();
   const [viewState, setViewState] = useState<'start' | 'dashboard'>('start');
   const [searchTarget, setSearchTarget] = useState({
-    domain: activeProject?.domain || 'amazon.in',
+    domain: activeProject?.domain || '',
     scope: '*.domain.com/*',
     country: 'United States of America',
-    brandName: activeProject?.brandName || (activeProject?.domain ? activeProject.domain.split('.')[0] : 'Amazon'),
+    brandName: activeProject?.brandName || (activeProject?.domain ? activeProject.domain.split('.')[0] : ''),
   });
+
+  React.useEffect(() => {
+    if (activeProject?.domain) {
+      setSearchTarget((prev) => ({
+        ...prev,
+        domain: activeProject.domain,
+        brandName: activeProject.brandName || activeProject.domain.split('.')[0] || '',
+      }));
+    }
+  }, [activeProject?.domain, activeProject?.brandName]);
 
   const handleAnalysisSuccess = (data: any) => {
     setSearchTarget({
-      domain: data.domain || activeProject?.domain || 'amazon.in',
+      domain: data.domain || activeProject?.domain || '',
       scope: data.scope || '*.domain.com/*',
       country: data.country || 'United States of America',
       brandName: data.brandName || activeProject?.brandName || '',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -27,6 +27,7 @@ interface SeRankingSummaryTabProps {
     domain: string;
     country?: string;
     countryCode?: string;
+    competitors?: Array<{ id?: string; name?: string; domain: string; visibilityScore?: number }>;
   };
   keywords: Array<{
     id: string;
@@ -75,67 +76,117 @@ export function SeRankingSummaryTab({
   const countOver100 = keywords.filter((k) => k.rank > 100 || k.rank === 0).length;
 
   const inTop10 = countTop1 + countTop2_3 + countTop4_5 + countTop6_10;
-  const searchVisibility = totalKeywords > 0 ? Number(((inTop10 / totalKeywords) * 100).toFixed(1)) : 12.9;
+  const searchVisibility = totalKeywords > 0 ? Number(((inTop10 / totalKeywords) * 100).toFixed(1)) : 0;
 
   const rankedKeywords = keywords.filter((k) => k.rank > 0 && k.rank <= 100);
   const avgPosition =
     rankedKeywords.length > 0
       ? Math.round(rankedKeywords.reduce((acc, k) => acc + k.rank, 0) / rankedKeywords.length)
-      : (totalKeywords > 0 ? 81 : 0);
+      : 0;
 
   const jumpedKeywords = keywords.filter((k) => k.change > 0);
   const droppedKeywords = keywords.filter((k) => k.change < 0);
   const unchangedKeywords = keywords.filter((k) => k.change === 0);
 
-  const jumpedCount = jumpedKeywords.length || (totalKeywords > 0 ? 0 : 33);
-  const droppedCount = droppedKeywords.length || (totalKeywords > 0 ? 0 : 24);
-  const unchangedCount = unchangedKeywords.length || (totalKeywords > 0 ? totalKeywords : 297);
-  const totalMovement = jumpedCount + droppedCount + unchangedCount || 354;
+  const jumpedCount = jumpedKeywords.length;
+  const droppedCount = droppedKeywords.length;
+  const unchangedCount = unchangedKeywords.length;
+  const totalMovement = jumpedCount + droppedCount + unchangedCount;
 
-  const jumpedPct = Number(((jumpedCount / totalMovement) * 100).toFixed(1));
-  const droppedPct = Number(((droppedCount / totalMovement) * 100).toFixed(1));
-  const unchangedPct = Number(((unchangedCount / totalMovement) * 100).toFixed(1));
+  const jumpedPct = totalMovement > 0 ? Number(((jumpedCount / totalMovement) * 100).toFixed(1)) : 0;
+  const droppedPct = totalMovement > 0 ? Number(((droppedCount / totalMovement) * 100).toFixed(1)) : 0;
+  const unchangedPct = totalMovement > 0 ? Number(((unchangedCount / totalMovement) * 100).toFixed(1)) : 0;
 
-  // Top keywords for the 3 tables
-  const topKeywordsList = [...keywords]
+  // Real Top, Jumped, and Dropped lists strictly from project keywords
+  const displayTopKeywords = [...keywords]
     .filter((k) => k.rank > 0)
     .sort((a, b) => a.rank - b.rank)
     .slice(0, 5);
 
-  const topJumpedList = [...jumpedKeywords]
+  const displayJumped = [...jumpedKeywords]
     .sort((a, b) => b.change - a.change)
     .slice(0, 5);
 
-  const topDroppedList = [...droppedKeywords]
+  const displayDropped = [...droppedKeywords]
     .sort((a, b) => a.change - b.change)
     .slice(0, 5);
 
-  // Default sample lists if empty to give full SE Ranking visual preview
-  const displayTopKeywords = topKeywordsList.length > 0 ? topKeywordsList : [
-    { id: '1', keyword: `${project.name} login`, rank: 2, prevRank: 2, change: 0, visibility: 100 },
-    { id: '2', keyword: `${project.name} app`, rank: 2, prevRank: 2, change: 0, visibility: 100 },
-    { id: '3', keyword: `${project.name} pricing`, rank: 3, prevRank: 8, change: 5, visibility: 100 },
-    { id: '4', keyword: `${project.name} download`, rank: 3, prevRank: 3, change: 0, visibility: 100 },
-    { id: '5', keyword: `${project.name} web`, rank: 3, prevRank: 3, change: 0, visibility: 100 },
-  ];
+  const getBracketDistribution = (list: typeof keywords) => {
+    const total = list.length;
+    const brackets = [
+      { name: 'Top 1', min: 1, max: 1, color: '#36B37E' },
+      { name: 'Top 2-3', min: 2, max: 3, color: '#4ABA8B' },
+      { name: 'Top 4-5', min: 4, max: 5, color: '#5EC298' },
+      { name: 'Top 6-10', min: 6, max: 10, color: '#72CAA4' },
+      { name: 'Top 11-30', min: 11, max: 30, color: '#86D1B2' },
+      { name: 'Top 31-100', min: 31, max: 100, color: '#9AD9BE' },
+      { name: '>100', min: 101, max: 999999, color: '#AFE1CB' },
+    ];
+    return brackets.map((b) => {
+      const count = list.filter((k) =>
+        b.min === 101 ? k.rank > 100 || k.rank === 0 : k.rank >= b.min && k.rank <= b.max
+      ).length;
+      const pct = total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0%';
+      return { name: b.name, color: b.color, pct, count };
+    });
+  };
 
-  const displayJumped = topJumpedList.length > 0 ? topJumpedList : [
-    { id: 'j1', keyword: `${project.name} free trial`, rank: 3, prevRank: 8, change: 5, visibility: 100 },
-    { id: 'j2', keyword: `${project.name} screen share`, rank: 3, prevRank: 100, change: 97, visibility: 100 },
-    { id: 'j3', keyword: `${project.name} recording`, rank: 3, prevRank: 6, change: 3, visibility: 100 },
-    { id: 'j4', keyword: `${project.name} meeting controls`, rank: 3, prevRank: 9, change: 6, visibility: 100 },
-    { id: 'j5', keyword: `${project.name} desktop support`, rank: 4, prevRank: 5, change: 1, visibility: 85 },
-  ];
-
-  const displayDropped = topDroppedList.length > 0 ? topDroppedList : [
-    { id: 'd1', keyword: `${project.name} live meeting`, rank: 4, prevRank: 3, change: -1, visibility: 85 },
-    { id: 'd2', keyword: `${project.name} audio call`, rank: 5, prevRank: 4, change: -1, visibility: 60 },
-    { id: 'd3', keyword: `${project.name} recharge online`, rank: 6, prevRank: 5, change: -1, visibility: 50 },
-    { id: 'd4', keyword: `${project.name} screen share mac`, rank: 6, prevRank: 5, change: -1, visibility: 50 },
-    { id: 'd5', keyword: `${project.name} mobile app sync`, rank: 6, prevRank: 4, change: -2, visibility: 50 },
-  ];
+  const jumpedDistribution = getBracketDistribution(jumpedKeywords);
+  const droppedDistribution = getBracketDistribution(droppedKeywords).map((d) => ({
+    ...d,
+    color: d.name === 'Top 1' ? '#F44336' : d.name === '>100' ? '#FBB4AF' : '#F77B72',
+  }));
+  const unchangedDistribution = getBracketDistribution(unchangedKeywords).map((d) => ({
+    ...d,
+    color: d.name === '>100' ? '#EFEFF4' : '#D6D8E3',
+  }));
 
   const cleanDomain = project.domain.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+  // Real observed pages grouped strictly from tracked keywords
+  const observedPages = useMemo(() => {
+    const pageMap = new Map<string, { url: string; count: number; ranks: number[] }>();
+    for (const kw of keywords) {
+      if (kw.url) {
+        const existing = pageMap.get(kw.url) || { url: kw.url, count: 0, ranks: [] };
+        existing.count += 1;
+        if (kw.rank > 0) existing.ranks.push(kw.rank);
+        pageMap.set(kw.url, existing);
+      }
+    }
+    return Array.from(pageMap.values()).map((p) => {
+      const avgPos = p.ranks.length > 0 ? Math.round(p.ranks.reduce((a, b) => a + b, 0) / p.ranks.length) : null;
+      let path = p.url;
+      try {
+        const u = new URL(p.url);
+        path = u.pathname;
+      } catch {}
+      return {
+        title: `${cleanDomain} ${path === '/' ? '' : path}`,
+        url: p.url,
+        keywords: p.count,
+        avgPos: avgPos !== null ? avgPos : '—',
+      };
+    });
+  }, [keywords, cleanDomain]);
+
+  interface ProjectCompetitorRow {
+    domain: string;
+    visibility: string;
+    isWorse: boolean;
+    diff: string;
+    width: string;
+  }
+
+  const projectCompetitors: ProjectCompetitorRow[] = useMemo(() => {
+    return (project.competitors || []).map((c) => ({
+      domain: c.domain || c.name || String(c),
+      visibility: c.visibilityScore !== undefined ? `${c.visibilityScore}%` : 'N/A',
+      isWorse: false,
+      diff: '0%',
+      width: c.visibilityScore ? `${Math.min(100, Math.max(10, c.visibilityScore))}%` : '20%',
+    }));
+  }, [project.competitors]);
 
   return (
     <div className="section-template section-wrapper__section-content space-y-4">
@@ -378,10 +429,7 @@ export function SeRankingSummaryTab({
           <div className="p-3 bg-gray-50/70 border border-gray-100 rounded-lg space-y-1">
             <div className="text-[11px] text-gray-500 font-semibold">Top 2-3</div>
             <div className="flex items-baseline justify-between">
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-gray-900">{countTop2_3 || 14}</span>
-                <span className="text-[10px] font-bold text-[#36B37E]">▲ 3</span>
-              </div>
+              <span className="text-xl font-bold text-gray-900">{countTop2_3}</span>
               <svg className="w-14 h-6" viewBox="0 0 60 20">
                 <path d="M 2 16 Q 30 16 58 4" stroke="#AEB5F2" strokeWidth="2" fill="none" />
               </svg>
@@ -392,10 +440,7 @@ export function SeRankingSummaryTab({
           <div className="p-3 bg-gray-50/70 border border-gray-100 rounded-lg space-y-1">
             <div className="text-[11px] text-gray-500 font-semibold">Top 4-5</div>
             <div className="flex items-baseline justify-between">
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-gray-900">{countTop4_5 || 20}</span>
-                <span className="text-[10px] font-bold text-[#F44336]">▼ 3</span>
-              </div>
+              <span className="text-xl font-bold text-gray-900">{countTop4_5}</span>
               <svg className="w-14 h-6" viewBox="0 0 60 20">
                 <path d="M 2 4 Q 30 18 58 12" stroke="#F7CFCF" strokeWidth="2" fill="none" />
               </svg>
@@ -406,7 +451,7 @@ export function SeRankingSummaryTab({
           <div className="p-3 bg-gray-50/70 border border-gray-100 rounded-lg space-y-1">
             <div className="text-[11px] text-gray-500 font-semibold">Top 6-10</div>
             <div className="flex items-baseline justify-between">
-              <span className="text-xl font-bold text-gray-900">{countTop6_10 || 26}</span>
+              <span className="text-xl font-bold text-gray-900">{countTop6_10}</span>
               <svg className="w-14 h-6" viewBox="0 0 60 20">
                 <path d="M 2 12 Q 30 4 58 12" stroke="#E788D5" strokeWidth="2" fill="none" />
               </svg>
@@ -417,10 +462,7 @@ export function SeRankingSummaryTab({
           <div className="p-3 bg-gray-50/70 border border-gray-100 rounded-lg space-y-1">
             <div className="text-[11px] text-gray-500 font-semibold">Top 11-30</div>
             <div className="flex items-baseline justify-between">
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-gray-900">{countTop11_30 || 10}</span>
-                <span className="text-[10px] font-bold text-[#F44336]">▼ 1</span>
-              </div>
+              <span className="text-xl font-bold text-gray-900">{countTop11_30}</span>
               <svg className="w-14 h-6" viewBox="0 0 60 20">
                 <path d="M 2 14 Q 30 4 58 16" stroke="#BD88E7" strokeWidth="2" fill="none" />
               </svg>
@@ -431,7 +473,7 @@ export function SeRankingSummaryTab({
           <div className="p-3 bg-gray-50/70 border border-gray-100 rounded-lg space-y-1">
             <div className="text-[11px] text-gray-500 font-semibold">Top 31-100</div>
             <div className="flex items-baseline justify-between">
-              <span className="text-xl font-bold text-gray-900">{countTop31_100 || 5}</span>
+              <span className="text-xl font-bold text-gray-900">{countTop31_100}</span>
               <svg className="w-14 h-6" viewBox="0 0 60 20">
                 <path d="M 2 16 Q 30 4 58 16" stroke="#FFA1A1" strokeWidth="2" fill="none" />
               </svg>
@@ -542,15 +584,15 @@ export function SeRankingSummaryTab({
 
         {/* Total Big Value */}
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-black text-gray-900">{totalKeywords || 75}</span>
+          <span className="text-3xl font-black text-gray-900">{totalKeywords}</span>
           <span className="text-xs text-gray-400 font-medium">keywords currently monitored</span>
         </div>
 
         {/* Linear Distribution Bar */}
         <div className="w-full h-3 rounded-full overflow-hidden flex bg-gray-100 shadow-2xs">
-          <div style={{ width: `${Math.max(5, jumpedPct)}%` }} className="bg-[#36B37E] h-full" title={`Jumped ${jumpedCount} (${jumpedPct}%)`} />
-          <div style={{ width: `${Math.max(5, droppedPct)}%` }} className="bg-[#F44336] h-full" title={`Dropped ${droppedCount} (${droppedPct}%)`} />
-          <div style={{ width: `${Math.max(20, unchangedPct)}%` }} className="bg-[#D6D8E3] h-full" title={`Unchanged ${unchangedCount} (${unchangedPct}%)`} />
+          <div style={{ width: `${Math.max(totalMovement > 0 ? 2 : 0, jumpedPct)}%` }} className="bg-[#36B37E] h-full" title={`Jumped ${jumpedCount} (${jumpedPct}%)`} />
+          <div style={{ width: `${Math.max(totalMovement > 0 ? 2 : 0, droppedPct)}%` }} className="bg-[#F44336] h-full" title={`Dropped ${droppedCount} (${droppedPct}%)`} />
+          <div style={{ width: `${Math.max(totalMovement > 0 ? 5 : 0, unchangedPct)}%` }} className="bg-[#D6D8E3] h-full" title={`Unchanged ${unchangedCount} (${unchangedPct}%)`} />
         </div>
 
         {/* Segment Labels */}
@@ -581,15 +623,7 @@ export function SeRankingSummaryTab({
               </div>
             </div>
             <div className="divide-y divide-gray-100 text-xs">
-              {[
-                { name: 'Top 1', color: '#36B37E', pct: '0%', count: 0 },
-                { name: 'Top 2-3', color: '#4ABA8B', pct: '12.1%', count: 4 },
-                { name: 'Top 4-5', color: '#5EC298', pct: '36.4%', count: 12 },
-                { name: 'Top 6-10', color: '#72CAA4', pct: '30.3%', count: 10 },
-                { name: 'Top 11-30', color: '#86D1B2', pct: '12.1%', count: 4 },
-                { name: 'Top 31-100', color: '#9AD9BE', pct: '9.1%', count: 3 },
-                { name: '>100', color: '#AFE1CB', pct: '0%', count: 0 },
-              ].map((row, i) => (
+              {jumpedDistribution.map((row, i) => (
                 <div key={i} className="py-1.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: row.color }} />
@@ -614,15 +648,7 @@ export function SeRankingSummaryTab({
               </div>
             </div>
             <div className="divide-y divide-gray-100 text-xs">
-              {[
-                { name: 'Top 1', color: '#F44336', pct: '0%', count: 0 },
-                { name: 'Top 2-3', color: '#F5554A', pct: '0%', count: 0 },
-                { name: 'Top 4-5', color: '#F6695E', pct: '8.3%', count: 2 },
-                { name: 'Top 6-10', color: '#F77B72', pct: '16.7%', count: 4 },
-                { name: 'Top 11-30', color: '#F88E86', pct: '8.3%', count: 2 },
-                { name: 'Top 31-100', color: '#F9A19A', pct: '8.3%', count: 2 },
-                { name: '>100', color: '#FBB4AF', pct: '58.3%', count: 14 },
-              ].map((row, i) => (
+              {droppedDistribution.map((row, i) => (
                 <div key={i} className="py-1.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: row.color }} />
@@ -647,15 +673,7 @@ export function SeRankingSummaryTab({
               </div>
             </div>
             <div className="divide-y divide-gray-100 text-xs">
-              {[
-                { name: 'Top 1', color: '#D6D8E3', pct: '0%', count: 0 },
-                { name: 'Top 2-3', color: '#DADCDE', pct: '3.4%', count: 10 },
-                { name: 'Top 4-5', color: '#DEE0E7', pct: '2%', count: 6 },
-                { name: 'Top 6-10', color: '#E2E4EB', pct: '4%', count: 12 },
-                { name: 'Top 11-30', color: '#E6E8EE', pct: '1.3%', count: 4 },
-                { name: 'Top 31-100', color: '#EAEBF1', pct: '0%', count: 0 },
-                { name: '>100', color: '#EFEFF4', pct: '89.2%', count: 265 },
-              ].map((row, i) => (
+              {unchangedDistribution.map((row, i) => (
                 <div key={i} className="py-1.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-xs" style={{ backgroundColor: row.color }} />
@@ -735,22 +753,28 @@ export function SeRankingSummaryTab({
                 </div>
               </div>
               <div className="divide-y divide-gray-100 text-xs">
-                {displayTopKeywords.map((item, i) => (
-                  <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
-                    <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
-                      {item.keyword}
-                    </span>
-                    <div className="flex items-center gap-10">
-                      <span className="font-bold text-gray-900 w-6 text-center">#{item.rank}</span>
-                      <span className="text-gray-600 w-10 text-right font-medium">100%</span>
+                {displayTopKeywords.length > 0 ? (
+                  displayTopKeywords.map((item, i) => (
+                    <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
+                      <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
+                        {item.keyword}
+                      </span>
+                      <div className="flex items-center gap-10">
+                        <span className="font-bold text-gray-900 w-6 text-center">#{item.rank}</span>
+                        <span className="text-gray-600 w-10 text-right font-medium">100%</span>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    No keywords ranked in top 100 yet.
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <div className="p-2 border-t border-gray-100 bg-gray-50/40 text-center">
               <button type="button" className="text-xs text-[#1863FD] font-semibold hover:underline">
-                View all ({totalKeywords || 354}) →
+                View all ({totalKeywords}) →
               </button>
             </div>
           </div>
@@ -766,25 +790,31 @@ export function SeRankingSummaryTab({
                 </div>
               </div>
               <div className="divide-y divide-gray-100 text-xs">
-                {displayJumped.map((item, i) => (
-                  <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
-                    <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
-                      {item.keyword}
-                    </span>
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-1 w-12 text-center">
-                        <span className="font-bold text-gray-900">#{item.rank}</span>
-                        <span className="text-[10px] text-[#36B37E] font-bold">▲{item.change}</span>
+                {displayJumped.length > 0 ? (
+                  displayJumped.map((item, i) => (
+                    <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
+                      <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
+                        {item.keyword}
+                      </span>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-1 w-12 text-center">
+                          <span className="font-bold text-gray-900">#{item.rank}</span>
+                          <span className="text-[10px] text-[#36B37E] font-bold">▲{item.change}</span>
+                        </div>
+                        <span className="text-gray-600 w-10 text-right font-medium">100%</span>
                       </div>
-                      <span className="text-gray-600 w-10 text-right font-medium">100%</span>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    No keywords with positive rank changes yet.
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <div className="p-2 border-t border-gray-100 bg-gray-50/40 text-center">
               <button type="button" className="text-xs text-[#1863FD] font-semibold hover:underline">
-                View all ({jumpedCount || 33}) →
+                View all ({jumpedCount}) →
               </button>
             </div>
           </div>
@@ -800,25 +830,31 @@ export function SeRankingSummaryTab({
                 </div>
               </div>
               <div className="divide-y divide-gray-100 text-xs">
-                {displayDropped.map((item, i) => (
-                  <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
-                    <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
-                      {item.keyword}
-                    </span>
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-1 w-12 text-center">
-                        <span className="font-bold text-gray-900">#{item.rank}</span>
-                        <span className="text-[10px] text-[#F44336] font-bold">▼{Math.abs(item.change)}</span>
+                {displayDropped.length > 0 ? (
+                  displayDropped.map((item, i) => (
+                    <div key={i} className="px-3 py-2 flex items-center justify-between hover:bg-gray-50/70">
+                      <span className="font-medium text-gray-800 truncate max-w-[140px]" title={item.keyword}>
+                        {item.keyword}
+                      </span>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-1 w-12 text-center">
+                          <span className="font-bold text-gray-900">#{item.rank}</span>
+                          <span className="text-[10px] text-[#F44336] font-bold">▼{Math.abs(item.change)}</span>
+                        </div>
+                        <span className="text-gray-600 w-10 text-right font-medium">85%</span>
                       </div>
-                      <span className="text-gray-600 w-10 text-right font-medium">85%</span>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    No keywords with dropped rank changes yet.
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <div className="p-2 border-t border-gray-100 bg-gray-50/40 text-center">
               <button type="button" className="text-xs text-[#1863FD] font-semibold hover:underline">
-                View all ({droppedCount || 24}) →
+                View all ({droppedCount}) →
               </button>
             </div>
           </div>
@@ -855,81 +891,34 @@ export function SeRankingSummaryTab({
               <tr>
                 <th className="py-2.5 px-3">URL IN SERP</th>
                 <th className="py-2.5 px-3 text-right">TOTAL KEYWORDS</th>
-                <th className="py-2.5 px-3 text-right">TRAFFIC FORECAST</th>
                 <th className="py-2.5 px-3 text-right">AVERAGE POSITION</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
-              {[
-                {
-                  title: `${cleanDomain} / meeting-recording`,
-                  url: `https://${cleanDomain}/meeting-recording`,
-                  keywords: 6,
-                  kwDiff: 1,
-                  traffic: 4.1,
-                  trafficDiff: 2.1,
-                  avgPos: 5,
-                  avgDiff: 36,
-                },
-                {
-                  title: `${cleanDomain} / chats-contacts-free`,
-                  url: `https://${cleanDomain}/chats-contacts-free`,
-                  keywords: 1,
-                  traffic: 0.6,
-                  avgPos: 5,
-                },
-                {
-                  title: `${cleanDomain} / desktop-startup-settings`,
-                  url: `https://${cleanDomain}/desktop-startup-settings`,
-                  keywords: 6,
-                  kwDiff: 2,
-                  traffic: 2.8,
-                  trafficDiff: 1.0,
-                  avgPos: 6,
-                  avgDiff: 4,
-                },
-                {
-                  title: `${cleanDomain} / screen-sharing-control`,
-                  url: `https://${cleanDomain}/screen-sharing-control`,
-                  keywords: 24,
-                  kwDiff: 3,
-                  traffic: 26.8,
-                  trafficDiff: 2.0,
-                  avgPos: 9,
-                  avgDiff: -1,
-                },
-              ].map((p, idx) => (
-                <tr key={idx} className="hover:bg-gray-50/70 transition-colors">
-                  <td className="py-3 px-3">
-                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                      <div className="font-semibold text-gray-900">{p.title}</div>
-                      <div className="text-[11px] text-[#1863FD] truncate max-w-md">{p.url}</div>
-                    </a>
-                  </td>
-                  <td className="py-3 px-3 text-right font-medium">
-                    <div className="flex items-center justify-end gap-1">
+              {observedPages.length > 0 ? (
+                observedPages.map((p, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="py-3 px-3">
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        <div className="font-semibold text-gray-900">{p.title}</div>
+                        <div className="text-[11px] text-[#1863FD] truncate max-w-md">{p.url}</div>
+                      </a>
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium">
                       <span>{p.keywords}</span>
-                      {p.kwDiff && <span className="text-[10px] text-[#36B37E] font-bold">▲{p.kwDiff}</span>}
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-right font-medium">
-                    <div className="flex items-center justify-end gap-1">
-                      <span>{p.traffic}</span>
-                      {p.trafficDiff && <span className="text-[10px] text-[#36B37E] font-bold">▲{p.trafficDiff}</span>}
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-right font-medium">
-                    <div className="flex items-center justify-end gap-1">
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium">
                       <span>{p.avgPos}</span>
-                      {p.avgDiff && (
-                        <span className={`text-[10px] font-bold ${p.avgDiff > 0 ? 'text-[#36B37E]' : 'text-[#F44336]'}`}>
-                          {p.avgDiff > 0 ? `▲${p.avgDiff}` : `▼${Math.abs(p.avgDiff)}`}
-                        </span>
-                      )}
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="py-8 text-center text-xs text-gray-400">
+                    No ranking URLs observed yet for this project. Run a live check to discover URLs ranking in Google SERP.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -953,37 +942,35 @@ export function SeRankingSummaryTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
-              {[
-                { domain: 'www.microsoft.com', visibility: '32.6%', diff: '-18.2%', isWorse: true, width: '33%' },
-                { domain: 'support.microsoft.com', visibility: '32.0%', diff: '-14.1%', isWorse: true, width: '32%' },
-                { domain: 'learn.microsoft.com', visibility: '29.7%', diff: '+17.4%', isWorse: false, width: '30%' },
-                { domain: 'www.reddit.com', visibility: '28.0%', diff: '+15.8%', isWorse: false, width: '28%' },
-              ].map((c, i) => (
-                <tr key={i} className="hover:bg-gray-50/70 transition-colors">
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-blue-50 rounded-full overflow-hidden">
-                        <div className="bg-[#1863FD] h-full" style={{ width: c.width }} />
+              {projectCompetitors.length > 0 ? (
+                projectCompetitors.map((c: ProjectCompetitorRow, i: number) => (
+                  <tr key={i} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-1.5 bg-blue-50 rounded-full overflow-hidden">
+                          <div className="bg-[#1863FD] h-full" style={{ width: c.width }} />
+                        </div>
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${c.domain}`}
+                          alt={c.domain}
+                          className="w-4 h-4 rounded-xs"
+                        />
+                        <span className="font-semibold text-gray-900">{c.domain}</span>
+                        <ExternalLink className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-pointer" />
                       </div>
-                      <img
-                        src={`https://www.google.com/s2/favicons?domain=${c.domain}`}
-                        alt={c.domain}
-                        className="w-4 h-4 rounded-xs"
-                      />
-                      <span className="font-semibold text-gray-900">{c.domain}</span>
-                      <ExternalLink className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-pointer" />
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-right font-medium">
-                    <div className="flex items-center justify-end gap-1.5">
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium">
                       <span className="font-bold text-gray-900">{c.visibility}</span>
-                      <span className={`text-[10px] font-bold ${c.isWorse ? 'text-[#F44336]' : 'text-[#36B37E]'}`}>
-                        {c.isWorse ? `▼ ${c.diff}` : `▲ ${c.diff}`}
-                      </span>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2} className="py-8 text-center text-xs text-gray-400">
+                    No competitors tracked in this project yet. Add competitors in Project Settings to compare search visibility.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

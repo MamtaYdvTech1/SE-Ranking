@@ -85,8 +85,8 @@ export async function getProjectReportData(
       criticalIssues: auditIssues.filter((i) => i.severity === 'Error').length,
       warnings: auditIssues.filter((i) => i.severity === 'Warning').length,
     },
-    rankingDistribution: rankingSummary.keywordDistribution.map((d) => ({
-      name: d.name,
+    rankingDistribution: rankingSummary.keywordDistribution.map((d: any) => ({
+      name: d.name || d.range || '',
       count: d.count,
       percentage: d.percentage,
     })),

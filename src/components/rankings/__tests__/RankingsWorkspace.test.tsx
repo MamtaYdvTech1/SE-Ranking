@@ -118,10 +118,12 @@ describe("RankingsWorkspace Component", () => {
       );
     });
 
-    // Metric Tabs
-    expect(screen.getAllByText("Average Position").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Visibility").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Top 3").length).toBeGreaterThan(0);
+    // Metric Tabs & Data rendered
+    await waitFor(() => {
+      expect(screen.getAllByText("Average Position").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Visibility").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Top 3").length).toBeGreaterThan(0);
+    });
 
     // Trend chart domain
     expect(screen.getAllByText(/zenith.com/).length).toBeGreaterThan(0);

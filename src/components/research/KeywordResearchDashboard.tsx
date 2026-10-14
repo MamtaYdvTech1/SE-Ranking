@@ -1,35 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
-  Globe,
   Download,
-  Share2,
   RefreshCw,
   ExternalLink,
-  ChevronDown,
   ArrowUpRight,
-  TrendingUp,
-  Award,
-  Layers,
-  FileText,
-  DollarSign,
-  Users,
-  Target,
-  BarChart3,
-  SlidersHorizontal,
-  CheckCircle,
   HelpCircle,
-  Plus,
-  HelpCircle as QuestionIcon,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -41,81 +25,191 @@ interface KeywordResearchDashboardProps {
   keyword: string;
   country?: string;
   countryCode?: string;
-  initialTab?: 'overview' | 'similar' | 'related' | 'questions' | 'serp';
+  initialTab?: 'overview' | 'similar' | 'questions' | 'serp';
   onNewSearch: () => void;
+}
+
+interface RealKeywordData {
+  keyword: string;
+  volume: number;
+  difficulty: number;
+  cpc: number;
+  competition: number;
+  competitionLevel?: string;
+  intent?: string;
+  trend?: Array<{ month: string; volume: number }>;
+}
+
+interface RealIdeaItem {
+  keyword: string;
+  volume: number;
+  kd: number;
+  cpc: number;
+  intent: string;
+}
+
+interface RealSerpItem {
+  pos: number;
+  title: string;
+  url: string;
+  domain: string;
+  snippet: string;
 }
 
 export function KeywordResearchDashboard({
   keyword,
-  country = 'India',
-  countryCode = 'in',
+  country = 'United States',
+  countryCode = 'us',
   initialTab = 'overview',
   onNewSearch,
 }: KeywordResearchDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'similar' | 'related' | 'questions' | 'serp'>(initialTab);
-  const [searchFilter, setSearchFilter] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'similar' | 'questions' | 'serp'>(initialTab);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<string>('');
+
+  const [metricData, setMetricData] = useState<RealKeywordData | null>(null);
+  const [ideas, setIdeas] = useState<RealIdeaItem[]>([]);
+  const [serpItems, setSerpItems] = useState<RealSerpItem[]>([]);
 
   const cleanKeyword = keyword.trim().toLowerCase();
 
-  // Dynamic realistic data based on keyword
-  const volume = Math.max(1200, Math.floor(8500 + (cleanKeyword.length * 950) % 45000));
-  const kd = Math.min(88, Math.max(18, Math.floor(32 + (cleanKeyword.length * 4) % 55)));
-  const cpc = Number((1.2 + (cleanKeyword.length * 0.35) % 8.5).toFixed(2));
-  const globalVolume = Math.round(volume * 2.85);
+  const fetchRealData = async () => {
+    if (!cleanKeyword) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      // 1. Fetch real keyword overview metrics via YepAPI
+      const kwPromise = fetch('/api/seo/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: [cleanKeyword] }),
+      }).then((r) => r.json());
+
+      // 2. Fetch real keyword ideas via YepAPI
+      const ideasPromise = fetch('/api/seo/keyword-ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: cleanKeyword, limit: 30 }),
+      }).then((r) => r.json());
+
+      // 3. Fetch real Google SERP top 10 via YepAPI
+      const serpPromise = fetch('/api/seo/serp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: cleanKeyword, depth: 10 }),
+      }).then((r) => r.json());
+
+      const [kwResult, ideasResult, serpResult] = await Promise.allSettled([
+        kwPromise,
+        ideasPromise,
+        serpPromise,
+      ]);
+
+      let hasAnySuccess = false;
+
+      // Handle Keywords
+      if (kwResult.status === 'fulfilled' && kwResult.value.success && kwResult.value.data?.keywords?.[0]) {
+        const item = kwResult.value.data.keywords[0];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const mappedTrend = Array.isArray(item.trend)
+          ? item.trend.map((t: any) => ({
+              month: monthNames[(t.month || 1) - 1] || `${t.month}`,
+              volume: t.volume || 0,
+            }))
+          : [];
+
+        setMetricData({
+          keyword: item.keyword,
+          volume: item.volume ?? 0,
+          difficulty: item.difficulty ?? 0,
+          cpc: item.cpc ?? 0,
+          competition: item.competition ?? 0,
+          competitionLevel: item.competitionLevel ?? 'LOW',
+          intent: item.intent ?? 'Informational',
+          trend: mappedTrend.length > 0 ? mappedTrend : [{ month: 'Current', volume: item.volume ?? 0 }],
+        });
+        hasAnySuccess = true;
+      } else if (kwResult.status === 'fulfilled' && !kwResult.value.success) {
+        if (kwResult.value.error) {
+          setErrorMessage(kwResult.value.error);
+        }
+      }
+
+      // Handle Ideas
+      if (ideasResult.status === 'fulfilled' && ideasResult.value.success && Array.isArray(ideasResult.value.data?.keywords)) {
+        const mappedIdeas: RealIdeaItem[] = ideasResult.value.data.keywords.map((k: any) => ({
+          keyword: k.keyword,
+          volume: k.volume ?? 0,
+          kd: k.difficulty ?? 0,
+          cpc: k.cpc ?? 0,
+          intent: k.intent ?? 'Commercial',
+        }));
+        setIdeas(mappedIdeas);
+        hasAnySuccess = true;
+      }
+
+      // Handle SERP
+      if (serpResult.status === 'fulfilled' && serpResult.value.success && Array.isArray(serpResult.value.data?.results)) {
+        const mappedSerp: RealSerpItem[] = serpResult.value.data.results
+          .filter((r: any) => r.type === 'organic' || !r.type)
+          .map((r: any, idx: number) => ({
+            pos: r.position || idx + 1,
+            title: r.title || 'Untitled Result',
+            url: r.url || '',
+            domain: r.domain || '',
+            snippet: r.description || '',
+          }));
+        setSerpItems(mappedSerp);
+        hasAnySuccess = true;
+      }
+
+      if (!hasAnySuccess && !errorMessage) {
+        setErrorMessage('No data could be retrieved for this keyword from YepAPI. Please verify spelling or credit balance.');
+      }
+
+      setLastRefreshed(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to connect to YepAPI.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRealData();
+  }, [cleanKeyword]);
+
+  const volume = metricData?.volume ?? 0;
+  const kd = metricData?.difficulty ?? 0;
+  const cpc = metricData?.cpc ?? 0;
+  const intent = metricData?.intent ?? 'Informational';
+  const compLevel = metricData?.competitionLevel ?? 'LOW';
 
   const kdCategory =
-    kd < 30 ? { label: 'Easy', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' } :
-    kd < 55 ? { label: 'Possible', color: 'text-blue-600', bg: 'bg-[#F5F3FF] border-[#DDD6FE]' } :
-    kd < 75 ? { label: 'Hard', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' } :
-    { label: 'Very Hard', color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' };
+    kd < 30
+      ? { label: 'Easy', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' }
+      : kd < 55
+      ? { label: 'Possible', color: 'text-blue-600', bg: 'bg-[#F5F3FF] border-[#DDD6FE]' }
+      : kd < 75
+      ? { label: 'Hard', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' }
+      : { label: 'Very Hard', color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' };
 
-  // Trend data
-  const trendData = [
-    { month: 'Apr', volume: Math.round(volume * 0.82) },
-    { month: 'May', volume: Math.round(volume * 0.88) },
-    { month: 'Jun', volume: Math.round(volume * 0.94) },
-    { month: 'Jul', volume: Math.round(volume * 0.98) },
-    { month: 'Aug', volume: Math.round(volume * 0.92) },
-    { month: 'Sep', volume: volume },
-  ];
-
-  // Similar keywords
-  const similarKeywords = [
-    { keyword: `best ${cleanKeyword}`, volume: Math.round(volume * 0.65), kd: kd - 4, cpc: cpc + 0.45, intent: 'Commercial' },
-    { keyword: `${cleanKeyword} online`, volume: Math.round(volume * 0.52), kd: kd - 8, cpc: cpc - 0.2, intent: 'Transactional' },
-    { keyword: `free ${cleanKeyword}`, volume: Math.round(volume * 0.44), kd: kd - 12, cpc: cpc - 0.6, intent: 'Informational' },
-    { keyword: `${cleanKeyword} tools for business`, volume: Math.round(volume * 0.38), kd: kd + 3, cpc: cpc + 1.1, intent: 'Commercial' },
-    { keyword: `top 10 ${cleanKeyword}`, volume: Math.round(volume * 0.31), kd: kd - 2, cpc: cpc + 0.3, intent: 'Informational' },
-    { keyword: `${cleanKeyword} pricing and reviews`, volume: Math.round(volume * 0.26), kd: kd - 6, cpc: cpc + 0.8, intent: 'Commercial' },
-    { keyword: `how to choose ${cleanKeyword}`, volume: Math.round(volume * 0.19), kd: kd - 14, cpc: cpc - 0.4, intent: 'Informational' },
-  ];
-
-  // Questions
-  const questions = [
-    { question: `what is ${cleanKeyword}?`, volume: Math.round(volume * 0.28), kd: kd - 12 },
-    { question: `how does ${cleanKeyword} work?`, volume: Math.round(volume * 0.22), kd: kd - 9 },
-    { question: `is ${cleanKeyword} worth it in 2026?`, volume: Math.round(volume * 0.17), kd: kd - 5 },
-    { question: `which is the best ${cleanKeyword} for small business?`, volume: Math.round(volume * 0.14), kd: kd - 2 },
-    { question: `how to get started with ${cleanKeyword}?`, volume: Math.round(volume * 0.11), kd: kd - 15 },
-  ];
-
-  // Top SERP ranking pages
-  const serpResults = [
-    { pos: 1, title: `Complete Guide to ${cleanKeyword} (2026 Updated)`, url: `https://www.forbes.com/advisor/business/${encodeURIComponent(cleanKeyword)}`, dt: 92, pt: 84, backlinks: 1420, traffic: 4800 },
-    { pos: 2, title: `The Best ${cleanKeyword} of 2026 - Tested & Reviewed`, url: `https://www.pcmag.com/picks/best-${encodeURIComponent(cleanKeyword)}`, dt: 91, pt: 81, backlinks: 980, traffic: 3900 },
-    { pos: 3, title: `${cleanKeyword}: Everything You Need to Know`, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanKeyword)}`, dt: 98, pt: 88, backlinks: 3400, traffic: 6200 },
-    { pos: 4, title: `Top 10 ${cleanKeyword} Solutions for Modern Teams`, url: `https://www.g2.com/categories/${encodeURIComponent(cleanKeyword)}`, dt: 90, pt: 79, backlinks: 840, traffic: 2800 },
-    { pos: 5, title: `${cleanKeyword} Comparison & Pricing Guide`, url: `https://www.capterra.com/software/${encodeURIComponent(cleanKeyword)}`, dt: 89, pt: 76, backlinks: 610, traffic: 2100 },
-  ];
+  // Filter questions vs general ideas
+  const questions = ideas.filter((k) =>
+    /^(what|how|why|when|where|who|which|is|are|can)\b/i.test(k.keyword)
+  );
 
   const handleExportCsv = () => {
     const headers = ['Keyword', 'Search Volume', 'Difficulty (KD %)', 'CPC (USD)', 'Intent'];
-    const rows = similarKeywords.map((k) => [`"${k.keyword}"`, k.volume, `${k.kd}%`, `$${k.cpc.toFixed(2)}`, k.intent]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const rows = ideas.map((k) => [`"${k.keyword}"`, k.volume, `${k.kd}%`, `$${k.cpc.toFixed(2)}`, k.intent]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${cleanKeyword}_keyword_research.csv`);
+    link.setAttribute('download', `${cleanKeyword}_yepapi_keyword_research.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -138,19 +232,29 @@ export function KeywordResearchDashboard({
                 <span className="text-xs px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] font-semibold border border-[#DDD6FE]">
                   Google {country}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-semibold border border-purple-200">
-                  Commercial
+                <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                  YepAPI
                 </span>
               </div>
               <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                <span>Keyword Research Analysis</span>
+                <span>Verified Data Provider: YepAPI</span>
                 <span>•</span>
-                <span>Updated today</span>
+                <span>Last updated: {lastRefreshed || 'Live'}</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={fetchRealData}
+              disabled={isLoading}
+              className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+
             <button
               onClick={onNewSearch}
               className="px-3.5 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
@@ -161,7 +265,8 @@ export function KeywordResearchDashboard({
 
             <button
               onClick={handleExportCsv}
-              className="px-3.5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              disabled={ideas.length === 0}
+              className="px-3.5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
@@ -189,7 +294,7 @@ export function KeywordResearchDashboard({
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
-            Similar Keywords ({similarKeywords.length})
+            Similar Ideas ({ideas.length})
           </button>
           <button
             onClick={() => setActiveTab('questions')}
@@ -209,257 +314,295 @@ export function KeywordResearchDashboard({
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
-            SERP Overview (Top 10)
+            Google Top 10 SERP ({serpItems.length})
           </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* KPI Cards Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Search Volume */}
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Search Volume
-            </div>
-            <div className="text-2xl font-black text-gray-900">
-              {volume.toLocaleString()}
-            </div>
-            <div className="mt-1.5 text-[11px] text-emerald-600 flex items-center font-medium">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>Monthly organic searches in {country}</span>
+        {/* Error Alert if any */}
+        {errorMessage && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-xs text-amber-800">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-bold">YepAPI Response Notice:</span>
+              <p className="leading-relaxed">{errorMessage}</p>
             </div>
           </div>
+        )}
 
-          {/* Keyword Difficulty */}
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Difficulty Score (KD)
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-black ${kdCategory.color}`}>{kd}</span>
-              <span className="text-xs text-gray-400">/ 100</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${kdCategory.bg} ${kdCategory.color}`}>
-                {kdCategory.label}
-              </span>
-            </div>
-            <div className="mt-1.5 text-[11px] text-gray-500">
-              Effort needed to rank on Google Page 1
-            </div>
-          </div>
-
-          {/* CPC & Paid Competition */}
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Cost Per Click (CPC)
-            </div>
-            <div className="text-2xl font-black text-purple-600">
-              ${cpc.toFixed(2)}
-            </div>
-            <div className="mt-1.5 text-[11px] text-gray-500">
-              PPC Competition: <span className="font-semibold text-gray-800">0.58 (Medium)</span>
-            </div>
-          </div>
-
-          {/* Global Volume */}
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-              Global Volume
-            </div>
-            <div className="text-2xl font-black text-[#7C3AED]">
-              {globalVolume.toLocaleString()}
-            </div>
-            <div className="mt-1.5 text-[11px] text-gray-500">
-              Across 190+ countries worldwide
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic Search Trend Chart */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">Search Volume Dynamics</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Last 6 months organic search demand</p>
-            </div>
-            <span className="text-xs text-gray-400 font-medium">Google Monthly Trends</span>
-          </div>
-
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData}>
-                <defs>
-                  <linearGradient id="volumeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    border: '1px solid #E2E8F0',
-                    fontSize: '12px',
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="volume"
-                  name="Search Volume"
-                  stroke="#7C3AED"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#volumeGrad)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Similar Keywords & Questions Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Similar Keywords */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900">Similar Keywords</h3>
-                <p className="text-xs text-gray-500">Keywords containing the search query</p>
-              </div>
-              <button
-                onClick={handleExportCsv}
-                className="text-xs text-[#7C3AED] font-semibold hover:underline flex items-center gap-1"
-              >
-                <span>Export list</span>
-              </button>
-            </div>
-
-            <div className="divide-y divide-gray-100">
-              {similarKeywords.map((k) => (
-                <div key={k.keyword} className="py-2.5 flex items-center justify-between text-xs">
-                  <div className="min-w-0 pr-2">
-                    <div className="font-semibold text-gray-900 truncate hover:text-[#7C3AED] cursor-pointer">
-                      {k.keyword}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-gray-100 text-gray-600 font-medium">
-                        {k.intent}
-                      </span>
-                      <span className="text-[11px] text-gray-400">
-                        CPC: ${k.cpc.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="font-bold text-gray-900">{k.volume.toLocaleString()}</div>
-                    <div className={`text-[11px] font-semibold ${k.kd > 45 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {k.kd}% KD
-                    </div>
-                  </div>
-                </div>
+        {/* Loading Skeleton */}
+        {isLoading && (
+          <div className="space-y-4 animate-pulse">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-24 bg-white rounded-xl border border-gray-200" />
               ))}
             </div>
+            <div className="h-64 bg-white rounded-xl border border-gray-200" />
           </div>
+        )}
 
-          {/* Questions */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900">Search Questions</h3>
-                <p className="text-xs text-gray-500">Popular questions asked by users</p>
-              </div>
-              <span className="text-xs text-gray-400">Google PAA</span>
-            </div>
-
-            <div className="divide-y divide-gray-100">
-              {questions.map((q) => (
-                <div key={q.question} className="py-2.5 flex items-center justify-between text-xs">
-                  <div className="min-w-0 pr-2">
-                    <div className="font-semibold text-gray-900 truncate hover:text-[#7C3AED] cursor-pointer">
-                      {q.question}
-                    </div>
-                    <div className="text-[11px] text-gray-400 mt-0.5">
-                      KD: {q.kd}% • High intent
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="font-bold text-blue-600">{q.volume.toLocaleString()}</div>
-                    <div className="text-[11px] text-gray-400">monthly</div>
-                  </div>
+        {!isLoading && (
+          <>
+            {/* KPI Cards Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Search Volume */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Search Volume
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                <div className="text-2xl font-black text-gray-900">
+                  {volume > 0 ? volume.toLocaleString() : '—'}
+                </div>
+                <div className="mt-1.5 text-[11px] text-emerald-600 flex items-center font-medium">
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <span>Monthly searches via YepAPI</span>
+                </div>
+              </div>
 
-        {/* SERP Overview (Top 5 Ranking Pages) */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">SERP Overview for Google</h3>
-              <p className="text-xs text-gray-500">Top 5 organically ranking search results</p>
-            </div>
-            <a
-              href={`https://www.google.com/search?q=${encodeURIComponent(cleanKeyword)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-[#7C3AED] font-semibold hover:underline flex items-center gap-1"
-            >
-              <span>View live SERP</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+              {/* Keyword Difficulty */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Difficulty Score (KD)
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-black ${kdCategory.color}`}>{kd}</span>
+                  <span className="text-xs text-gray-400">/ 100</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${kdCategory.bg} ${kdCategory.color}`}>
+                    {kdCategory.label}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-[11px] text-gray-500">
+                  Effort needed to rank on Google
+                </div>
+              </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-gray-700">
-              <thead className="bg-gray-50/80 text-[11px] uppercase tracking-wider text-gray-500 border-b border-gray-200 font-semibold">
-                <tr>
-                  <th className="px-4 py-3 text-center">Pos</th>
-                  <th className="px-4 py-3">Ranking Page & Title</th>
-                  <th className="px-3 py-3 text-center">Domain Trust</th>
-                  <th className="px-3 py-3 text-center">Page Trust</th>
-                  <th className="px-3 py-3 text-right">Backlinks</th>
-                  <th className="px-4 py-3 text-right">Estimated Traffic</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {serpResults.map((r) => (
-                  <tr key={r.pos} className="hover:bg-[#F5F3FF]/30 transition-colors">
-                    <td className="px-4 py-3 text-center">
-                      <span className="w-6 h-6 rounded-full bg-[#F5F3FF] text-[#7C3AED] font-bold inline-flex items-center justify-center text-xs">
-                        {r.pos}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 max-w-md">
-                      <div className="font-semibold text-gray-900 truncate hover:text-[#7C3AED]">
-                        {r.title}
+              {/* CPC */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Cost Per Click (CPC)
+                </div>
+                <div className="text-2xl font-black text-purple-600">
+                  ${cpc > 0 ? cpc.toFixed(2) : '0.00'}
+                </div>
+                <div className="mt-1.5 text-[11px] text-gray-500">
+                  Competition: <span className="font-semibold text-gray-800">{compLevel}</span>
+                </div>
+              </div>
+
+              {/* Intent */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-2xs">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Search Intent
+                </div>
+                <div className="text-2xl font-black text-[#1E293B] capitalize">
+                  {intent}
+                </div>
+                <div className="mt-1.5 text-[11px] text-gray-500">
+                  Classified by YepAPI intent AI
+                </div>
+              </div>
+            </div>
+
+            {/* TAB: Overview */}
+            {activeTab === 'overview' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {/* Search Volume Trend Chart */}
+                {metricData?.trend && metricData.trend.length > 0 && (
+                  <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-2xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-bold text-gray-900">Search Trend (12-Month Volume)</div>
+                      <span className="text-xs text-gray-400">Source: YepAPI Google Data</span>
+                    </div>
+                    <div className="h-56 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={metricData.trend}>
+                          <defs>
+                            <linearGradient id="volGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.25} />
+                              <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                          <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="volume" stroke="#7C3AED" strokeWidth={2} fill="url(#volGradient)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ideas Preview Table */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="text-sm font-bold text-gray-900">Keyword Ideas ({ideas.length})</div>
+                    <button
+                      onClick={() => setActiveTab('similar')}
+                      className="text-xs text-[#7C3AED] hover:underline font-semibold cursor-pointer"
+                    >
+                      View all ideas →
+                    </button>
+                  </div>
+                  {ideas.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-gray-500">
+                      No keyword ideas found for &quot;{cleanKeyword}&quot;.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-[#F8FAFC] text-gray-500 font-semibold border-b border-gray-200">
+                          <tr>
+                            <th className="py-2.5 px-4">Keyword</th>
+                            <th className="py-2.5 px-4 text-right">Volume</th>
+                            <th className="py-2.5 px-4 text-right">KD</th>
+                            <th className="py-2.5 px-4 text-right">CPC</th>
+                            <th className="py-2.5 px-4">Intent</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {ideas.slice(0, 8).map((k, i) => (
+                            <tr key={i} className="hover:bg-gray-50/80">
+                              <td className="py-2.5 px-4 font-semibold text-gray-900">{k.keyword}</td>
+                              <td className="py-2.5 px-4 text-right font-medium text-gray-700">{k.volume.toLocaleString()}</td>
+                              <td className="py-2.5 px-4 text-right font-medium text-gray-700">{k.kd}%</td>
+                              <td className="py-2.5 px-4 text-right font-medium text-purple-700">${k.cpc.toFixed(2)}</td>
+                              <td className="py-2.5 px-4 text-gray-500 capitalize">{k.intent}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Similar Ideas */}
+            {activeTab === 'similar' && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="text-sm font-bold text-gray-900">Similar Ideas for &quot;{cleanKeyword}&quot;</div>
+                  <span className="text-xs text-gray-500 font-medium">{ideas.length} results</span>
+                </div>
+                {ideas.length === 0 ? (
+                  <div className="p-12 text-center text-xs text-gray-500">
+                    No related ideas returned by YepAPI.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#F8FAFC] text-gray-500 font-semibold border-b border-gray-200">
+                        <tr>
+                          <th className="py-3 px-4">Keyword</th>
+                          <th className="py-3 px-4 text-right">Volume</th>
+                          <th className="py-3 px-4 text-right">Difficulty (KD)</th>
+                          <th className="py-3 px-4 text-right">CPC</th>
+                          <th className="py-3 px-4">Intent</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {ideas.map((k, i) => (
+                          <tr key={i} className="hover:bg-gray-50/80">
+                            <td className="py-3 px-4 font-semibold text-gray-900">{k.keyword}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-700">{k.volume.toLocaleString()}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-700">{k.kd}%</td>
+                            <td className="py-3 px-4 text-right font-medium text-purple-700">${k.cpc.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-gray-500 capitalize">{k.intent}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: Questions */}
+            {activeTab === 'questions' && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="text-sm font-bold text-gray-900">Question Keywords</div>
+                  <span className="text-xs text-gray-500 font-medium">{questions.length} questions</span>
+                </div>
+                {questions.length === 0 ? (
+                  <div className="p-12 text-center text-xs text-gray-500">
+                    No question-format keywords detected in ideas list.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#F8FAFC] text-gray-500 font-semibold border-b border-gray-200">
+                        <tr>
+                          <th className="py-3 px-4">Question</th>
+                          <th className="py-3 px-4 text-right">Volume</th>
+                          <th className="py-3 px-4 text-right">Difficulty (KD)</th>
+                          <th className="py-3 px-4 text-right">CPC</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {questions.map((q, i) => (
+                          <tr key={i} className="hover:bg-gray-50/80">
+                            <td className="py-3 px-4 font-semibold text-gray-900">{q.keyword}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-700">{q.volume.toLocaleString()}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-700">{q.kd}%</td>
+                            <td className="py-3 px-4 text-right font-medium text-purple-700">${q.cpc.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: SERP */}
+            {activeTab === 'serp' && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="text-sm font-bold text-gray-900">Top Organic Google SERP Results</div>
+                  <span className="text-xs text-gray-500 font-medium">{serpItems.length} results</span>
+                </div>
+                {serpItems.length === 0 ? (
+                  <div className="p-12 text-center text-xs text-gray-500">
+                    No organic SERP results returned for &quot;{cleanKeyword}&quot;.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {serpItems.map((item) => (
+                      <div key={item.pos} className="p-4 hover:bg-gray-50/80 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold shrink-0">
+                            #{item.pos}
+                          </span>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-bold text-[#1E293B] hover:text-[#7C3AED] hover:underline flex items-center gap-1.5"
+                          >
+                            <span>{item.title}</span>
+                            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                          </a>
+                        </div>
+                        <div className="text-xs text-emerald-700 font-medium pl-7 truncate">
+                          {item.url}
+                        </div>
+                        {item.snippet && (
+                          <div className="text-xs text-gray-600 pl-7 leading-relaxed">
+                            {item.snippet}
+                          </div>
+                        )}
                       </div>
-                      <div className="font-mono text-[11px] text-gray-400 truncate mt-0.5">
-                        {r.url}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-gray-800">
-                      {r.dt}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-gray-800">
-                      {r.pt}
-                    </td>
-                    <td className="px-3 py-3 text-right text-gray-700 font-medium">
-                      {r.backlinks.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-blue-600">
-                      {r.traffic.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

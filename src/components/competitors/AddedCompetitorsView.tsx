@@ -577,11 +577,7 @@ export function getProjectCompetitorData(projectDomain: string, competitors: Com
       { id: "comp-fk-myntra", name: "myntra.com", domain: "myntra.com", notes: "Fashion & lifestyle ecommerce", lastCheckedAt: "2026-10-12T10:00:00Z" },
       { id: "comp-fk-ajio", name: "ajio.com", domain: "ajio.com", notes: "Apparel & online shopping", lastCheckedAt: "2026-10-12T10:00:00Z" },
       { id: "comp-fk-snapdeal", name: "snapdeal.com", domain: "snapdeal.com", notes: "Value marketplace rival", lastCheckedAt: "2026-10-12T10:00:00Z" },
-    ] : [
-      { id: `comp-${brand}-1`, name: `competitor-${clean}`, domain: `competitor-${clean}`, notes: "Direct category competitor", lastCheckedAt: "2026-10-12T10:00:00Z" },
-      { id: `comp-${brand}-2`, name: `leader-${brand}.com`, domain: `leader-${brand}.com`, notes: "Market leader", lastCheckedAt: "2026-10-12T10:00:00Z" },
-      { id: `comp-${brand}-3`, name: `benchmark-${brand}.io`, domain: `benchmark-${brand}.io`, notes: "Industry benchmark", lastCheckedAt: "2026-10-12T10:00:00Z" },
-    ]
+    ] : []
   );
 
   const rivalCols: TableColumnDef[] = rivals.map((r) => {
@@ -639,7 +635,7 @@ export function getProjectCompetitorData(projectDomain: string, competitors: Com
 
 export function AddedCompetitorsView({
   projectId,
-  projectDomain = "myjio.com",
+  projectDomain = "",
   competitors = [],
   canEdit = true,
   onAddCompetitor,

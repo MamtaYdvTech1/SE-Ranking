@@ -293,14 +293,14 @@ export function generateSerpData(keyword: string, date: string, targetDomain: st
 
 export function SerpCompetitorsView({
   projectId,
-  projectDomain = "flipkart.com",
+  projectDomain = "",
   competitors = [],
 }: SerpCompetitorsViewProps) {
-  const cleanDomain = (projectDomain || "flipkart.com")
+  const cleanDomain = (projectDomain || "")
     .replace(/^https?:\/\//i, "")
     .replace(/^www\./i, "")
     .replace(/\/$/, "");
-  const brandTitle = cleanDomain.split(".")[0].toUpperCase();
+  const brandTitle = cleanDomain ? cleanDomain.split(".")[0].toUpperCase() : "DOMAIN";
   const domainKeywords = useMemo(() => getSerpKeywordsForDomain(projectDomain), [projectDomain]);
 
   // 1. Notice banner dismissal

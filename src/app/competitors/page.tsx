@@ -68,8 +68,8 @@ const DEFAULT_SUGGESTIONS: CompetitorData[] = [];
 
 function CompetitorsPageContent() {
   const { activeProject, projects } = useApp();
-  const domain =
-    activeProject?.domain || (projects[0]?.domain ?? 'in.pinterest.com');
+  const targetProject = activeProject || (projects && projects.length > 0 ? projects[0] : null);
+  const domain = targetProject?.domain || '';
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -433,6 +433,26 @@ function CompetitorsPageContent() {
         return <Globe className="w-4 h-4 text-blue-500 shrink-0" />;
     }
   };
+
+  if (!targetProject) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-[#F8FAFC]">
+        <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 border border-purple-100 shadow-xs">
+          <Globe className="w-8 h-8 text-[#7C3AED]" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No Website Selected</h2>
+        <p className="text-sm text-gray-500 max-w-md mb-6">
+          Please create or select a website project to monitor competitor rankings, visibility score, and share of voice.
+        </p>
+        <button
+          onClick={() => router.push('/projects')}
+          className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
+        >
+          Go to Projects
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#F5F7FB] min-h-screen text-gray-800 relative pb-12 select-none overflow-x-hidden font-sans flex flex-col">
@@ -946,6 +966,7 @@ function CompetitorsPageContent() {
           <SeRankingShareOfVoice
             projectDomain={domain}
             projectId={activeProject?.id}
+            addedCompetitors={addedCompetitors}
             showToast={showToast}
             onOpenGuestLink={() => setIsGuestLinkOpen(true)}
             onOpenFeedback={() => setIsFeedbackOpen(true)}
@@ -961,6 +982,7 @@ function CompetitorsPageContent() {
           <SeRankingVisibilityRating
             projectDomain={domain}
             projectId={activeProject?.id}
+            addedCompetitors={addedCompetitors}
             showToast={showToast}
             onOpenGuestLink={() => setIsGuestLinkOpen(true)}
             onOpenFeedback={() => setIsFeedbackOpen(true)}

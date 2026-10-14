@@ -47,50 +47,43 @@ export interface BacklinkGapResult {
   domainTrust: number;
 }
 
+import { yepApiClient } from '@/lib/yepapi';
+
 export interface BacklinkProvider {
   fetchBacklinks(domain: string): Promise<BacklinkRecord[]>;
 }
 
 /**
- * Default Backlink Provider using environment configuration
+ * Default Backlink Provider using YepAPI client
  */
 class DefaultBacklinkProvider implements BacklinkProvider {
-  private apiKey =
-    process.env.BACKLINK_API_KEY ||
-    process.env.DATA_FOR_SEO_API_KEY ||
-    (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD
-      ? `${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`
-      : '');
-
   async fetchBacklinks(domain: string): Promise<BacklinkRecord[]> {
-    if (!this.apiKey) {
+    if (!yepApiClient.isConfigured()) {
       return [];
     }
 
     try {
-      // Connect to configured external provider endpoint
-      const res = await fetch(`https://api.dataforseo.com/v3/backlinks/summary/live`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(this.apiKey).toString('base64')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify([{ target: domain }]),
-        signal: AbortSignal.timeout(10000),
+      const res = await yepApiClient.getBacklinksList({
+        target: domain,
+        limit: 100,
+        mode: 'as_is',
+        status: 'all',
       });
 
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.tasks?.[0]?.result?.[0]?.items || []).map((item: any) => ({
-        sourceUrl: item.url_from || '',
-        targetUrl: item.url_to || '',
+      if (!res.ok || !res.data || !res.data.backlinks || res.data.backlinks.length === 0) {
+        return [];
+      }
+
+      return res.data.backlinks.map((item) => ({
+        sourceUrl: item.from,
+        targetUrl: item.to,
         anchorText: item.anchor || 'Empty Anchor',
-        domainTrust: item.rank || 50,
-        pageTrust: item.page_rank || 50,
+        domainTrust: item.domainAuthority ? Math.round(item.domainAuthority / 10) : (item.rank ? Math.round(item.rank / 10) : 50),
+        pageTrust: item.rank ? Math.round(item.rank / 10) : 50,
         isDoFollow: item.dofollow ?? true,
-        isLost: item.is_lost ?? false,
-        firstSeenDate: item.first_seen ? new Date(item.first_seen) : new Date(),
-        lastSeenDate: item.last_seen ? new Date(item.last_seen) : new Date(),
+        isLost: item.status === 'lost',
+        firstSeenDate: item.firstSeen ? new Date(item.firstSeen) : new Date(),
+        lastSeenDate: item.lastSeen ? new Date(item.lastSeen) : new Date(),
       }));
     } catch {
       return [];
@@ -101,8 +94,8 @@ class DefaultBacklinkProvider implements BacklinkProvider {
 const activeProvider: BacklinkProvider = new DefaultBacklinkProvider();
 
 /**
- * Retrieves full backlink intelligence for a project, reading from the database
- * and calculating deterministic distributions.
+ * Retrieves full backlink intelligence for a project, reading strictly from the database
+ * without fabricating metrics or leaking another project's data.
  */
 export async function getProjectBacklinks(projectId: string): Promise<BacklinkSummary> {
   const project = await prisma.project.findUnique({
@@ -113,24 +106,26 @@ export async function getProjectBacklinks(projectId: string): Promise<BacklinkSu
     throw new Error('Project not found');
   }
 
-  // Fetch from database
-  let storedBacklinks = await prisma.backlink.findMany({
+  // Fetch strictly from database for this specific projectId
+  const storedBacklinks = await prisma.backlink.findMany({
     where: { projectId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
   });
 
-  // If no backlinks exist in DB, auto-populate with realistic domain-tailored backlinks
   if (storedBacklinks.length === 0) {
-    try {
-      const { seedProjectData } = await import('@/services/seo/seed-project-data.service');
-      await seedProjectData(projectId, project.domain, project.brandName || project.name);
-      storedBacklinks = await prisma.backlink.findMany({
-        where: { projectId, deletedAt: null },
-        orderBy: { createdAt: 'desc' },
-      });
-    } catch (seedErr) {
-      console.warn('Auto-seed project backlinks notice:', seedErr);
-    }
+    return {
+      domain: project.domain,
+      totalBacklinks: 0,
+      referringDomains: 0,
+      dofollowRatio: 0,
+      nofollowRatio: 0,
+      domainTrust: 0,
+      pageTrust: 0,
+      newBacklinksLast30Days: 0,
+      lostBacklinksLast30Days: 0,
+      anchors: [],
+      recentBacklinks: [],
+    };
   }
 
   const totalBacklinks = storedBacklinks.length;
@@ -143,7 +138,12 @@ export async function getProjectBacklinks(projectId: string): Promise<BacklinkSu
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  let totalDt = 0;
+  let totalPt = 0;
+
   for (const b of storedBacklinks) {
+    totalDt += b.domainTrust || 0;
+    totalPt += b.pageTrust || 0;
     try {
       const u = new URL(b.sourceUrl);
       uniqueDomains.add(u.hostname);
@@ -162,6 +162,8 @@ export async function getProjectBacklinks(projectId: string): Promise<BacklinkSu
   const referringDomains = uniqueDomains.size;
   const dofollowRatio = totalBacklinks > 0 ? Number(((dofollowCount / totalBacklinks) * 100).toFixed(1)) : 0;
   const nofollowRatio = totalBacklinks > 0 ? Number((100 - dofollowRatio).toFixed(1)) : 0;
+  const avgDt = totalBacklinks > 0 ? Math.round(totalDt / totalBacklinks) : 0;
+  const avgPt = totalBacklinks > 0 ? Math.round(totalPt / totalBacklinks) : 0;
 
   // Top anchor texts
   const anchors = Object.entries(anchorCounts)
@@ -179,8 +181,8 @@ export async function getProjectBacklinks(projectId: string): Promise<BacklinkSu
     referringDomains,
     dofollowRatio,
     nofollowRatio,
-    domainTrust: totalBacklinks > 0 ? 58 : 0,
-    pageTrust: totalBacklinks > 0 ? 46 : 0,
+    domainTrust: avgDt,
+    pageTrust: avgPt,
     newBacklinksLast30Days: newLast30,
     lostBacklinksLast30Days: lostLast30,
     anchors,

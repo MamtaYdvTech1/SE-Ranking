@@ -19,9 +19,22 @@ import {
   Trash2,
 } from 'lucide-react';
 
+export interface CompetitorItem {
+  id: string;
+  domain: string;
+  visibility: number;
+  avgPosition: number;
+  commonKeywords: number;
+  totalKeywords: number;
+  organicTraffic: string;
+  backlinks: string;
+  tag: string;
+}
+
 export interface SeRankingVisibilityRatingProps {
   projectDomain?: string;
   projectId?: string;
+  addedCompetitors?: CompetitorItem[];
   showToast?: (msg: string) => void;
   onOpenGuestLink?: () => void;
   onOpenFeedback?: () => void;
@@ -45,402 +58,82 @@ interface VisibilityCompetitor {
   seriesData?: number[];
 }
 
-const INITIAL_COMPETITORS: VisibilityCompetitor[] = [
-  {
-    id: 1,
-    domain: 'www.jio.com',
-    keywordsCount: '265K',
-    visibility: 100,
-    visibilityStr: '100%',
-    trafficForecast: '597.2K',
-    percentInTop10: '68.4%',
-    backlinks: '212,011',
-    refDomains: '16,248',
-    color: '#c5158e', // SE Ranking Magenta
-    isYou: true,
-    isActive: true,
-    seriesData: [100, 100, 100, 100, 100, 100],
-  },
-  {
-    id: 2,
-    domain: 'rechargemojo.com',
-    keywordsCount: '11.5K',
-    visibility: 42.9,
-    visibilityStr: '42.9%',
-    trafficForecast: '80.1K',
-    percentInTop10: '38.2%',
-    backlinks: '64',
-    refDomains: '57',
-    color: '#e6ec94', // Light Yellow / Lime
-    isYou: false,
-    isActive: true,
-    seriesData: [42.9, 42.9, 42.9, 43.15, 43.15, 43.15],
-  },
-  {
-    id: 3,
-    domain: 'paytm.com',
-    keywordsCount: '312K',
-    visibility: 23.4,
-    visibilityStr: '23.4%',
-    trafficForecast: '33.1K',
-    percentInTop10: '24.1%',
-    backlinks: '185K',
-    refDomains: '14.2K',
-    color: '#53022a', // Deep Maroon / Burgundy
-    isYou: false,
-    isActive: true,
-    seriesData: [23.4, 23.4, 30.2, 36.91, 36.91, 36.91],
-  },
-  {
-    id: 4,
-    domain: 'www.paisabazaar.com',
-    keywordsCount: '457.8K',
-    visibility: 34.8,
-    visibilityStr: '34.8%',
-    trafficForecast: '46.4K',
-    percentInTop10: '29.5%',
-    backlinks: '91,465',
-    refDomains: '9,099',
-    color: '#6e67a4', // Slate Purple
-    isYou: false,
-    isActive: true,
-    seriesData: [34.8, 34.8, 35.0, 35.06, 35.06, 35.06],
-  },
-  {
-    id: 5,
-    domain: 'play.google.com',
-    keywordsCount: '45.4K',
-    visibility: 25.6,
-    visibilityStr: '25.6%',
-    trafficForecast: '38.2K',
-    percentInTop10: '26.8%',
-    backlinks: '1.4M',
-    refDomains: '84.5K',
-    color: '#8bd0a6', // Mint Green
-    isYou: false,
-    isActive: true,
-    seriesData: [25.6, 25.6, 26.8, 27.22, 27.22, 27.22],
-  },
-  {
-    id: 6,
-    domain: 'apps.apple.com',
-    keywordsCount: '38.9K',
-    visibility: 14.0,
-    visibilityStr: '14.0%',
-    trafficForecast: '18.5K',
-    percentInTop10: '16.5%',
-    backlinks: '890K',
-    refDomains: '52K',
-    color: '#06900a', // Vibrant Green
-    isYou: false,
-    isActive: true,
-    seriesData: [14.0, 14.0, 14.0, 13.97, 13.97, 13.97],
-  },
-  {
-    id: 7,
-    domain: 'rechargebatteries.org',
-    keywordsCount: '3.2K',
-    visibility: 19.6,
-    visibilityStr: '19.6%',
-    trafficForecast: '25.8K',
-    percentInTop10: '21.0%',
-    backlinks: '412',
-    refDomains: '120',
-    color: '#1e232f', // Dark Charcoal
-    isYou: false,
-    isActive: true,
-    seriesData: [19.6, 19.6, 10.0, 0, 0, 0],
-  },
-  {
-    id: 8,
-    domain: 'indiapostgdsonline.cept.gov.in',
-    keywordsCount: '4.8K',
-    visibility: 13.6,
-    visibilityStr: '13.6%',
-    trafficForecast: '16.2K',
-    percentInTop10: '15.4%',
-    backlinks: '3.5K',
-    refDomains: '890',
-    color: '#dcd98b', // Khaki Gold
-    isYou: false,
-    isActive: true,
-    seriesData: [13.6, 13.6, 5.0, 0, 0, 0],
-  },
-  {
-    id: 9,
-    domain: 'www.airtel.in',
-    keywordsCount: '180K',
-    visibility: 12.4,
-    visibilityStr: '12.4%',
-    trafficForecast: '14.1K',
-    percentInTop10: '14.2%',
-    backlinks: '98K',
-    refDomains: '8.5K',
-    color: '#e74c3c',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 10,
-    domain: 'www.myvi.in',
-    keywordsCount: '95K',
-    visibility: 11.2,
-    visibilityStr: '11.2%',
-    trafficForecast: '12.8K',
-    percentInTop10: '13.1%',
-    backlinks: '62K',
-    refDomains: '5.4K',
-    color: '#f39c12',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 11,
-    domain: 'www.phonepe.com',
-    keywordsCount: '140K',
-    visibility: 9.8,
-    visibilityStr: '9.8%',
-    trafficForecast: '11.5K',
-    percentInTop10: '11.8%',
-    backlinks: '85K',
-    refDomains: '7.1K',
-    color: '#5f27cd',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 12,
-    domain: 'www.amazon.in',
-    keywordsCount: '850K',
-    visibility: 8.5,
-    visibilityStr: '8.5%',
-    trafficForecast: '9.8K',
-    percentInTop10: '10.2%',
-    backlinks: '520K',
-    refDomains: '32K',
-    color: '#ff9f43',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 13,
-    domain: 'www.mobikwik.com',
-    keywordsCount: '72K',
-    visibility: 7.9,
-    visibilityStr: '7.9%',
-    trafficForecast: '8.9K',
-    percentInTop10: '9.6%',
-    backlinks: '48K',
-    refDomains: '4.2K',
-    color: '#0abde3',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 14,
-    domain: 'www.freecharge.in',
-    keywordsCount: '54K',
-    visibility: 6.4,
-    visibilityStr: '6.4%',
-    trafficForecast: '7.2K',
-    percentInTop10: '8.1%',
-    backlinks: '36K',
-    refDomains: '3.8K',
-    color: '#ee5253',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 15,
-    domain: 'www.bajajfinserv.in',
-    keywordsCount: '220K',
-    visibility: 5.8,
-    visibilityStr: '5.8%',
-    trafficForecast: '6.5K',
-    percentInTop10: '7.5%',
-    backlinks: '75K',
-    refDomains: '6.2K',
-    color: '#10ac84',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 16,
-    domain: 'www.google.com',
-    keywordsCount: '1.2M',
-    visibility: 5.1,
-    visibilityStr: '5.1%',
-    trafficForecast: '5.9K',
-    percentInTop10: '6.8%',
-    backlinks: '2.8M',
-    refDomains: '150K',
-    color: '#48dbfb',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 17,
-    domain: 'en.wikipedia.org',
-    keywordsCount: '980K',
-    visibility: 4.6,
-    visibilityStr: '4.6%',
-    trafficForecast: '5.2K',
-    percentInTop10: '6.2%',
-    backlinks: '1.1M',
-    refDomains: '95K',
-    color: '#8395a7',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 18,
-    domain: 'www.cred.club',
-    keywordsCount: '42K',
-    visibility: 3.9,
-    visibilityStr: '3.9%',
-    trafficForecast: '4.4K',
-    percentInTop10: '5.4%',
-    backlinks: '24K',
-    refDomains: '2.8K',
-    color: '#222f3e',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 19,
-    domain: 'www.tataneu.com',
-    keywordsCount: '38K',
-    visibility: 3.2,
-    visibilityStr: '3.2%',
-    trafficForecast: '3.7K',
-    percentInTop10: '4.8%',
-    backlinks: '18K',
-    refDomains: '1.9K',
-    color: '#341f97',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 20,
-    domain: 'www.sbi.co.in',
-    keywordsCount: '190K',
-    visibility: 2.8,
-    visibilityStr: '2.8%',
-    trafficForecast: '3.1K',
-    percentInTop10: '4.1%',
-    backlinks: '88K',
-    refDomains: '7.8K',
-    color: '#01a3a4',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 21,
-    domain: 'www.hdfcbank.com',
-    keywordsCount: '210K',
-    visibility: 2.4,
-    visibilityStr: '2.4%',
-    trafficForecast: '2.8K',
-    percentInTop10: '3.6%',
-    backlinks: '92K',
-    refDomains: '8.2K',
-    color: '#2e86de',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 22,
-    domain: 'www.icicibank.com',
-    keywordsCount: '195K',
-    visibility: 2.1,
-    visibilityStr: '2.1%',
-    trafficForecast: '2.4K',
-    percentInTop10: '3.2%',
-    backlinks: '86K',
-    refDomains: '7.9K',
-    color: '#b53471',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 23,
-    domain: 'www.axisbank.com',
-    keywordsCount: '160K',
-    visibility: 1.8,
-    visibilityStr: '1.8%',
-    trafficForecast: '2.1K',
-    percentInTop10: '2.8%',
-    backlinks: '74K',
-    refDomains: '6.8K',
-    color: '#6F1E51',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 24,
-    domain: 'www.kotak.com',
-    keywordsCount: '145K',
-    visibility: 1.5,
-    visibilityStr: '1.5%',
-    trafficForecast: '1.8K',
-    percentInTop10: '2.4%',
-    backlinks: '68K',
-    refDomains: '6.1K',
-    color: '#ED4C67',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 25,
-    domain: 'www.bankofbaroda.in',
-    keywordsCount: '120K',
-    visibility: 1.2,
-    visibilityStr: '1.2%',
-    trafficForecast: '1.4K',
-    percentInTop10: '2.0%',
-    backlinks: '52K',
-    refDomains: '5.1K',
-    color: '#F79F1F',
-    isYou: false,
-    isActive: false,
-  },
-  {
-    id: 26,
-    domain: 'www.kvb.bank.in',
-    keywordsCount: '45K',
-    visibility: 0.9,
-    visibilityStr: '0.9%',
-    trafficForecast: '1.1K',
-    percentInTop10: '1.6%',
-    backlinks: '18K',
-    refDomains: '1.8K',
-    color: '#A3CB38',
-    isYou: false,
-    isActive: false,
-  },
+const COMPETITOR_COLORS = [
+  '#e6ec94', // Light Yellow / Lime
+  '#53022a', // Deep Maroon / Burgundy
+  '#6e67a4', // Slate Purple
+  '#8bd0a6', // Mint Green
+  '#06900a', // Vibrant Green
+  '#1e232f', // Dark Charcoal
+  '#dcd98b', // Khaki Gold
+  '#e74c3c', // Red
+  '#f39c12', // Orange
+  '#5f27cd', // Violet
 ];
 
 export function SeRankingVisibilityRating({
-  projectDomain = 'myjio.com',
+  projectDomain = '',
   projectId,
+  addedCompetitors = [],
   showToast = () => {},
   onOpenGuestLink = () => {},
   onOpenFeedback = () => {},
   onOpenNotes = () => {},
   notesCount = 50,
 }: SeRankingVisibilityRatingProps) {
-  const cleanDomain = projectDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase();
-  const [competitors, setCompetitors] = useState<VisibilityCompetitor[]>(() => {
-    return INITIAL_COMPETITORS.map((c) =>
-      c.isYou ? { ...c, domain: cleanDomain } : c
-    );
-  });
+  const cleanDomain = projectDomain
+    ? projectDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase()
+    : '';
+
+  const [competitors, setCompetitors] = useState<VisibilityCompetitor[]>([]);
 
   useEffect(() => {
-    setCompetitors((prev) =>
-      prev.map((c) => (c.isYou ? { ...c, domain: cleanDomain } : c))
-    );
-  }, [cleanDomain]);
+    if (!cleanDomain) {
+      setCompetitors([]);
+      return;
+    }
+
+    const youComp: VisibilityCompetitor = {
+      id: 1,
+      domain: cleanDomain,
+      keywordsCount: '—',
+      visibility: 100,
+      visibilityStr: '100%',
+      trafficForecast: '—',
+      percentInTop10: '—',
+      backlinks: '—',
+      refDomains: '—',
+      color: '#c5158e', // SE Ranking Magenta
+      isYou: true,
+      isActive: true,
+      seriesData: [100, 100, 100, 100, 100, 100],
+    };
+
+    const compRows: VisibilityCompetitor[] = (addedCompetitors || []).map((c, idx) => ({
+      id: idx + 2,
+      domain: c.domain,
+      keywordsCount: `${c.totalKeywords || c.commonKeywords || 0}`,
+      visibility: c.visibility || 0,
+      visibilityStr: `${c.visibility || 0}%`,
+      trafficForecast: c.organicTraffic || '—',
+      percentInTop10: '—',
+      backlinks: c.backlinks || '—',
+      refDomains: '—',
+      color: COMPETITOR_COLORS[idx % COMPETITOR_COLORS.length],
+      isYou: false,
+      isActive: true,
+      seriesData: [
+        c.visibility || 0,
+        c.visibility || 0,
+        c.visibility || 0,
+        c.visibility || 0,
+        c.visibility || 0,
+        c.visibility || 0,
+      ],
+    }));
+
+    setCompetitors([youComp, ...compRows]);
+  }, [cleanDomain, addedCompetitors]);
   const [activeMetricTab, setActiveMetricTab] = useState<'visibility' | 'traffic' | 'top10' | 'distribution'>('visibility');
   const [period, setPeriod] = useState<'week' | '2weeks' | 'month'>('month');
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
@@ -966,6 +659,14 @@ export function SeRankingVisibilityRating({
                   </tr>
                 );
               })}
+              {filteredCompetitors.length <= 1 && (
+                <tr>
+                  <td colSpan={8} className="py-6 px-4 text-center text-gray-500 bg-gray-50/40">
+                    <p className="font-semibold text-xs text-gray-700">No competitors added yet for {cleanDomain || 'this project'}.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Add up to 5 competitors in the "Added Competitors" tab to view real visibility comparisons.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

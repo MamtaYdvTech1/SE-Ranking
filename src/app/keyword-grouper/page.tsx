@@ -44,9 +44,9 @@ function KeywordGrouperContent() {
   const router = useRouter();
   const tab = searchParams?.get('tab') || 'settings';
   const { activeProject, projects } = useApp();
-  const domainName = (activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com')
+  const domainName = (activeProject?.domain || (projects && projects[0]?.domain) || '')
     .replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  const brandName = domainName.split('.')[0].toUpperCase();
+  const brandName = domainName ? domainName.split('.')[0].toUpperCase() : 'PROJECT';
 
   const [showInfo, setShowInfo] = useState(true);
   const [reportTitle, setReportTitle] = useState('');

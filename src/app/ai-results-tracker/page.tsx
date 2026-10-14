@@ -93,8 +93,8 @@ const DEFAULT_DEMO_PROMPTS: LlmPromptItem[] = [
 
 function AiResultsTrackerContent() {
   const { activeProject, projects } = useApp();
-  const domain = activeProject?.domain || (projects && projects[0]?.domain) || 'flipkart.com';
-  const cleanDomain = (domain || 'flipkart.com')
+  const domain = activeProject?.domain || (projects && projects[0]?.domain) || '';
+  const cleanDomain = domain
     .replace(/^https?:\/\//i, '')
     .replace(/^www\./i, '')
     .replace(/\/$/, '');
@@ -309,8 +309,8 @@ function AiResultsTrackerContent() {
     return (
       <div className="flex-1 bg-[#F5F7FB] dark:bg-slate-900 min-h-screen p-4 sm:p-6 select-none font-sans">
         <AiCompetitorsView
-          projectId={activeProject?.id || '12960641'}
-          projectDomain={cleanDomain || 'flipkart.com'}
+          projectId={activeProject?.id || ''}
+          projectDomain={cleanDomain || ''}
         />
       </div>
     );
@@ -907,7 +907,7 @@ function AiResultsTrackerContent() {
                     <tbody className="divide-y divide-gray-100">
                       {[
                         {
-                          domain: cleanDomain || 'flipkart.com',
+                          domain: cleanDomain || 'Your Domain',
                           isYou: true,
                           visibility: 85,
                           mentions: '3 / 4',
@@ -1026,7 +1026,7 @@ function AiResultsTrackerContent() {
                           authority: 'High',
                         },
                         {
-                          domain: cleanDomain || 'flipkart.com',
+                          domain: cleanDomain || 'Your Domain',
                           share: 28,
                           promptsCited: '3 / 4',
                           linksCount: 22,
