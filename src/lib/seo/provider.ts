@@ -86,11 +86,12 @@ export class SeRankingProvider implements SeoDataProvider {
     );
 
     if (!isTokenConfigured) {
-      return new MockSeoDataProvider().analyze(params);
+      throw new Error('SE Ranking API credentials are not configured.');
     }
 
+    let response: Response;
     try {
-      const response = await fetch(`${this.baseUrl}/ai-search/analyze`, {
+      response = await fetch(`${this.baseUrl}/ai-search/analyze`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
@@ -100,31 +101,24 @@ export class SeRankingProvider implements SeoDataProvider {
           brand: params.brandName,
         }),
       });
-
-      if (response.status === 401 || response.status === 403) {
-        console.warn('SEO provider credentials rejected, serving live fallback data');
-        return new MockSeoDataProvider().analyze(params);
-      }
-
-      if (response.status === 429) {
-        console.warn('API request limit reached, serving live fallback data');
-        return new MockSeoDataProvider().analyze(params);
-      }
-
-      if (response.status === 404) {
-        return new MockSeoDataProvider().analyze(params);
-      }
-
-      if (!response.ok) {
-        return new MockSeoDataProvider().analyze(params);
-      }
-
-      const data = await response.json();
-      return this.normalizeApiResponse(data, params);
     } catch (err: unknown) {
-      console.warn('Unable to query SE Ranking API directly, falling back:', err);
-      return new MockSeoDataProvider().analyze(params);
+      console.warn('Unable to reach SE Ranking API:', err);
+      throw new Error('Unable to reach the SEO data provider. Please try again.');
     }
+
+    // Surface provider failures instead of substituting generated data
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Your SEO data provider credentials were rejected.');
+    }
+    if (response.status === 429) {
+      throw new Error('API request limit reached. Please try again later.');
+    }
+    if (!response.ok) {
+      throw new Error(`SEO data provider error (${response.status}). AI search analysis is unavailable.`);
+    }
+
+    const data = await response.json();
+    return this.normalizeApiResponse(data, params);
   }
 
   private normalizeApiResponse(raw: Record<string, unknown>, params: AnalyzeRequestInput): AnalysisOverview {
@@ -432,18 +426,10 @@ export class MockSeoDataProvider implements SeoDataProvider {
 
 export function getSeoProvider(): SeoDataProvider {
   const mode = process.env.SEO_PROVIDER_MODE || 'real';
-  const token = process.env.SE_RANKING_API_TOKEN;
-
   if (mode === 'mock') {
     return new MockSeoDataProvider();
   }
 
-  if (mode === 'real') {
-    if (!token || token.trim() === '') {
-      return new SeRankingProvider();
-    }
-    return new SeRankingProvider();
-  }
-
-  return new MockSeoDataProvider();
+  // Mock data only when explicitly requested (local demos); everything else hits the real provider
+  return new SeRankingProvider();
 }

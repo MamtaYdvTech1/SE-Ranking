@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 import { GbpPostCreateSchema } from '@/lib/validation/schemas';
 
 export async function GET(
@@ -11,13 +12,9 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const locationId = searchParams.get('locationId');
 
-    const project = await prisma.project.findFirst({
-      where: { OR: [{ id }, { domain: id }] },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
 
     const whereClause: any = {
       projectId: project.id,
@@ -80,13 +77,9 @@ export async function POST(
     const { id } = await params;
     const body = await req.json();
 
-    const project = await prisma.project.findFirst({
-      where: { OR: [{ id }, { domain: id }] },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
 
     const result = GbpPostCreateSchema.safeParse(body);
     if (!result.success) {
@@ -132,7 +125,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: _projectId } = await params;
+    const { id } = await params;
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
     const { searchParams } = new URL(req.url);
     const postId = searchParams.get('id') || (await req.json().catch(() => ({}))).id;
 
@@ -140,10 +136,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
     }
 
-    await prisma.gbpPost.update({
-      where: { id: postId },
+    const deleted = await prisma.gbpPost.updateMany({
+      where: { id: postId, projectId: project.id, deletedAt: null },
       data: { deletedAt: new Date() },
     });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, message: 'Post deleted successfully.' });
   } catch (err: unknown) {

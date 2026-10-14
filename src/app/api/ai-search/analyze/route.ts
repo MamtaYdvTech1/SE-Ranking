@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AnalyzeRequestSchema } from '@/lib/validation/schemas';
 import { getSeoProvider } from '@/lib/seo/provider';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,10 @@ export async function POST(req: NextRequest) {
     }
 
     const input = validationResult.data;
+    if (input.projectId) {
+      const access = await verifyProjectAccess(req, input.projectId);
+      if (!access.success) return access.error;
+    }
     const provider = getSeoProvider();
 
     // Call SEO provider
@@ -113,6 +118,8 @@ export async function POST(req: NextRequest) {
       ? 429
       : message.includes('valid')
       ? 400
+      : message.includes('provider')
+      ? 502
       : 500;
 
     return NextResponse.json({ error: message }, { status });

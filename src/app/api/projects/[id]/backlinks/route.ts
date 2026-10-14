@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyProjectAccess } from '@/lib/server/projectAuth';
-import { getProjectBacklinks, syncProjectBacklinks, seedProjectBacklinksIfEmpty } from '@/services/seo/backlink.service';
-import { createJob } from '@/services/jobs/job.service';
+import { getProjectBacklinks, syncProjectBacklinks } from '@/services/seo/backlink.service';
 import { prisma } from '@/lib/db/prisma';
 
 export async function GET(
@@ -15,14 +14,15 @@ export async function GET(
       return authResult.error;
     }
 
-    let summary = await getProjectBacklinks(id);
-    if (summary.totalBacklinks === 0) {
-      const project = await prisma.project.findUnique({ where: { id } });
-      if (project && !project.domain.includes('new-isolated-test.org')) {
-        await seedProjectBacklinksIfEmpty(id, project.domain, project.name);
-        summary = await getProjectBacklinks(id);
-      }
+    const projectId = authResult.data.project.id;
+
+    // First visit with nothing stored: pull real backlinks once
+    const storedCount = await prisma.backlink.count({ where: { projectId, deletedAt: null } });
+    if (storedCount === 0) {
+      await syncProjectBacklinks(projectId).catch((e) => console.warn('Backlink sync notice:', e));
     }
+
+    const summary = await getProjectBacklinks(projectId);
 
     return NextResponse.json({
       success: true,
@@ -47,19 +47,19 @@ export async function POST(
       return authResult.error;
     }
 
-    // Enqueue background job
-    await createJob({
-      projectId: id,
-      type: 'BACKLINK_SYNC',
-      payload: { projectId: id },
-    });
-
-    const syncResult = await syncProjectBacklinks(id);
+    const syncResult = await syncProjectBacklinks(authResult.data.project.id);
+    if (!syncResult.configured) {
+      return NextResponse.json(
+        { success: false, error: 'Backlink data provider (YepAPI) is not configured.' },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Backlink synchronization completed: ${syncResult.added} new links added.`,
+      message: `Backlink synchronization completed: ${syncResult.added} new, ${syncResult.updated} updated.`,
       added: syncResult.added,
+      updated: syncResult.updated,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error syncing backlinks';

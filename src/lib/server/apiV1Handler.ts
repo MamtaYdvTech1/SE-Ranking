@@ -418,10 +418,11 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
         take: 5,
       });
 
+      // Most recent 30 days of snapshots, returned oldest-first for the trend chart
+      const trendSince = new Date(Date.now() - 30 * 86400000);
       const historyRecords = await prisma.rankingHistory.findMany({
-        where: { projectId: project.id },
+        where: { projectId: project.id, checkedAt: { gte: trendSince } },
         orderBy: { checkedAt: "asc" },
-        take: 30,
       });
 
       const historyByDate: Record<string, { total: number; count: number }> = {};
@@ -498,11 +499,20 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
       }
 
       if (subPath === "rankings/check" && method === "POST") {
-        await prisma.project.update({
-          where: { id: project.id },
-          data: { lastRankingCheckAt: new Date() },
+        const { collectRankingsForProject } = await import("@/services/seo/ranking.service");
+        const result = await collectRankingsForProject(project.id, { timeoutMs: 25000 });
+        if (result.providerStatus === "UNCONFIGURED") {
+          return errorResponse(result.message, 503);
+        }
+        if (kws.length > 0 && result.checkedCount === 0) {
+          return errorResponse(result.message, 502);
+        }
+        return successResponse({
+          checkedCount: result.checkedCount,
+          rankedCount: result.rankedCount,
+          unrankedCount: result.unrankedCount,
+          message: result.message,
         });
-        return successResponse({ checkedCount: kws.length, message: `Checked ${kws.length} keywords.` });
       }
 
       if (subPath === "rankings/detailed" || subPath === "rankings/historical") {

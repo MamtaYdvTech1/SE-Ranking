@@ -8,39 +8,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const cleanId = decodeURIComponent(id || '').trim();
 
-    // 1. Locate project
-    let project = await prisma.project.findFirst({
-      where: {
-        OR: [{ id: cleanId }, { domain: cleanId }],
-        deletedAt: null,
-      },
-      include: {
-        keywords: true,
-      },
-    });
-
-    if (!project) {
-      // Check if domain match
-      const cleanDomain = cleanId.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
-      project = await prisma.project.findFirst({
-        where: {
-          domain: { contains: cleanDomain },
-          deletedAt: null,
-        },
-        include: {
-          keywords: true,
-        },
-      });
-    }
-
-    if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Project not found.' },
-        { status: 404 }
-      );
-    }
+    // 1. Authenticate and verify project ownership
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
 
     // 2. Perform real live ranking recheck via SEO provider (YepAPI)
     const { collectRankingsForProject } = await import('@/services/seo/ranking.service');
@@ -78,16 +50,15 @@ export async function POST(
       }
     }
 
-    // Update project lastRankingCheckAt
-    await prisma.project.update({
-      where: { id: project.id },
-      data: {
-        lastRankingCheckAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
+    // collectRankingsForProject only stamps lastRankingCheckAt when the provider actually returned results
+    if (result.providerStatus === 'UNCONFIGURED' || (keywords.length > 0 && result.checkedCount === 0)) {
+      return NextResponse.json(
+        { success: false, error: result.message, providerStatus: result.providerStatus },
+        { status: result.providerStatus === 'UNCONFIGURED' ? 503 : 502 }
+      );
+    }
 
-    const updatedCount = result.checkedCount || keywords.length;
+    const updatedCount = result.checkedCount;
 
     return NextResponse.json({
       success: true,

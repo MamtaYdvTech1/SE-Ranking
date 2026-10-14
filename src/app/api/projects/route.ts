@@ -484,10 +484,12 @@ export async function POST(req: NextRequest) {
         .catch(() => {});
     }
 
-    // Seed initial realistic authentic backlinks for this domain
+    // Pull the domain's real backlinks from YepAPI in background
     import('@/services/seo/backlink.service')
-      .then(({ seedProjectBacklinksIfEmpty }) => {
-        seedProjectBacklinksIfEmpty(createdProject.id, cleanDomain, projectName).catch(() => {});
+      .then(({ syncProjectBacklinks }) => {
+        syncProjectBacklinks(createdProject.id).catch((e) =>
+          console.warn('Initial backlink sync background notice:', e)
+        );
       })
       .catch(() => {});
 

@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    await params;
-    return NextResponse.json({
-      success: true,
-      statusCode: 200,
+  const { id } = await params;
+  const access = await verifyProjectAccess(request, id);
+  if (!access.success) return access.error;
+
+  // No GA4 Data API sync is implemented yet; report that instead of pretending a job was queued.
+  return NextResponse.json(
+    {
+      success: false,
+      statusCode: 501,
       timestamp: new Date().toISOString(),
-      data: { queued: true },
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        statusCode: 500,
-        timestamp: new Date().toISOString(),
-        message: error?.message || 'Failed to trigger GA4 sync',
-      },
-      { status: 500 }
-    );
-  }
+      message: 'GA4 sync is not available yet.',
+    },
+    { status: 501 }
+  );
 }
