@@ -2,12 +2,10 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
-  MOCK_ZOHO_IPS,
-  MOCK_WORKCOMPOSER_IPS,
-  MOCK_IPS,
   ZohoIpItem,
   IpRecord,
-} from "./mockBacklinkData";
+} from "./types";
+import { useBacklinkExplorer, formatLastChecked } from "./useBacklinkExplorer";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 
 export function CountryOrGlobeLogo({ type, flag, countryCode, country }: { type?: string; flag?: string; countryCode?: string; country?: string }) {
@@ -16,24 +14,20 @@ export function CountryOrGlobeLogo({ type, flag, countryCode, country }: { type?
 }
 
 interface IpsTabProps {
+  projectId?: string;
   projectDomain?: string;
   showSubTabs?: boolean;
   onNavigateTab?: (tab: string) => void;
 }
 
 export function IpsTab({
-  projectDomain = "workcomposer.com",
+  projectId,
+  projectDomain = "",
   showSubTabs = true,
   onNavigateTab,
 }: IpsTabProps) {
-  // Domain selection (workcomposer.com as in screenshot, or workco.com)
-  const [activeDomain, setActiveDomain] = useState<string>(projectDomain || "workcomposer.com");
-
-  useEffect(() => {
-    if (projectDomain) {
-      setActiveDomain(projectDomain);
-    }
-  }, [projectDomain]);
+  const activeDomain = projectDomain || "";
+  const { data: explorer, loading: explorerLoading, refresh: refreshExplorer } = useBacklinkExplorer(projectId);
 
   // Mode: IPS vs SUBNETS
   const [viewMode, setViewMode] = useState<"IPS" | "SUBNETS">("IPS");
@@ -50,7 +44,7 @@ export function IpsTab({
   const [tempEmailFreq, setTempEmailFreq] = useState("Bi-weekly");
 
   // Report Update State
-  const [lastCheckDate, setLastCheckDate] = useState("September 26, 2026");
+  const lastCheckDate = formatLastChecked(explorer.lastChecked);
   const [isUpdatingReport, setIsUpdatingReport] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -180,12 +174,7 @@ export function IpsTab({
   };
 
   // Source Items
-  const sourceIps: ZohoIpItem[] = useMemo(() => {
-    if (activeDomain.toLowerCase() === "workco.com" || activeDomain.toLowerCase() === "zoho.com") {
-      return MOCK_ZOHO_IPS;
-    }
-    return MOCK_WORKCOMPOSER_IPS;
-  }, [activeDomain]);
+  const sourceIps: ZohoIpItem[] = explorer.ips;
 
   // Distinct countries for filter
   const distinctCountries = useMemo(() => {
@@ -386,15 +375,12 @@ export function IpsTab({
   };
 
   // Update Report action
-  const handleUpdateReport = () => {
+  const handleUpdateReport = async () => {
     setIsUpdatingReport(true);
-    setTimeout(() => {
-      setIsUpdatingReport(false);
-      const now = new Date();
-      const formatted = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-      setLastCheckDate(formatted);
-      setToastMessage("Report updated successfully. Fresh backlink data loaded.");
-    }, 1200);
+    const result = await refreshExplorer();
+    setIsUpdatingReport(false);
+    setToastMessage(result.message);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Add Note
@@ -456,13 +442,7 @@ export function IpsTab({
       <div className="flex items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
         {/* Breadcrumb path */}
         <div className="flex items-center gap-2 font-medium">
-          <button
-            onClick={() => setActiveDomain(activeDomain === "workco.com" ? "workcomposer.com" : "workco.com")}
-            className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer font-medium"
-            title="Click to toggle domain"
-          >
-            {activeDomain}
-          </button>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">{activeDomain}</span>
           <span className="text-slate-400">›</span>
           <span className="text-slate-600 dark:text-slate-400 hover:text-slate-900 cursor-pointer">Backlink Checker</span>
           <span className="text-slate-400">›</span>

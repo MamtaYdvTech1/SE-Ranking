@@ -2,37 +2,26 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
-  MOCK_ZOHO_PAGES,
-  MOCK_WORKCOMPOSER_PAGES,
-  MOCK_PAGES,
   ZohoPageItem,
   PageRecord,
-} from "./mockBacklinkData";
+} from "./types";
+import { useBacklinkExplorer, formatLastChecked } from "./useBacklinkExplorer";
 
 interface PagesTabProps {
+  projectId?: string;
   projectDomain?: string;
   showSubTabs?: boolean;
   onNavigateTab?: (tab: string) => void;
 }
 
 export function PagesTab({
-  projectDomain = "workco.com",
+  projectId,
+  projectDomain = "",
   showSubTabs = true,
   onNavigateTab,
 }: PagesTabProps) {
-  // Active domain (default workco.com, toggles to workcomposer.com)
-  const [activeDomain, setActiveDomain] = useState<string>(projectDomain || "workco.com");
-
-  useEffect(() => {
-    if (projectDomain) {
-      setActiveDomain(projectDomain);
-      if (projectDomain.toLowerCase().includes("workcomposer")) {
-        setLastCheckDate("September 26, 2026");
-      } else {
-        setLastCheckDate("September 23, 2026");
-      }
-    }
-  }, [projectDomain]);
+  const activeDomain = projectDomain || "";
+  const { data: explorer, loading: explorerLoading, refresh: refreshExplorer } = useBacklinkExplorer(projectId);
 
   // Banners
   const [showTrialBanner, setShowTrialBanner] = useState(false);
@@ -46,9 +35,7 @@ export function PagesTab({
   const [tempEmailFreq, setTempEmailFreq] = useState("Bi-weekly");
 
   // Report Update State
-  const [lastCheckDate, setLastCheckDate] = useState(
-    projectDomain?.toLowerCase().includes("workcomposer") ? "September 26, 2026" : "September 23, 2026"
-  );
+  const lastCheckDate = formatLastChecked(explorer.lastChecked);
   const [isUpdatingReport, setIsUpdatingReport] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -216,12 +203,7 @@ export function PagesTab({
   }, [toastMessage]);
 
   // Source items
-  const sourcePages: ZohoPageItem[] = useMemo(() => {
-    if (activeDomain.toLowerCase() === "workco.com" || activeDomain.toLowerCase() === "zoho.com") {
-      return MOCK_ZOHO_PAGES;
-    }
-    return MOCK_WORKCOMPOSER_PAGES;
-  }, [activeDomain]);
+  const sourcePages: ZohoPageItem[] = explorer.pages;
 
   // Filtered & Sorted
   const filteredPages = useMemo(() => {
@@ -337,15 +319,12 @@ export function PagesTab({
   };
 
   // Update Report action
-  const handleUpdateReport = () => {
+  const handleUpdateReport = async () => {
     setIsUpdatingReport(true);
-    setTimeout(() => {
-      setIsUpdatingReport(false);
-      const now = new Date();
-      const formatted = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-      setLastCheckDate(formatted);
-      setToastMessage("Report updated successfully. Fresh backlink data loaded.");
-    }, 1200);
+    const result = await refreshExplorer();
+    setIsUpdatingReport(false);
+    setToastMessage(result.message);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Add Note
@@ -409,13 +388,7 @@ export function PagesTab({
       <div className="flex items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
         {/* Breadcrumb path */}
         <div className="flex items-center gap-2 font-medium">
-          <button
-            onClick={() => setActiveDomain(activeDomain === "workco.com" ? "workcomposer.com" : "workco.com")}
-            className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer font-medium"
-            title="Click to toggle domain"
-          >
-            {activeDomain}
-          </button>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">{activeDomain}</span>
           <span className="text-slate-400">›</span>
           <span className="text-slate-600 dark:text-slate-400 hover:text-slate-900 cursor-pointer">Backlink Checker</span>
           <span className="text-slate-400">›</span>

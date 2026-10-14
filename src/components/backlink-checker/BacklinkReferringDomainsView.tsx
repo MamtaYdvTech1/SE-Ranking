@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { MOCK_REFERRING_DOMAINS, ReferringDomainRecord } from "./mockBacklinkData";
+import type { ReferringDomainRecord } from "./types";
+import { useBacklinkExplorer } from "./useBacklinkExplorer";
 
 interface BacklinkReferringDomainsViewProps {
   projectId?: string;
@@ -102,12 +103,13 @@ function formatShortDate(d: Date): string {
 }
 
 export function BacklinkReferringDomainsView({
-  projectId = "proj-123",
-  projectDomain = "workcomposer.com",
+  projectId,
+  projectDomain = "",
   onNavigateTab,
   showSubTabs = true,
 }: BacklinkReferringDomainsViewProps) {
   const router = useRouter();
+  const { data: explorer, loading: explorerLoading, refresh: refreshExplorer } = useBacklinkExplorer(projectId);
 
   // Banners visibility
   const [showTopNotice, setShowTopNotice] = useState(true);
@@ -461,7 +463,7 @@ export function BacklinkReferringDomainsView({
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
-    let result = [...MOCK_REFERRING_DOMAINS];
+    let result: ReferringDomainRecord[] = [...explorer.referringDomains];
 
     // Status filter
     if (statusFilter === "ACTIVE") {
@@ -693,6 +695,7 @@ export function BacklinkReferringDomainsView({
 
     return result;
   }, [
+    explorer.referringDomains,
     statusFilter,
     search,
     enabledFilters,
@@ -843,13 +846,12 @@ export function BacklinkReferringDomainsView({
     setSelectedIds(next);
   };
 
-  const handleUpdateReport = () => {
+  const handleUpdateReport = async () => {
     setIsUpdatingReport(true);
-    setTimeout(() => {
-      setIsUpdatingReport(false);
-      setUpdateToast("Referring domains report refreshed successfully with latest live crawler metrics!");
-      setTimeout(() => setUpdateToast(null), 4000);
-    }, 1200);
+    const result = await refreshExplorer();
+    setIsUpdatingReport(false);
+    setUpdateToast(result.message);
+    setTimeout(() => setUpdateToast(null), 4000);
   };
 
   const handleExport = (format: string) => {
@@ -2752,22 +2754,45 @@ export function BacklinkReferringDomainsView({
                               <span className="text-slate-400 font-normal">First seen: {item.firstSeen}</span>
                             </div>
                             <div className="space-y-1.5 pt-1">
-                              <div className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
-                                <div>
-                                  <div className="font-semibold text-slate-900 dark:text-white">
-                                    https://{item.domain}/reviews/workcomposer-analysis/
+                              {explorer.backlinks
+                                .filter((bl) => {
+                                  try {
+                                    return new URL(bl.sourceUrl).hostname.replace(/^www\./i, "").toLowerCase() === item.domain;
+                                  } catch {
+                                    return false;
+                                  }
+                                })
+                                .slice(0, 10)
+                                .map((bl) => (
+                                  <div key={bl.id} className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-800">
+                                    <div className="min-w-0">
+                                      <a
+                                        href={bl.sourceUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-semibold text-slate-900 dark:text-white hover:underline break-all"
+                                      >
+                                        {bl.sourceUrl}
+                                      </a>
+                                      <div className="text-slate-500 text-[11px] mt-0.5 break-all">
+                                        Target: {bl.targetUrl}
+                                        {bl.anchorText ? <> | Anchor: &quot;{bl.anchorText}&quot;</> : null}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded font-bold text-[10px] ${
+                                          bl.isDofollow
+                                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                        }`}
+                                      >
+                                        {bl.isDofollow ? "DOFOLLOW" : "NOFOLLOW"}
+                                      </span>
+                                      <span className="text-slate-400 text-[11px]">Seen: {bl.lastSeen}</span>
+                                    </div>
                                   </div>
-                                  <div className="text-slate-500 text-[11px] mt-0.5">
-                                    Target: https://www.workcomposer.com/ | Anchor: &quot;WorkComposer&quot;
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-bold text-[10px]">
-                                    DOFOLLOW
-                                  </span>
-                                  <span className="text-slate-400 text-[11px]">Seen: {item.firstSeen}</span>
-                                </div>
-                              </div>
+                                ))}
                             </div>
                           </div>
                         </td>
@@ -2780,7 +2805,7 @@ export function BacklinkReferringDomainsView({
               {paginatedItems.length === 0 && (
                 <tr>
                   <td colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="py-12 text-center text-slate-500">
-                    No referring domains match your filter criteria.
+                    {explorerLoading ? "Loading referring domains…" : "No referring domains match your filter criteria."}
                   </td>
                 </tr>
               )}

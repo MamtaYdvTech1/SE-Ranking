@@ -29,7 +29,7 @@ export function BacklinkCheckerOverviewView({
   showSubTabs = true,
 }: BacklinkCheckerOverviewViewProps) {
   const router = useRouter();
-  const [domain, setDomain] = useState<string>(projectDomain || "workcomposer.com");
+  const [domain, setDomain] = useState<string>(projectDomain || "");
 
   useEffect(() => {
     if (projectDomain) {
@@ -97,6 +97,7 @@ export function BacklinkCheckerOverviewView({
       {/* Main Backlink Checker Overview Workspace */}
       <div className="flex-1 px-6 sm:px-8 py-5 w-full">
         <BacklinkCheckerOverview
+          projectId={projectId}
           projectDomain={domain}
           onNavigateTab={handleTabChange}
         />

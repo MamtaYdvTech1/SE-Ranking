@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { MOCK_BACKLINKS, BacklinkRecord } from "./mockBacklinkData";
+import type { BacklinkRecord } from "./types";
+import { useBacklinkExplorer } from "./useBacklinkExplorer";
 
 interface BacklinksTableTabProps {
+  projectId?: string;
   projectDomain?: string;
 }
 
@@ -28,7 +30,9 @@ function isSubdomain(urlStr: string): boolean {
   }
 }
 
-export function BacklinksTableTab({ projectDomain = "workcomposer.com" }: BacklinksTableTabProps) {
+export function BacklinksTableTab({ projectId, projectDomain = "" }: BacklinksTableTabProps) {
+  const { data: explorer, loading: explorerLoading, refresh: refreshExplorer } = useBacklinkExplorer(projectId);
+
   // Banners visibility
   const [showTopNotice, setShowTopNotice] = useState(true);
   const [showGuideBanner, setShowGuideBanner] = useState(true);
@@ -96,7 +100,7 @@ export function BacklinksTableTab({ projectDomain = "workcomposer.com" }: Backli
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
-    let result = [...MOCK_BACKLINKS];
+    let result: BacklinkRecord[] = [...explorer.backlinks];
 
     // Status filter
     if (statusFilter === "NEW") {
@@ -185,6 +189,7 @@ export function BacklinksTableTab({ projectDomain = "workcomposer.com" }: Backli
 
     return result;
   }, [
+    explorer.backlinks,
     statusFilter,
     search,
     oneBacklinkPerDomain,
@@ -252,13 +257,12 @@ export function BacklinksTableTab({ projectDomain = "workcomposer.com" }: Backli
     setSelectedIds(next);
   };
 
-  const handleUpdateReport = () => {
+  const handleUpdateReport = async () => {
     setIsUpdatingReport(true);
-    setTimeout(() => {
-      setIsUpdatingReport(false);
-      setUpdateToast("Backlink report refreshed successfully with latest live crawler metrics!");
-      setTimeout(() => setUpdateToast(null), 4000);
-    }, 1200);
+    const result = await refreshExplorer();
+    setIsUpdatingReport(false);
+    setUpdateToast(result.message);
+    setTimeout(() => setUpdateToast(null), 4000);
   };
 
   const handleExport = (format: string) => {
@@ -1145,7 +1149,7 @@ export function BacklinksTableTab({ projectDomain = "workcomposer.com" }: Backli
               {paginatedItems.length === 0 && (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-500">
-                    No backlinks found matching your active filters.
+                    {explorerLoading ? "Loading backlinks…" : "No backlinks found matching your active filters."}
                   </td>
                 </tr>
               )}

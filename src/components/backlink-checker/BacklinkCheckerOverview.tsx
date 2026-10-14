@@ -1,24 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  MOCK_TIME_SERIES,
-  MOCK_TOP_ANCHORS,
-  MOCK_DOMAIN_TRUST_DISTRIBUTION,
-  MOCK_COUNTRY_DISTRIBUTION,
-  TimeSeriesPoint,
-} from "./mockBacklinkData";
+import type { TimeSeriesPoint } from "./types";
+import { useBacklinkExplorer } from "./useBacklinkExplorer";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 
 interface BacklinkCheckerOverviewProps {
+  projectId?: string;
   projectDomain: string;
   onNavigateTab: (tab: string) => void;
 }
 
 export function BacklinkCheckerOverview({
+  projectId,
   projectDomain,
   onNavigateTab,
 }: BacklinkCheckerOverviewProps) {
+  const { data: explorer } = useBacklinkExplorer(projectId);
   // Periods
   const [activePeriod, setActivePeriod] = useState<"7D" | "1M" | "3M" | "6M" | "12M">("3M");
   const [groupBy, setGroupBy] = useState<"WEEKS" | "DAYS" | "MONTHS">("WEEKS");
@@ -39,8 +37,8 @@ export function BacklinkCheckerOverview({
   const [hoverRefDomainIndex, setHoverRefDomainIndex] = useState<number | null>(null);
   const [hoverBacklinkIndex, setHoverBacklinkIndex] = useState<number | null>(null);
 
-  // Time series data
-  const data = MOCK_TIME_SERIES;
+  // Weekly history computed from stored backlinks
+  const data: TimeSeriesPoint[] = explorer.timeSeries;
 
   // Chart dimensions for top chart
   const topWidth = 900;
@@ -49,16 +47,14 @@ export function BacklinkCheckerOverview({
   const innerTopWidth = topWidth - topPadding.left - topPadding.right;
   const innerTopHeight = topHeight - topPadding.top - topPadding.bottom;
 
-  // Scales for dual chart
-  // Left axis (Ref domains): 150 to 270
-  const minRef = 150;
-  const maxRef = 270;
-  // Right axis (Backlinks): 240 to 360
-  const minBacklinks = 240;
-  const maxBacklinks = 360;
+  // Scales for dual chart, sized to the data with ~10% headroom
+  const minRef = 0;
+  const maxRef = Math.max(10, Math.ceil(Math.max(0, ...data.map((d) => d.referringDomains)) * 1.1));
+  const minBacklinks = 0;
+  const maxBacklinks = Math.max(10, Math.ceil(Math.max(0, ...data.map((d) => d.backlinks)) * 1.1));
 
   const getX = (idx: number) =>
-    topPadding.left + (idx / (data.length - 1)) * innerTopWidth;
+    topPadding.left + (data.length > 1 ? idx / (data.length - 1) : 0.5) * innerTopWidth;
 
   const getYRef = (val: number) =>
     topPadding.top +
@@ -91,9 +87,10 @@ export function BacklinkCheckerOverview({
     .map((d, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getYDT(d.pageTrust).toFixed(1)}`)
     .join(" ");
 
-  // Organic Traffic (scaled 1000-1600)
+  // Organic Traffic (scaled 0 to max)
+  const maxTraffic = Math.max(1, ...data.map((d) => d.organicTraffic));
   const getYTraffic = (val: number) =>
-    topPadding.top + innerTopHeight - ((val - 1000) / 600) * innerTopHeight;
+    topPadding.top + innerTopHeight - (val / maxTraffic) * innerTopHeight;
   const trafficPath = data
     .map((d, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getYTraffic(d.organicTraffic).toFixed(1)}`)
     .join(" ");
@@ -902,7 +899,7 @@ export function BacklinkCheckerOverview({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-normal">
-                  {MOCK_TOP_ANCHORS.map((anchor, i) => (
+                  {explorer.anchors.slice(0, 10).map((anchor, i) => (
                     <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td className="py-2 text-slate-800 dark:text-slate-200 truncate max-w-[140px]" title={anchor.anchorText}>
                         {anchor.anchorText}
@@ -958,7 +955,7 @@ export function BacklinkCheckerOverview({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-normal">
-                  {MOCK_DOMAIN_TRUST_DISTRIBUTION.map((dt, i) => (
+                  {explorer.trustDistribution.map((dt, i) => (
                     <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td className="py-2 text-slate-800 dark:text-slate-200 font-medium">
                         {dt.range}
@@ -1014,7 +1011,7 @@ export function BacklinkCheckerOverview({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-normal">
-                  {MOCK_COUNTRY_DISTRIBUTION.map((item, i) => (
+                  {explorer.countryDistribution.map((item, i) => (
                     <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                       <td className="py-2 text-slate-800 dark:text-slate-200 flex items-center gap-2">
                         <CountryFlag code={item.countryCode} name={item.countryName} />

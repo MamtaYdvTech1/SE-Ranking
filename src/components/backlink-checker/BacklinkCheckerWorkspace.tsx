@@ -59,7 +59,7 @@ export function BacklinkCheckerWorkspace({
     load();
   }, [projectId]);
 
-  const domain = project?.primaryDomain || "workcomposer.com";
+  const domain = project?.primaryDomain || "";
 
   const handleTabChange = (tabId: BacklinkCheckerTabType) => {
     setActiveTab(tabId);
@@ -109,17 +109,19 @@ export function BacklinkCheckerWorkspace({
         >
           {activeTab === "overview" && (
             <BacklinkCheckerOverview
+              projectId={projectId}
               projectDomain={domain}
               onNavigateTab={(tab) => handleTabChange(tab as BacklinkCheckerTabType)}
             />
           )}
 
-          {activeTab === "backlinks" && <BacklinksTableTab projectDomain={domain} />}
+          {activeTab === "backlinks" && <BacklinksTableTab projectId={projectId} projectDomain={domain} />}
 
-          {activeTab === "referring-domains" && <ReferringDomainsTab projectDomain={domain} />}
+          {activeTab === "referring-domains" && <ReferringDomainsTab projectId={projectId} projectDomain={domain} />}
 
           {activeTab === "anchor-texts" && (
             <AnchorTextsTab
+              projectId={projectId}
               projectDomain={domain}
               showSubTabs={true}
               onNavigateTab={(tab) => handleTabChange(tab as BacklinkCheckerTabType)}
@@ -128,6 +130,7 @@ export function BacklinkCheckerWorkspace({
 
           {activeTab === "pages" && (
             <PagesTab
+              projectId={projectId}
               projectDomain={domain}
               showSubTabs={true}
               onNavigateTab={(tab) => handleTabChange(tab as BacklinkCheckerTabType)}
@@ -136,6 +139,7 @@ export function BacklinkCheckerWorkspace({
 
           {activeTab === "ips" && (
             <IpsTab
+              projectId={projectId}
               projectDomain={domain}
               showSubTabs={true}
               onNavigateTab={(tab) => handleTabChange(tab as BacklinkCheckerTabType)}
