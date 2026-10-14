@@ -145,10 +145,21 @@ export async function GET(req: NextRequest) {
       const top30 = pKeywords.filter((k: any) => k.currentPosition != null && k.currentPosition <= 30).length;
       const top5_10_30 = `${top5} / ${top10} / ${top30}`;
       
-      const trafficForecast = Math.round(rankedKws.reduce((acc: number, k: any) => acc + (k.monthlySearchVolume || 0) * (k.currentPosition! <= 3 ? 0.35 : k.currentPosition! <= 10 ? 0.15 : 0.03), 0));
-      const trafficDelta = trafficForecast > 0 ? Math.round(trafficForecast * 0.18) : 0;
-      const searchVisibility = rankedKws.length > 0 ? ((rankedKws.reduce((acc: number, k: any) => acc + (k.currentPosition! <= 3 ? 1 : k.currentPosition! <= 10 ? 0.5 : 0.1), 0) / (pKeywords.length || 1)) * 100).toFixed(2) : '0.00';
-      const visibilityDelta = Number(searchVisibility) > 0 ? (Number(searchVisibility) * 0.12).toFixed(2) : '0.00';
+      const ctrWeight = (pos: number) => (pos <= 3 ? 0.35 : pos <= 10 ? 0.15 : 0.03);
+      const visWeight = (pos: number) => (pos <= 3 ? 1 : pos <= 10 ? 0.5 : 0.1);
+      const isRanked = (pos: number | null | undefined): pos is number => pos != null && pos > 0 && pos <= 100;
+
+      const trafficForecast = Math.round(rankedKws.reduce((acc: number, k: any) => acc + (k.monthlySearchVolume || 0) * ctrWeight(k.currentPosition!), 0));
+      const searchVisibility = rankedKws.length > 0 ? ((rankedKws.reduce((acc: number, k: any) => acc + visWeight(k.currentPosition!), 0) / (pKeywords.length || 1)) * 100).toFixed(2) : '0.00';
+
+      // Deltas vs. the previous ranking check, from each keyword's stored previousPosition
+      type KeywordRow = { previousPosition: number | null; monthlySearchVolume: number | null };
+      const prevRows = pKeywords as KeywordRow[];
+      const prevTraffic = Math.round(prevRows.reduce((acc, k) => acc + (isRanked(k.previousPosition) ? (k.monthlySearchVolume || 0) * ctrWeight(k.previousPosition) : 0), 0));
+      const prevVisibility = (prevRows.reduce((acc, k) => acc + (isRanked(k.previousPosition) ? visWeight(k.previousPosition) : 0), 0) / (pKeywords.length || 1)) * 100;
+      const hasPrevious = prevRows.some((k) => isRanked(k.previousPosition));
+      const trafficDelta = hasPrevious ? trafficForecast - prevTraffic : 0;
+      const visibilityDelta = hasPrevious ? (Number(searchVisibility) - prevVisibility).toFixed(2) : '0.00';
       
       const pBacklinks = allBacklinks.filter((b: any) => b.projectId === p.id);
       const uniqueDomains = new Set<string>();
@@ -509,8 +520,8 @@ export async function POST(req: NextRequest) {
       message: 'Project created successfully!',
       project: {
         ...createdProject,
-        keywordsCount: initialKeywords.length > 0 ? initialKeywords.length : 10,
-        competitorsCount: initialCompetitors.length > 0 ? initialCompetitors.length : 3,
+        keywordsCount: initialKeywords.length,
+        competitorsCount: initialCompetitors.length,
       },
     });
   } catch (err: unknown) {

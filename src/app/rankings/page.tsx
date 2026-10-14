@@ -78,15 +78,13 @@ interface KeywordItem {
   traffic?: number;
 }
 
-const HIGH_POTENTIAL_KEYWORDS = [
-  { keyword: 'remote employee tracking software', volume: 5400, kd: 25, intent: 'Commercial', cpc: '$4.10' },
-  { keyword: 'work time tracker', volume: 8100, kd: 22, intent: 'Commercial', cpc: '$3.20' },
-  { keyword: 'employee monitoring software', volume: 14800, kd: 28, intent: 'Commercial', cpc: '$4.50' },
-  { keyword: 'automatic screenshot monitoring tool', volume: 2400, kd: 16, intent: 'High Potential', cpc: '$5.10' },
-  { keyword: 'desktop activity tracker', volume: 3600, kd: 19, intent: 'Commercial', cpc: '$2.80' },
-  { keyword: 'remote team productivity tool', volume: 5200, kd: 24, intent: 'Commercial', cpc: '$3.90' },
-  { keyword: 'time tracking software with screenshots', volume: 1900, kd: 18, intent: 'Commercial', cpc: '$3.40' },
-];
+interface HighPotentialKeyword {
+  keyword: string;
+  volume: number;
+  kd: number | null;
+  cpc: number | null;
+  intent: string | null;
+}
 
 const INITIAL_KEYWORDS: KeywordItem[] = [];
 const DEPRECATED_KEYWORDS_SAMPLE: KeywordItem[] = [
@@ -1295,12 +1293,39 @@ function RankingsPageContent() {
   // Add Keywords and High-Potential Keywords Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isHighPotentialModalOpen, setIsHighPotentialModalOpen] = useState(false);
-  const [selectedHighPotential, setSelectedHighPotential] = useState<string[]>([
-    'remote employee tracking software',
-    'work time tracker',
-  ]);
+  const [selectedHighPotential, setSelectedHighPotential] = useState<string[]>([]);
+  const [highPotentialKeywords, setHighPotentialKeywords] = useState<HighPotentialKeyword[]>([]);
+  const [highPotentialLoading, setHighPotentialLoading] = useState(false);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywords, setKeywords] = useState<KeywordItem[]>([]);
+
+  // Load real keyword ideas for this domain when the High-Potential modal opens
+  useEffect(() => {
+    if (!isHighPotentialModalOpen || !domain) return;
+    const controller = new AbortController();
+    fetch(`/api/keywords/suggestions?domain=${encodeURIComponent(domain)}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : { suggestions: [] }))
+      .then((json) => {
+        const tracked = new Set(keywords.map((k) => k.keyword.toLowerCase()));
+        const ideas: HighPotentialKeyword[] = (Array.isArray(json.suggestions) ? json.suggestions : [])
+          .filter((s: { keyword?: string }) => s.keyword && !tracked.has(s.keyword.toLowerCase()))
+          .map((s: { keyword: string; volume?: number; kd?: number; cpc?: number; intent?: string }) => ({
+            keyword: s.keyword,
+            volume: s.volume ?? 0,
+            kd: s.kd ?? null,
+            cpc: s.cpc ?? null,
+            intent: s.intent || null,
+          }))
+          // Highest volume first, easier keywords breaking ties
+          .sort((a: HighPotentialKeyword, b: HighPotentialKeyword) => b.volume - a.volume || (a.kd ?? 100) - (b.kd ?? 100))
+          .slice(0, 15);
+        setHighPotentialKeywords(ideas);
+      })
+      .catch(() => {})
+      .finally(() => setHighPotentialLoading(false));
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch only when the modal opens or the domain changes
+  }, [isHighPotentialModalOpen, domain]);
   const [rankingsSummary, setRankingsSummary] = useState<any>(null);
   const [rankingsTrend, setRankingsTrend] = useState<any[]>([]);
   const [keywordDistribution, setKeywordDistribution] = useState<any[]>([]);
@@ -1450,10 +1475,12 @@ function RankingsPageContent() {
       ];
       return projectCompetitors.map((comp, idx) => {
         const colors = palette[idx % palette.length];
-        const avgPos = Number(comp.avgPosition || 10);
-        const top10 = comp.commonKeywordsCount || Math.min(keywords.length, 5);
+        const hasAvgPos = comp.avgPosition != null && Number(comp.avgPosition) > 0;
+        const avgPos = hasAvgPos ? Number(comp.avgPosition) : '—';
+        const top10 = comp.commonKeywordsCount ?? 0;
         const cx = 50 + ((idx + 1) / (projectCompetitors.length + 1)) * 400;
-        const cy = Math.max(30, Math.min(180, 20 + (avgPos / 15) * 150));
+        // Competitors without ranking data sit at the bottom of the chart
+        const cy = hasAvgPos ? Math.max(30, Math.min(180, 20 + (Number(comp.avgPosition) / 15) * 150)) : 180;
         return {
           id: comp.id,
           domain: comp.domain,
@@ -1470,7 +1497,7 @@ function RankingsPageContent() {
       });
     }
     return [];
-  }, [projectCompetitors, keywords.length]);
+  }, [projectCompetitors]);
 
   const detailedDateCol1 = useMemo(() => {
     if (rankingsTrend && rankingsTrend.length > 1) {
@@ -3316,7 +3343,11 @@ function RankingsPageContent() {
                             Discover untapped, high-potential keywords—quick wins that can drive fast growth.{' '}
                             <button
                               type="button"
-                              onClick={() => setIsHighPotentialModalOpen(true)}
+                              onClick={() => {
+                                setSelectedHighPotential([]);
+                                setHighPotentialLoading(Boolean(domain));
+                                setIsHighPotentialModalOpen(true);
+                              }}
                               className="text-[#5F31EC] hover:underline font-semibold cursor-pointer"
                             >
                               Check them out now
@@ -7269,7 +7300,13 @@ function RankingsPageContent() {
               </p>
 
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
-                {HIGH_POTENTIAL_KEYWORDS.map((item) => (
+                {highPotentialLoading && (
+                  <div className="p-4 text-center text-gray-400">Loading keyword ideas…</div>
+                )}
+                {!highPotentialLoading && highPotentialKeywords.length === 0 && (
+                  <div className="p-4 text-center text-gray-400">No new keyword ideas found for {domain}.</div>
+                )}
+                {!highPotentialLoading && highPotentialKeywords.map((item) => (
                   <label
                     key={item.keyword}
                     className="p-3 flex items-center justify-between hover:bg-[#F5F3FF] cursor-pointer transition-colors"
@@ -7289,12 +7326,14 @@ function RankingsPageContent() {
                       />
                       <div>
                         <div className="font-bold text-gray-900">{item.keyword}</div>
-                        <div className="text-[11px] text-gray-400">{item.intent} · CPC: {item.cpc}</div>
+                        <div className="text-[11px] text-gray-400">
+                          {item.intent ? `${item.intent.charAt(0).toUpperCase()}${item.intent.slice(1)} · ` : ''}CPC: {item.cpc != null ? `$${item.cpc.toFixed(2)}` : '—'}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-[#7C3AED]">{item.volume.toLocaleString()} vol</div>
-                      <div className="text-[10px] font-semibold text-emerald-600">KD {item.kd}%</div>
+                      <div className="text-[10px] font-semibold text-emerald-600">KD {item.kd != null ? `${item.kd}%` : '—'}</div>
                     </div>
                   </label>
                 ))}
