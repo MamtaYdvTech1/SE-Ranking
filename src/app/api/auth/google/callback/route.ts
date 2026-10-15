@@ -98,31 +98,33 @@ export async function GET(req: NextRequest) {
         }).catch(() => user);
       }
     } catch (dbErr) {
-      console.warn('Database access warning during Google login:', dbErr);
+      console.error('Database access error during Google login:', dbErr);
     }
 
-    const resolvedId = user?.id || `usr_google_${Date.now()}`;
+    if (!user || !user.id) {
+      console.error('Failed to create or retrieve user during Google OAuth callback');
+      return NextResponse.redirect(`${appUrl}/login?error=db_unavailable`);
+    }
 
-    // 4. Create database session or fallback session token
-    const { randomBytes } = await import('node:crypto');
-    let sessionToken = `ses_g_${Date.now()}_${randomBytes(16).toString('hex')}`;
-    let expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
+    // 4. Create database session
+    let sessionToken: string;
+    let expiresAt: Date;
     try {
-      const sessionResult = await createSession(resolvedId, req);
+      const sessionResult = await createSession(user.id, req);
       sessionToken = sessionResult.sessionToken;
       expiresAt = sessionResult.expiresAt;
     } catch (sessionErr) {
-      console.warn('Session write fallback:', sessionErr);
+      console.error('Session creation failed during Google OAuth:', sessionErr);
+      return NextResponse.redirect(`${appUrl}/login?error=session_creation_failed`);
     }
 
-    // 5. Construct HTML response that sets localStorage and cookies before redirecting
+    // 5. Construct HTML response that sets display info in localStorage and cookies before redirecting
     const userJson = JSON.stringify({
-      id: resolvedId,
+      id: user.id,
       email: email,
       name: name,
       avatarUrl: avatarUrl || '',
-      role: user?.role || 'OWNER',
+      role: user.role || 'OWNER',
     });
 
     const html = `<!DOCTYPE html>
@@ -174,7 +176,6 @@ export async function GET(req: NextRequest) {
 
         localStorage.setItem('seranking_auth_status', 'logged_in');
         sessionStorage.setItem('seranking_auth_status', 'logged_in');
-        localStorage.setItem('auth_token', ${JSON.stringify(sessionToken)});
         localStorage.setItem('user_email', ${JSON.stringify(email)});
         localStorage.setItem('user_name', ${JSON.stringify(name)});
         localStorage.setItem('seranking_user', ${JSON.stringify(userJson)});
@@ -194,10 +195,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Attach DB session cookie
-    setSessionCookie(response, sessionToken, expiresAt);
+    // Attach signed, httpOnly DB session cookie
+    await setSessionCookie(response, sessionToken, expiresAt);
 
-    // Attach client-accessible cookies
+    // Attach non-sensitive client display cookies
     response.cookies.set('seranking_auth_status', 'logged_in', {
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
@@ -211,12 +212,6 @@ export async function GET(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
     });
     response.cookies.set('user_name', encodeURIComponent(name), {
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
-    response.cookies.set('se_auth_token', sessionToken, {
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
       sameSite: 'lax',

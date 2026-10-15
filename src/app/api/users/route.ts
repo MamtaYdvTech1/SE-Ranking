@@ -1,76 +1,155 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { getAuthSession, getSessionFromCookie, hashPassword } from '@/lib/server/auth';
+import { randomBytes } from 'node:crypto';
 
-interface UserRecord {
-  id: string;
-  name: string;
-  email: string;
-  accountType: 'Owner' | 'Manager' | 'Client' | 'Admin';
-  language?: string;
-  allowManageNotifications?: boolean;
-  notifications?: Record<string, boolean>;
-  createdAt: string;
+export const dynamic = 'force-dynamic';
+
+function mapRoleToAccountType(role: string): 'Owner' | 'Manager' | 'Client' | 'Admin' {
+  const normalized = role.toUpperCase();
+  if (normalized === 'OWNER' || normalized === 'SUPERADMIN') return 'Owner';
+  if (normalized === 'ADMIN') return 'Admin';
+  if (normalized === 'CLIENT') return 'Client';
+  return 'Manager';
 }
 
-let usersStore: UserRecord[] = [
-  {
-    id: '1',
-    name: 'Account Owner',
-    email: 'owner@seranking.com',
-    accountType: 'Owner',
-    language: 'English',
-    createdAt: '2026-09-01',
-  },
-];
+function mapAccountTypeToRole(accountType: string): string {
+  const normalized = accountType.toUpperCase();
+  if (normalized === 'CLIENT') return 'CLIENT';
+  if (normalized === 'ADMIN') return 'ADMIN';
+  if (normalized === 'OWNER') return 'OWNER';
+  return 'MEMBER';
+}
 
 export async function GET(req: NextRequest) {
-  const cookieEmail = req.cookies.get('user_email')?.value;
-  const cookieName = req.cookies.get('user_name')?.value;
+  try {
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+    }
 
-  if (cookieEmail && usersStore.length > 0) {
-    const email = decodeURIComponent(cookieEmail);
-    const name = cookieName ? decodeURIComponent(cookieName) : email.split('@')[0];
-    usersStore[0].email = email;
-    usersStore[0].name = name;
+    const dbUsers = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const users = dbUsers.map((u) => ({
+      id: u.id,
+      name: u.name || u.email.split('@')[0],
+      email: u.email,
+      accountType: mapRoleToAccountType(u.role),
+      language: 'English',
+      createdAt: u.createdAt.toISOString().split('T')[0],
+      status: u.status,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      users,
+      totalSeats: Math.max(10, users.length + 2),
+      usedSeats: users.length,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to fetch users';
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
   }
-
-  return NextResponse.json({
-    success: true,
-    users: usersStore,
-    totalSeats: 3,
-    usedSeats: usersStore.length,
-  });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const { firstName, lastName, email, accountType, language, allowManageNotifications, notifications } = body;
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
     }
 
-    const fullName = `${firstName || ''} ${lastName || ''}`.trim() || email.split('@')[0];
+    const callerRole = auth.user.role.toUpperCase();
+    if (callerRole !== 'OWNER' && callerRole !== 'ADMIN' && callerRole !== 'SUPERADMIN') {
+      return NextResponse.json({ success: false, error: 'Insufficient permissions to add users.' }, { status: 403 });
+    }
 
-    const newUser: UserRecord = {
-      id: String(usersStore.length + 1),
-      name: fullName,
-      email: email.trim(),
-      accountType: accountType === 'CLIENT' ? 'Client' : 'Manager',
-      language: language || 'English',
-      allowManageNotifications: Boolean(allowManageNotifications),
-      notifications: notifications || {},
-      createdAt: new Date().toISOString().split('T')[0],
-    };
+    const body = await req.json().catch(() => ({}));
+    const { firstName, lastName, email, accountType, password } = body;
 
-    usersStore.push(newUser);
+    if (!email || typeof email !== 'string') {
+      return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const existing = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: 'A user with this email address already exists.' }, { status: 409 });
+    }
+
+    const fullName = `${firstName || ''} ${lastName || ''}`.trim() || cleanEmail.split('@')[0];
+    const userPassword = password || randomBytes(16).toString('hex') + 'A1!';
+    const passwordHash = hashPassword(userPassword);
+    const assignedRole = mapAccountTypeToRole(accountType || 'MEMBER');
+
+    const created = await prisma.user.create({
+      data: {
+        email: cleanEmail,
+        name: fullName,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        role: assignedRole,
+        status: 'active',
+        passwordHash,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    const allUsers = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const mappedUsers = allUsers.map((u) => ({
+      id: u.id,
+      name: u.name || u.email.split('@')[0],
+      email: u.email,
+      accountType: mapRoleToAccountType(u.role),
+      language: 'English',
+      createdAt: u.createdAt.toISOString().split('T')[0],
+    }));
 
     return NextResponse.json({
       success: true,
-      user: newUser,
-      users: usersStore,
-      usedSeats: usersStore.length,
-      totalSeats: 3,
+      user: {
+        id: created.id,
+        name: created.name,
+        email: created.email,
+        accountType: mapRoleToAccountType(created.role),
+        language: 'English',
+        createdAt: created.createdAt.toISOString().split('T')[0],
+      },
+      users: mappedUsers,
+      usedSeats: mappedUsers.length,
+      totalSeats: Math.max(10, mappedUsers.length + 2),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to add user';
@@ -80,37 +159,85 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const { id, firstName, lastName, email, accountType, language, allowManageNotifications, notifications } = body;
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+    }
 
-    if (!id) {
+    const callerRole = auth.user.role.toUpperCase();
+    if (callerRole !== 'OWNER' && callerRole !== 'ADMIN' && callerRole !== 'SUPERADMIN') {
+      return NextResponse.json({ success: false, error: 'Insufficient permissions to edit users.' }, { status: 403 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { id, firstName, lastName, email, accountType } = body;
+
+    if (!id || typeof id !== 'string') {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const index = usersStore.findIndex((u) => u.id === id);
-    if (index === -1) {
+    const existing = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const existing = usersStore[index];
     const fullName = `${firstName || ''} ${lastName || ''}`.trim() || existing.name;
+    const assignedRole = accountType ? mapAccountTypeToRole(accountType) : existing.role;
 
-    usersStore[index] = {
-      ...existing,
-      name: fullName,
-      email: email ? email.trim() : existing.email,
-      accountType: accountType === 'CLIENT' ? 'Client' : accountType === 'MANAGER' ? 'Manager' : existing.accountType,
-      language: language || existing.language,
-      allowManageNotifications: allowManageNotifications !== undefined ? Boolean(allowManageNotifications) : existing.allowManageNotifications,
-      notifications: notifications || existing.notifications,
-    };
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        name: fullName,
+        ...(email ? { email: email.toLowerCase().trim() } : {}),
+        role: assignedRole,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    const allUsers = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const mappedUsers = allUsers.map((u) => ({
+      id: u.id,
+      name: u.name || u.email.split('@')[0],
+      email: u.email,
+      accountType: mapRoleToAccountType(u.role),
+      language: 'English',
+      createdAt: u.createdAt.toISOString().split('T')[0],
+    }));
 
     return NextResponse.json({
       success: true,
-      user: usersStore[index],
-      users: usersStore,
-      usedSeats: usersStore.length,
-      totalSeats: 3,
+      user: {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        accountType: mapRoleToAccountType(updated.role),
+        language: 'English',
+        createdAt: updated.createdAt.toISOString().split('T')[0],
+      },
+      users: mappedUsers,
+      usedSeats: mappedUsers.length,
+      totalSeats: Math.max(10, mappedUsers.length + 2),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to update user';
@@ -120,18 +247,63 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+    }
+
+    const callerRole = auth.user.role.toUpperCase();
+    if (callerRole !== 'OWNER' && callerRole !== 'ADMIN' && callerRole !== 'SUPERADMIN') {
+      return NextResponse.json({ success: false, error: 'Insufficient permissions to delete users.' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (id && id !== '1') {
-      usersStore = usersStore.filter((u) => u.id !== id);
+    if (!id) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
+
+    if (id === auth.user.id) {
+      return NextResponse.json({ error: 'You cannot delete your own account.' }, { status: 400 });
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    }).catch(async () => {
+      // If cascade delete fails, set status to suspended
+      await prisma.user.update({
+        where: { id },
+        data: { status: 'suspended' },
+      });
+    });
+
+    const allUsers = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const mappedUsers = allUsers.map((u) => ({
+      id: u.id,
+      name: u.name || u.email.split('@')[0],
+      email: u.email,
+      accountType: mapRoleToAccountType(u.role),
+      language: 'English',
+      createdAt: u.createdAt.toISOString().split('T')[0],
+    }));
 
     return NextResponse.json({
       success: true,
-      users: usersStore,
-      usedSeats: usersStore.length,
-      totalSeats: 3,
+      users: mappedUsers,
+      usedSeats: mappedUsers.length,
+      totalSeats: Math.max(10, mappedUsers.length + 2),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to delete user';

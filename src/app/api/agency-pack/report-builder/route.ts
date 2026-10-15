@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getAuthSession, getSessionFromCookie } from '@/lib/server/auth';
 
 export const runtime = 'nodejs';
 
@@ -30,17 +31,18 @@ const DEFAULT_CONFIG: ReportBuilderConfig = {
   updatedAt: new Date().toISOString(),
 };
 
-function getConfigPath(): string {
-  const dir = path.join(process.cwd(), 'public', 'uploads');
+function getConfigPath(userId: string): string {
+  const dir = path.join(process.cwd(), 'data', 'reports');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  return path.join(dir, 'report_builder_config.json');
+  const safeId = userId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'default';
+  return path.join(dir, `report_builder_${safeId}.json`);
 }
 
-function readConfig(): ReportBuilderConfig {
+function readConfig(userId: string): ReportBuilderConfig {
   try {
-    const configPath = getConfigPath();
+    const configPath = getConfigPath(userId);
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf8');
       return { ...DEFAULT_CONFIG, ...JSON.parse(data) };
@@ -51,17 +53,22 @@ function readConfig(): ReportBuilderConfig {
   return { ...DEFAULT_CONFIG };
 }
 
-function writeConfig(cfg: ReportBuilderConfig): void {
+function writeConfig(userId: string, cfg: ReportBuilderConfig): void {
   try {
-    const configPath = getConfigPath();
+    const configPath = getConfigPath(userId);
     fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), 'utf8');
   } catch (err) {
     console.error('Error writing report builder config file:', err);
   }
 }
 
-export async function GET() {
-  const config = readConfig();
+export async function GET(req: NextRequest) {
+  const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+  if (!auth?.user) {
+    return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+  }
+
+  const config = readConfig(auth.user.id);
   return NextResponse.json({
     success: true,
     data: config,
@@ -70,15 +77,20 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => ({}));
-    const existing = readConfig();
+    const existing = readConfig(auth.user.id);
     const updated: ReportBuilderConfig = {
       ...existing,
       ...body,
       updatedAt: new Date().toISOString(),
     };
 
-    writeConfig(updated);
+    writeConfig(auth.user.id, updated);
 
     return NextResponse.json({
       success: true,
@@ -91,13 +103,18 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function PUT() {
+export async function PUT(req: NextRequest) {
+  const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+  if (!auth?.user) {
+    return NextResponse.json({ success: false, error: 'Authentication required. Please sign in.' }, { status: 401 });
+  }
+
   const resetConfig: ReportBuilderConfig = {
     ...DEFAULT_CONFIG,
     updatedAt: new Date().toISOString(),
   };
 
-  writeConfig(resetConfig);
+  writeConfig(auth.user.id, resetConfig);
 
   return NextResponse.json({
     success: true,

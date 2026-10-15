@@ -65,42 +65,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // If user has no assigned projects, check for legacy unassigned projects (userId: null)
-    // and claim them for this user so existing data is preserved
-    if (projects.length === 0 && auth.user.role !== 'SUPERADMIN') {
-      try {
-        const unclaimed = await projectDb.findMany({
-          where: { userId: null, deletedAt: null },
-          take: 10,
-        });
-        if (unclaimed.length > 0) {
-          await projectDb.updateMany({
-            where: { id: { in: unclaimed.map((u: any) => u.id) } },
-            data: { userId: auth.user.id },
-          });
-          projects = await projectDb.findMany({
-            where: whereClause,
-            orderBy: { createdAt: 'desc' },
-            include: {
-              searchEngines: true,
-              _count: {
-                select: {
-                  keywords: true,
-                  projectCompetitors: true,
-                  auditIssues: true,
-                  tasks: true,
-                  locations: true,
-                  reports: true,
-                },
-              },
-            },
-          });
-        }
-      } catch {
-        // Continue normally
-      }
-    }
-
     if (projects.length === 0) {
       return NextResponse.json({ success: true, projects: [] });
     }

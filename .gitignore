@@ -52,5 +52,6 @@ scratch/
 prisma/*.db
 prisma/*.db-journal
 
-# uploads
+# uploads & runtime data
 public/uploads/
+data/
