@@ -58,17 +58,23 @@ const DEFAULT_CONFIG: WhiteLabelConfig = {
   smtpPort: '587',
   smtpSenderName: 'SE Ranking Reports',
   smtpSenderEmail: 'reports@seranking.com',
-  smtpPassword: 'kffk ajbh eftv nlmw',
+  smtpPassword: '',
   useCustomEmailTemplate: true,
   updatedAt: new Date().toISOString(),
 };
 
 let currentConfig: WhiteLabelConfig = { ...DEFAULT_CONFIG };
 
+/** Config as returned to clients: the SMTP password is never sent back, only whether one is set. */
+function publicConfig(config: WhiteLabelConfig) {
+  const { smtpPassword, ...rest } = config;
+  return { ...rest, smtpPassword: '', smtpPasswordSet: Boolean(smtpPassword) };
+}
+
 export async function GET() {
   return NextResponse.json({
     success: true,
-    data: currentConfig,
+    data: publicConfig(currentConfig),
   });
 }
 
@@ -76,17 +82,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     
-    // Merge updates
+    // Merge updates; an empty password field keeps the stored one
+    const { smtpPassword, ...updates } = body as Partial<WhiteLabelConfig>;
     currentConfig = {
       ...currentConfig,
-      ...body,
+      ...updates,
+      ...(smtpPassword ? { smtpPassword } : {}),
       updatedAt: new Date().toISOString(),
     };
 
     return NextResponse.json({
       success: true,
       message: 'White label settings successfully applied!',
-      data: currentConfig,
+      data: publicConfig(currentConfig),
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to update settings';
@@ -103,6 +111,6 @@ export async function PUT() {
   return NextResponse.json({
     success: true,
     message: 'White label settings reset to default.',
-    data: currentConfig,
+    data: publicConfig(currentConfig),
   });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { createSession, setSessionCookie } from '@/lib/server/auth';
+import { safeRedirectPath } from '@/lib/safeRedirect';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,8 +24,7 @@ export async function GET(req: NextRequest) {
     ? `${appUrl}/api/auth/google/callback`
     : (process.env.GOOGLE_REDIRECT_URI || `${appUrl}/api/auth/google/callback`);
 
-  const returnTo = searchParams.get('state') || '/projects';
-  const redirectTarget = returnTo.startsWith('/') ? returnTo : '/projects';
+  const redirectTarget = safeRedirectPath(searchParams.get('state'));
 
   try {
     // 1. Exchange authorization code for Google access token

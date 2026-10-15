@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { getAuthSession } from '@/lib/server/auth';
+import { getAuthSession, getSessionFromCookie } from '@/lib/server/auth';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
+
+type SessionUser = { id: string; role: string };
+
+async function currentUser(req: NextRequest): Promise<SessionUser | null> {
+  const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+  return auth?.user ? { id: auth.user.id, role: auth.user.role } : null;
+}
+
+/** Reports visible to this user: those on projects they own (SUPERADMIN: all). */
+function ownedReportScope(user: SessionUser) {
+  return user.role === 'SUPERADMIN' ? {} : { project: { userId: user.id } };
+}
+
+const unauthorized = () => NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+const notFound = () => NextResponse.json({ error: 'Report not found' }, { status: 404 });
 
 export interface ReportItem {
   id: string;
@@ -39,9 +55,14 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get('q') || '';
     const id = searchParams.get('id');
 
-    const whereClause: any = { deletedAt: null };
+    const user = await currentUser(req);
+    if (!user) return unauthorized();
+
+    const whereClause: any = { deletedAt: null, ...ownedReportScope(user) };
     if (projectId) {
-      whereClause.projectId = projectId;
+      const access = await verifyProjectAccess(req, projectId);
+      if (!access.success) return access.error;
+      whereClause.projectId = access.data.project.id;
     }
 
     const fetched = await prisma.report.findMany({
@@ -108,7 +129,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await getAuthSession(req);
+    const user = await currentUser(req);
+    if (!user) return unauthorized();
     const body = await req.json().catch(() => ({}));
 
     // Check if this is a template creation request
@@ -133,13 +155,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine target project
-    let projectId = body.projectId;
-    if (!projectId) {
-      const firstProj = await prisma.project.findFirst({
-        where: { deletedAt: null },
+    let projectId: string | undefined = body.projectId;
+    if (projectId) {
+      const access = await verifyProjectAccess(req, projectId);
+      if (!access.success) return access.error;
+      projectId = access.data.project.id;
+    } else {
+      // Default to the caller's own most recent project
+      const ownProject = await prisma.project.findFirst({
+        where: { deletedAt: null, ...(user.role === 'SUPERADMIN' ? {} : { userId: user.id }) },
         orderBy: { createdAt: 'desc' },
       });
-      projectId = firstProj?.id;
+      projectId = ownProject?.id;
     }
 
     if (!projectId) {
@@ -192,12 +219,17 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const user = await currentUser(req);
+    if (!user) return unauthorized();
     const body = await req.json();
     const { id, action, title } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Report ID is required' }, { status: 400 });
     }
+
+    const owned = await prisma.report.findFirst({ where: { id, deletedAt: null, ...ownedReportScope(user) } });
+    if (!owned) return notFound();
 
     if (action === 'rename' && title && title.trim()) {
       const updated = await prisma.report.update({
@@ -208,7 +240,7 @@ export async function PUT(req: NextRequest) {
     }
 
     if (action === 'toggleSchedule') {
-      const existing = await prisma.report.findUnique({ where: { id } });
+      const existing = owned;
       if (existing) {
         const nextSchedule = existing.schedule && existing.schedule !== 'Without schedule' ? null : 'Every week, on: Wednesday';
         const updated = await prisma.report.update({
@@ -232,6 +264,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await currentUser(req);
+    if (!user) return unauthorized();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -239,9 +273,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Report ID is required' }, { status: 400 });
     }
 
-    await prisma.report.delete({
-      where: { id },
-    }).catch(() => null);
+    const deleted = await prisma.report.deleteMany({
+      where: { id, ...ownedReportScope(user) },
+    });
+    if (deleted.count === 0) return notFound();
 
     return NextResponse.json({
       success: true,
