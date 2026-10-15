@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST as uploadLogoPost } from '../app/api/agency-pack/upload-logo/route';
 import { GET as reportBuilderGet, POST as reportBuilderPost } from '../app/api/agency-pack/report-builder/route';
@@ -14,7 +14,7 @@ import { prisma } from '../lib/db/prisma';
 import { createSession, setSessionCookie, hashPassword } from '../lib/server/auth';
 
 describe('Phase 1 Critical Security Hotfixes Suite', () => {
-  let testUser: any;
+  let testUser: { id: string; email: string };
   let testSessionCookie: string;
 
   beforeEach(async () => {
@@ -190,7 +190,7 @@ describe('Phase 1 Critical Security Hotfixes Suite', () => {
       expect(data.success).toBe(true);
       expect(Array.isArray(data.users)).toBe(true);
       for (const u of data.users) {
-        expect((u as any).passwordHash).toBeUndefined();
+        expect((u as Record<string, unknown>).passwordHash).toBeUndefined();
       }
     });
 
@@ -230,7 +230,7 @@ describe('Phase 1 Critical Security Hotfixes Suite', () => {
     it('ensures a user with 0 projects does NOT automatically steal projects with userId: null', async () => {
       // Create a dummy unassigned project (userId: null)
       const unassignedDomain = `unassigned-${Date.now()}.com`;
-      const unassignedProject = await (prisma as any).project.create({
+      const unassignedProject = await (prisma.project.create as unknown as (args: { data: Record<string, unknown> }) => Promise<{ id: string }> )({
         data: {
           name: 'Legacy Unassigned Project',
           domain: unassignedDomain,

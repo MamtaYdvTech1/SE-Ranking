@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import { getRankingProvider } from '@/lib/rankings/provider';
 import { KeywordCheckRequest, KeywordCheckResult, SearchEngineType } from '@/lib/rankings/types';
-import { yepApiClient } from '@/lib/yepapi';
 
 // Standard organic CTR distribution curve
 const CTR_CURVE: Record<number, number> = {
@@ -92,7 +91,7 @@ export async function collectRankingsForProject(
     targetDomain: project.domain,
   }));
 
-  let checkResponse = await provider.checkRankings(requests, {
+  const checkResponse = await provider.checkRankings(requests, {
     timeoutMs: options?.timeoutMs || 20000,
   });
 
@@ -167,8 +166,9 @@ export async function collectRankingsForProject(
           checkedAt: now,
         },
       });
-    } catch (dbErr: any) {
-      if (dbErr.code === 'P2025' || dbErr.code === 'P2003') {
+    } catch (dbErr: unknown) {
+      const code = (dbErr as { code?: string })?.code;
+      if (code === 'P2025' || code === 'P2003') {
         // Record was removed concurrently
         continue;
       }
@@ -414,7 +414,7 @@ export async function getRankingSummary(
     throw new Error('Project not found');
   }
 
-  let keywords = await prisma.keyword.findMany({
+  const keywords = await prisma.keyword.findMany({
     where: {
       projectId: project.id,
       deletedAt: null,
