@@ -1,8 +1,9 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { VisibilityRatingView } from "../VisibilityRatingView";
 import { CompetitorDto } from "@/lib/types";
+import { installCompetitorFetchStub, pinClock } from "./competitorFixtures";
 
 describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
   const mockCompetitors: CompetitorDto[] = [
@@ -26,14 +27,22 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    pinClock();
+    installCompetitorFetchStub();
     if (typeof window !== "undefined") {
       window.URL.createObjectURL = vi.fn(() => "blob:mock-url");
       window.URL.revokeObjectURL = vi.fn();
     }
   });
 
-  it("renders notice banner, breadcrumbs, action controls, view tabs, chart, and table by default", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders notice banner, breadcrumbs, action controls, view tabs, chart, and table by default", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     expect(screen.getByTestId("visibility-rating-view")).toBeInTheDocument();
     expect(screen.getByTestId("visibility-notice-banner")).toBeInTheDocument();
@@ -76,8 +85,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(within(table).getByText("sourceforge.net")).toBeInTheDocument();
   });
 
-  it("dismisses the top notice alert banner when clicking close button", () => {
+  it("dismisses the top notice alert banner when clicking close button", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const dismissBtn = screen.getByLabelText("Dismiss notice");
     fireEvent.click(dismissBtn);
@@ -85,8 +95,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("visibility-notice-banner")).not.toBeInTheDocument();
   });
 
-  it("switches search engine via dropdown", () => {
+  it("switches search engine via dropdown", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const engineBtn = screen.getByRole("button", { name: "Select search engine" });
     fireEvent.click(engineBtn);
@@ -98,8 +109,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText("Engine updated: Google Desktop")).toBeInTheDocument();
   });
 
-  it("opens single-date comparison calendar, navigates months, selects a day, and applies it", () => {
+  it("opens single-date comparison calendar, navigates months, selects a day, and applies it", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const dateBtn = screen.getByRole("button", { name: "Select date" });
     fireEvent.click(dateBtn);
@@ -127,8 +139,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText("Active evaluation date updated to 18 Sep 2026")).toBeInTheDocument();
   });
 
-  it("discards staged date when clicking CANCEL in calendar popover", () => {
+  it("discards staged date when clicking CANCEL in calendar popover", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const dateBtn = screen.getByRole("button", { name: "Select date" });
     fireEvent.click(dateBtn);
@@ -143,8 +156,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText("19 Sep 2026")).toBeInTheDocument();
   });
 
-  it("switches primary view tabs and sub-interval timeline duration", () => {
+  it("switches primary view tabs and sub-interval timeline duration", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     // Click Traffic Forecast tab
     const trafficTab = screen.getByRole("button", { name: "TRAFFIC FORECAST" });
@@ -171,8 +185,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(monthBtn).toHaveClass("text-blue-600");
   });
 
-  it("displays guideline and floating tooltip on chart tick hover, and toggles legend series", () => {
+  it("displays guideline and floating tooltip on chart tick hover, and toggles legend series", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     expect(screen.queryByTestId("visibility-guideline")).not.toBeInTheDocument();
     expect(screen.queryByTestId("visibility-chart-tooltip")).not.toBeInTheDocument();
@@ -197,8 +212,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(legendBtn).not.toHaveClass("opacity-40");
   });
 
-  it("filters domains via search input and clears search", () => {
+  it("filters domains via search input and clears search", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const searchInput = screen.getByRole("textbox", { name: "Search domains" });
     fireEvent.change(searchInput, { target: { value: "github" } });
@@ -214,8 +230,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(within(table).getByText("getcomposer.org")).toBeInTheDocument();
   });
 
-  it("filters domains by group and by tags using the FILTERS popover panel", () => {
+  it("filters domains by group and by tags using the FILTERS popover panel", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const filterBtn = screen.getByRole("button", { name: "Filter columns" });
     fireEvent.click(filterBtn);
@@ -257,8 +274,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText("Filters reset: Showing all domains")).toBeInTheDocument();
   });
 
-  it("configures table columns via COLUMNS dropdown menu", () => {
+  it("configures table columns via COLUMNS dropdown menu", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const columnsBtn = screen.getByRole("button", { name: "Customize columns" });
     fireEvent.click(columnsBtn);
@@ -293,8 +311,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.queryByRole("dialog", { name: "Table columns configuration" })).not.toBeInTheDocument();
   });
 
-  it("handles master and individual checkbox domain selection", () => {
+  it("handles master and individual checkbox domain selection", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const selectAllCheckbox = screen.getByRole("checkbox", { name: "Select all domains" });
     fireEvent.click(selectAllCheckbox);
@@ -311,8 +330,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(domainCheckbox).toBeChecked();
   });
 
-  it("copies table and selected rows via Copy dropdown", () => {
+  it("copies table and selected rows via Copy dropdown", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const copyBtn = screen.getByRole("button", { name: "Copy table data" });
     fireEvent.click(copyBtn);
@@ -328,8 +348,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText(/0 rows copied to clipboard/i)).toBeInTheDocument();
   });
 
-  it("sorts table columns when headers are clicked", () => {
+  it("sorts table columns when headers are clicked", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const table = screen.getByRole("table");
     const domainsHeader = within(table).getByText("DOMAINS");
@@ -340,8 +361,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     fireEvent.click(visibilityHeader);
   });
 
-  it("triggers traffic breakdown and row options toasts", () => {
+  it("triggers traffic breakdown and row options toasts", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const trafficLink = screen.getByRole("button", { name: "4,850" });
     fireEvent.click(trafficLink);
@@ -352,8 +374,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText("Options for getcomposer.org")).toBeInTheDocument();
   });
 
-  it("handles pagination controls", () => {
+  it("handles pagination controls", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     // Change rows per page to 25
     const rowsSelect = screen.getByRole("combobox", { name: "Rows per page" });
@@ -365,8 +388,9 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(nextBtn).toBeDisabled(); // All items fit on 1 page with 25 rows (total 16 items)
   });
 
-  it("opens export modal, selects format, toggles options, and downloads export", () => {
+  it("opens export modal, selects format, toggles options, and downloads export", async () => {
     render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
     const exportBtn = screen.getByRole("button", { name: "Export visibility data" });
     fireEvent.click(exportBtn);
@@ -391,40 +415,18 @@ describe("VisibilityRatingView Component", { timeout: 15000 }, () => {
     expect(screen.getByText(/Export downloaded: visibility_rating_workcomposer.com.csv/i)).toBeInTheDocument();
   });
 
-  it("renders real Jio dataset by default with 12 Oct 2026, 2 WEEKS timeline, and 26 competitors", () => {
-    render(<VisibilityRatingView projectId="proj-jio" projectDomain="www.jio.com" />);
+  it("renders tracked domains from the competitor overview with today's date and 2 WEEKS timeline", async () => {
+    render(<VisibilityRatingView {...defaultProps} />);
+    await screen.findAllByText("getcomposer.org");
 
-    // Default date and timeline
-    expect(screen.getByText("12 Oct 2026")).toBeInTheDocument();
+    expect(screen.getByText("19 Sep 2026")).toBeInTheDocument();
     const twoWeeksBtn = screen.getByRole("button", { name: "2 WEEKS" });
     expect(twoWeeksBtn).toHaveClass("text-blue-600");
 
-    // Real domains in the table
     const table = screen.getByRole("table");
-    expect(within(table).getByText("www.jio.com")).toBeInTheDocument();
-    expect(within(table).getByText("rechargemojo.com")).toBeInTheDocument();
-    expect(within(table).getByText("www.paisabazaar.com")).toBeInTheDocument();
-    expect(within(table).getByText("play.google.com")).toBeInTheDocument();
-    expect(within(table).getByText("paytm.com")).toBeInTheDocument();
-    expect(within(table).getByText("rechargebatteries.org")).toBeInTheDocument();
-    expect(within(table).getByText("apps.apple.com")).toBeInTheDocument();
-    expect(within(table).getByText("indiapostgdsonline.cept.gov.in")).toBeInTheDocument();
-
-    // Hover over Oct 8 tick
-    const tickOct8 = screen.getByTestId("xtick-Oct-8");
-    fireEvent.mouseEnter(tickOct8);
-
-    const tooltip = screen.getByTestId("visibility-chart-tooltip");
-    expect(tooltip).toBeInTheDocument();
-    expect(within(tooltip).getByText(/OCT-08 2026/i)).toBeInTheDocument();
-    expect(within(tooltip).getByText("VISIBILITY")).toBeInTheDocument();
-
-    // Exact competitor scores in tooltip
-    expect(within(tooltip).getByText("100")).toBeInTheDocument();
-    expect(within(tooltip).getByText("35.88")).toBeInTheDocument();
-    expect(within(tooltip).getByText("34.52")).toBeInTheDocument();
-    expect(within(tooltip).getByText("27.22")).toBeInTheDocument();
-    expect(within(tooltip).getByText("15.95")).toBeInTheDocument();
-    expect(within(tooltip).getByText("3.12")).toBeInTheDocument();
+    expect(within(table).getByText("workcomposer.com")).toBeInTheDocument();
+    expect(within(table).getByText("getcomposer.org")).toBeInTheDocument();
+    expect(within(table).getByText("sourceforge.net")).toBeInTheDocument();
+    expect(within(table).getByText("github.com")).toBeInTheDocument();
   });
 });

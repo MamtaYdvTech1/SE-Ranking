@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
   Globe,
@@ -50,7 +50,6 @@ export function CompetitiveResearchDashboard({
   domain,
   scope = '*.domain.com/*',
   country = 'United States of America',
-  brandName,
   onNewSearch,
 }: CompetitiveResearchDashboardProps) {
   const [activeTab, setActiveTab] = useState<
@@ -61,118 +60,74 @@ export function CompetitiveResearchDashboard({
   const [selectedIntentFilter, setSelectedIntentFilter] = useState<string>('all');
 
   const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const brand = brandName || cleanDomain.split('.')[0];
 
-  // Dynamic realistic data based on domain
-  const isWorkComposer = cleanDomain.includes('workcomposer');
-  const domainTrust = isWorkComposer ? 68 : Math.floor(55 + (cleanDomain.length * 3) % 40);
-  const pageTrust = Math.max(20, domainTrust - 7);
-  const organicTraffic = isWorkComposer ? 28400 : Math.floor(18000 + (cleanDomain.length * 2400) % 80000);
-  const organicKeywords = isWorkComposer ? 3842 : Math.floor(2200 + (cleanDomain.length * 350) % 9500);
-  const paidTraffic = isWorkComposer ? 1420 : Math.floor(450 + (cleanDomain.length * 120) % 4000);
-  const paidKeywords = isWorkComposer ? 184 : Math.floor(60 + (cleanDomain.length * 20) % 350);
-  const referringDomains = isWorkComposer ? 1120 : Math.floor(520 + (cleanDomain.length * 110) % 3500);
-  const totalBacklinks = referringDomains * 8 + 490;
+  // Live domain data from YepAPI via /api/seo/competitors
+  const [overview, setOverview] = useState<{
+    domainRank: number;
+    organicTraffic: number;
+    organicKeywords: number;
+    backlinks: number;
+    referringDomains: number;
+  } | null>(null);
+  const [competitorDomains, setCompetitorDomains] = useState<
+    Array<{ domain: string; avgPosition: number; intersections: number; organicCount: number; organicEtv: number }>
+  >([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Traffic & Keyword Growth Chart Data
-  const trendData = [
-    { month: 'Apr 2026', traffic: Math.round(organicTraffic * 0.72), keywords: Math.round(organicKeywords * 0.76) },
-    { month: 'May 2026', traffic: Math.round(organicTraffic * 0.79), keywords: Math.round(organicKeywords * 0.81) },
-    { month: 'Jun 2026', traffic: Math.round(organicTraffic * 0.85), keywords: Math.round(organicKeywords * 0.88) },
-    { month: 'Jul 2026', traffic: Math.round(organicTraffic * 0.91), keywords: Math.round(organicKeywords * 0.93) },
-    { month: 'Aug 2026', traffic: Math.round(organicTraffic * 0.96), keywords: Math.round(organicKeywords * 0.97) },
-    { month: 'Sep 2026', traffic: organicTraffic, keywords: organicKeywords },
-  ];
+  useEffect(() => {
+    if (!cleanDomain) return;
+    let active = true;
+    const post = (mode: 'overview' | 'domains') =>
+      fetch('/api/seo/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: cleanDomain, mode, limit: 10 }),
+      }).then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) throw new Error(json?.error || `Request failed (${res.status})`);
+        return json.data;
+      });
+    Promise.allSettled([post('overview'), post('domains')])
+      .then(([ov, comps]) => {
+        if (!active) return;
+        if (ov.status === 'fulfilled') setOverview(ov.value);
+        if (comps.status === 'fulfilled') setCompetitorDomains(comps.value?.competitors || []);
+        const failed = [ov, comps].find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+        setLoadError(failed ? (failed.reason instanceof Error ? failed.reason.message : 'Failed to load domain data') : null);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [cleanDomain]);
 
-  // Keyword position distribution
-  const positionDistribution = [
-    { range: 'Top 1-3', count: Math.round(organicKeywords * 0.08), fill: '#10B981' },
-    { range: 'Top 4-10', count: Math.round(organicKeywords * 0.16), fill: '#3B82F6' },
-    { range: 'Top 11-20', count: Math.round(organicKeywords * 0.24), fill: '#6366F1' },
-    { range: 'Top 21-50', count: Math.round(organicKeywords * 0.31), fill: '#F59E0B' },
-    { range: 'Top 51-100', count: Math.round(organicKeywords * 0.21), fill: '#94A3B8' },
-  ];
+  // Same rank -> 0-100 trust mapping used by the backlink tools
+  const domainTrust = overview ? Math.min(100, Math.round(overview.domainRank / 2)) : 0;
+  const pageTrust = 0;
+  const organicTraffic = overview?.organicTraffic ?? 0;
+  const organicKeywords = overview?.organicKeywords ?? 0;
+  const paidTraffic = 0;
+  const paidKeywords = 0;
+  const referringDomains = overview?.referringDomains ?? 0;
+  const totalBacklinks = overview?.backlinks ?? 0;
 
-  // Top Keywords
-  const baseKeywords = [
-    {
-      keyword: `${brand} employee monitoring software`,
-      intent: 'Commercial',
-      position: 1,
-      prevPosition: 2,
-      volume: 4400,
-      kd: 38,
-      cpc: 4.85,
-      trafficPercent: 14.2,
-      features: ['Snippet', 'PAA', 'Sitelinks'],
-    },
-    {
-      keyword: `best remote work tracking tools`,
-      intent: 'Informational',
-      position: 3,
-      prevPosition: 5,
-      volume: 8100,
-      kd: 54,
-      cpc: 6.2,
-      trafficPercent: 11.5,
-      features: ['Snippet', 'PAA'],
-    },
-    {
-      keyword: `${brand} pricing plans`,
-      intent: 'Transactional',
-      position: 1,
-      prevPosition: 1,
-      volume: 2900,
-      kd: 22,
-      cpc: 3.4,
-      trafficPercent: 9.8,
-      features: ['Sitelinks', 'Reviews'],
-    },
-    {
-      keyword: `employee productivity tracker for mac and windows`,
-      intent: 'Commercial',
-      position: 4,
-      prevPosition: 6,
-      volume: 3600,
-      kd: 46,
-      cpc: 5.15,
-      trafficPercent: 7.4,
-      features: ['PAA'],
-    },
-    {
-      keyword: `how to track remote team hours accurately`,
-      intent: 'Informational',
-      position: 2,
-      prevPosition: 3,
-      volume: 5200,
-      kd: 41,
-      cpc: 2.8,
-      trafficPercent: 6.9,
-      features: ['Snippet', 'Video'],
-    },
-    {
-      keyword: `${brand} login portal`,
-      intent: 'Navigational',
-      position: 1,
-      prevPosition: 1,
-      volume: 6800,
-      kd: 15,
-      cpc: 1.1,
-      trafficPercent: 18.1,
-      features: ['Sitelinks'],
-    },
-    {
-      keyword: `automatic timesheet app for agencies`,
-      intent: 'Transactional',
-      position: 5,
-      prevPosition: 8,
-      volume: 2400,
-      kd: 49,
-      cpc: 7.3,
-      trafficPercent: 4.8,
-      features: ['PAA', 'Sitelinks'],
-    },
-  ];
+  // Not provided by the data source: history, position split, keyword list, paid data, top pages
+  const trendData: Array<{ month: string; traffic: number; keywords: number }> = [];
+  const positionDistribution: Array<{ range: string; count: number; fill: string }> = [];
+  const baseKeywords: Array<{
+    keyword: string;
+    intent: string;
+    position: number;
+    prevPosition: number;
+    volume: number;
+    kd: number;
+    cpc: number;
+    trafficPercent: number;
+    features: string[];
+  }> = [];
 
   const filteredKeywords = baseKeywords.filter((k) => {
     const matchesSearch = k.keyword.toLowerCase().includes(keywordSearch.toLowerCase());
@@ -180,50 +135,18 @@ export function CompetitiveResearchDashboard({
     return matchesSearch && matchesIntent;
   });
 
-  // Top Competitors
-  const competitors = [
-    {
-      domain: 'timedoctor.com',
-      commonKeywords: Math.round(organicKeywords * 0.42),
-      missingKeywords: 1840,
-      traffic: Math.round(organicTraffic * 1.65),
-      paidTraffic: 4200,
-      strength: 78,
-    },
-    {
-      domain: 'hubstaff.com',
-      commonKeywords: Math.round(organicKeywords * 0.38),
-      missingKeywords: 2310,
-      traffic: Math.round(organicTraffic * 2.1),
-      paidTraffic: 8900,
-      strength: 84,
-    },
-    {
-      domain: 'desktime.com',
-      commonKeywords: Math.round(organicKeywords * 0.29),
-      missingKeywords: 1420,
-      traffic: Math.round(organicTraffic * 1.15),
-      paidTraffic: 1950,
-      strength: 69,
-    },
-    {
-      domain: 'activtrak.com',
-      commonKeywords: Math.round(organicKeywords * 0.25),
-      missingKeywords: 980,
-      traffic: Math.round(organicTraffic * 0.88),
-      paidTraffic: 1200,
-      strength: 64,
-    },
-  ];
+  // Competing domains (keyword overlap from the data source)
+  const competitors = competitorDomains.map((c) => ({
+    domain: c.domain,
+    commonKeywords: c.intersections,
+    missingKeywords: Math.max(0, c.organicCount - c.intersections),
+    traffic: Math.round(c.organicEtv),
+    paidTraffic: 0,
+    // Share of this domain's keywords that the competitor also ranks for
+    strength: organicKeywords > 0 ? Math.min(100, Math.round((c.intersections / organicKeywords) * 100)) : 0,
+  }));
 
-  // Top Pages
-  const topPages = [
-    { path: '/', trafficPercent: 38.5, traffic: Math.round(organicTraffic * 0.385), keywords: 940 },
-    { path: '/features/time-tracking', trafficPercent: 22.4, traffic: Math.round(organicTraffic * 0.224), keywords: 610 },
-    { path: '/pricing', trafficPercent: 15.2, traffic: Math.round(organicTraffic * 0.152), keywords: 340 },
-    { path: '/blog/remote-work-productivity-tips', trafficPercent: 11.6, traffic: Math.round(organicTraffic * 0.116), keywords: 480 },
-    { path: '/features/screenshots-monitoring', trafficPercent: 8.3, traffic: Math.round(organicTraffic * 0.083), keywords: 220 },
-  ];
+  const topPages: Array<{ path: string; trafficPercent: number; traffic: number; keywords: number }> = [];
 
   // Export CSV
   const handleExportCsv = () => {
@@ -291,6 +214,16 @@ export function CompetitiveResearchDashboard({
             </button>
           </div>
         </div>
+
+        {(isLoading || loadError) && (
+          <div
+            className={`mt-3 px-3 py-2 rounded-lg text-xs ${
+              loadError ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-gray-50 border border-gray-200 text-gray-500'
+            }`}
+          >
+            {loadError ? `Could not load live data for ${cleanDomain}: ${loadError}` : `Loading live data for ${cleanDomain}…`}
+          </div>
+        )}
 
         {/* Tab navigation matching SE Ranking */}
         <div className="flex items-center gap-1 mt-3 border-t border-gray-100 pt-2 text-xs">

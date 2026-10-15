@@ -4,14 +4,27 @@
  * Next.js Edge, Next.js Node, and browsers.
  */
 
-const DEFAULT_SECRET = process.env.JWT_SECRET || 'seranking-secure-jwt-key-2026-production-ready';
+/**
+ * Signing secret, read at call time. There is deliberately no production fallback: without
+ * JWT_SECRET, signing throws and verification rejects every token (fail closed).
+ * Vitest runs with NODE_ENV=test and gets a fixed test-only secret.
+ */
+function resolveSecret(): string | null {
+  const secret = process.env.JWT_SECRET;
+  if (secret && secret.trim()) return secret;
+  if (process.env.NODE_ENV === 'test') return 'test-only-session-secret';
+  return null;
+}
 
 /**
  * Signs a raw session token using HMAC-SHA256.
  * Returns `${token}.${signatureHex}`
  */
-export async function signSessionToken(token: string, secret = DEFAULT_SECRET): Promise<string> {
+export async function signSessionToken(token: string, secret = resolveSecret()): Promise<string> {
   if (!token) return '';
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured; refusing to sign session tokens.');
+  }
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -33,8 +46,9 @@ export async function signSessionToken(token: string, secret = DEFAULT_SECRET): 
  */
 export async function verifySessionToken(
   signedOrRawToken: string | undefined | null,
-  secret = DEFAULT_SECRET
+  secret = resolveSecret()
 ): Promise<string | null> {
+  if (!secret) return null;
   if (!signedOrRawToken || typeof signedOrRawToken !== 'string') return null;
   const trimmed = signedOrRawToken.trim();
   if (!trimmed.includes('.')) {

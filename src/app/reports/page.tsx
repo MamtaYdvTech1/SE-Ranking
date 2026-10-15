@@ -249,45 +249,8 @@ export default function ReportBuilderPage() {
     fetchReports();
   }, [activeProject?.id]);
 
-  // Default reports matching Screenshot 2
-  const [reports, setReports] = useState<ReportRow[]>([
-    {
-      id: '10075967',
-      title: 'teams.com Project Report',
-      domain: 'teams.com',
-      updated: 'Oct-03 2026',
-      sent: '-',
-      frequency: 'Every week, on: Saturday',
-      language: 'English',
-      period: 'Sep-27 2026 - Oct-03 2026',
-      hasSchedule: true,
-      file_type: 'pdf',
-    },
-    {
-      id: '10075968',
-      title: 'Teams Project Report',
-      domain: 'teams.com',
-      updated: 'Oct-01 2026',
-      sent: '-',
-      frequency: 'Every week, on: Thursday',
-      language: 'English',
-      period: 'Sep-27 2026 - Oct-03 2026',
-      hasSchedule: true,
-      file_type: 'pdf',
-    },
-    {
-      id: '10075969',
-      title: 'zohosocial.com Project Report',
-      domain: 'zohosocial.com',
-      updated: 'Sep-23 2026',
-      sent: 'Sep-30 2026',
-      frequency: 'Every week, on: Wednesday',
-      language: 'English',
-      period: 'Sep-24 2026 - Sep-30 2026',
-      hasSchedule: true,
-      file_type: 'pdf',
-    },
-  ]);
+  // Real reports loaded from database
+  const [reports, setReports] = useState<ReportRow[]>([]);
 
   // Starts with 0 templates matching Screenshot 2
   const [myTemplates, setMyTemplates] = useState<TemplateItem[]>([]);
@@ -992,7 +955,7 @@ export default function ReportBuilderPage() {
                 <input
                   type="text"
                   placeholder="Type something here..."
-                  defaultValue={activeEditingReport?.project || activeProject?.domain || "teams.com"}
+                  defaultValue={activeEditingReport?.project || activeProject?.domain || ""}
                   className="w-full max-w-md bg-white/80 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-[#7C3AED] rounded px-3 py-1.5 text-sm font-semibold text-[#7C3AED] outline-hidden transition-all shadow-2xs"
                 />
               </div>
@@ -2347,9 +2310,10 @@ export default function ReportBuilderPage() {
                         )}
                         <div
                           onClick={() => {
+                            const curDomain = activeProject?.domain || 'my-project.com';
                             setActiveEditingReport({
-                              name: `teams.com - ${tpl.name}`,
-                              project: 'teams.com',
+                              name: `${curDomain} - ${tpl.name}`,
+                              project: curDomain,
                               period: 'Last Week',
                             });
                             setIsEditingReport(true);

@@ -1,8 +1,9 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { SerpCompetitorsView } from "../SerpCompetitorsView";
 import { CompetitorDto } from "@/lib/types";
+import { installCompetitorFetchStub, pinClock } from "./competitorFixtures";
 
 describe("SerpCompetitorsView Component", () => {
   const mockCompetitors: CompetitorDto[] = [
@@ -27,14 +28,22 @@ describe("SerpCompetitorsView Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    pinClock();
+    installCompetitorFetchStub();
     if (typeof window !== "undefined") {
       window.URL.createObjectURL = vi.fn(() => "blob:mock-url");
       window.URL.revokeObjectURL = vi.fn();
     }
   });
 
-  it("renders notice banner, breadcrumb, action buttons, and keywords list by default", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("renders notice banner, breadcrumb, action buttons, and keywords list by default", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     expect(screen.getByTestId("serp-competitors-view")).toBeInTheDocument();
     expect(screen.getByText(/This section contains brief information on the top 100 websites/i)).toBeInTheDocument();
@@ -46,8 +55,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.getByText("work composer")).toBeInTheDocument();
   });
 
-  it("dismisses the notice banner when clicking dismiss button", () => {
+  it("dismisses the notice banner when clicking dismiss button", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const dismissBtn = screen.getByLabelText("Dismiss notice banner");
     fireEvent.click(dismissBtn);
@@ -55,8 +65,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByText(/This section contains brief information on the top 100 websites/i)).not.toBeInTheDocument();
   });
 
-  it("switches active keyword when clicking a keyword item", () => {
+  it("switches active keyword when clicking a keyword item", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const kwButton = screen.getByRole("button", { name: /work composer hack/i });
     fireEvent.click(kwButton);
@@ -64,8 +75,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(kwButton).toHaveClass("bg-blue-50");
   });
 
-  it("filters keywords using the search input", () => {
+  it("filters keywords using the search input", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const searchInput = screen.getByPlaceholderText("Search keyword 🔍");
     fireEvent.change(searchInput, { target: { value: "hack" } });
@@ -75,8 +87,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.getByText("Keywords (1)")).toBeInTheDocument();
   });
 
-  it("selects keyword group from dropdown", () => {
+  it("selects keyword group from dropdown", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const groupDropdownBtn = screen.getByRole("button", { name: /Select keyword group/i });
     fireEvent.click(groupDropdownBtn);
@@ -88,8 +101,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.getByText("Keywords (2)")).toBeInTheDocument();
   });
 
-  it("toggles display mode between DOMAIN and URL", () => {
+  it("toggles display mode between DOMAIN and URL", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const urlBtn = screen.getByRole("button", { name: "URL" });
     const domainBtn = screen.getByRole("button", { name: "DOMAIN" });
@@ -103,8 +117,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(domainBtn).toHaveClass("bg-[#544f70]");
   });
 
-  it("changes depth tier pills to filter SERP rows", () => {
+  it("changes depth tier pills to filter SERP rows", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const top10Btn = screen.getByRole("button", { name: "TOP 10" });
     fireEvent.click(top10Btn);
@@ -113,8 +128,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.getAllByText("10 results").length).toBeGreaterThan(0);
   });
 
-  it("toggles highlight competitors switch", () => {
+  it("toggles highlight competitors switch", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const switchBtn = screen.getByRole("switch", { name: /Highlight competitors/i });
     expect(switchBtn).toHaveAttribute("aria-checked", "false");
@@ -131,8 +147,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryAllByText("Competitor").length).toBe(compBadgesBefore);
   });
 
-  it("opens, uses, and closes the filter by tags dropdown", () => {
+  it("opens, uses, and closes the filter by tags dropdown", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const tagsBtn = screen.getByTestId("serp-filter-by-tags-btn");
     fireEvent.click(tagsBtn);
@@ -150,8 +167,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByText("Match:")).not.toBeInTheDocument();
   });
 
-  it("opens and closes the column fullscreen modal", () => {
+  it("opens and closes the column fullscreen modal", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const expandButtons = screen.getAllByTitle("Expand to fullscreen");
     fireEvent.click(expandButtons[0]);
@@ -164,8 +182,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByText(/Full SERP Rankings — #/i)).not.toBeInTheDocument();
   });
 
-  it("opens, switches format, and executes export modal", () => {
+  it("opens, switches format, and executes export modal", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     const exportBtn = screen.getByRole("button", { name: /EXPORT/i });
     fireEvent.click(exportBtn);
@@ -186,8 +205,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.getByText(/Export downloaded/i)).toBeInTheDocument();
   });
 
-  it("opens and closes Advanced SERP Analysis modal", () => {
+  it("opens and closes Advanced SERP Analysis modal", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     fireEvent.click(screen.getByRole("button", { name: /ADVANCED SERP ANALYSIS/i }));
 
@@ -198,8 +218,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByText("Total Tracked URLs in SERP:")).not.toBeInTheDocument();
   });
 
-  it("opens and closes Notes modal", () => {
+  it("opens and closes Notes modal", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     fireEvent.click(screen.getByRole("button", { name: /Notes \(46\)/i }));
 
@@ -209,8 +230,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByRole("heading", { name: "Notes (46)" })).not.toBeInTheDocument();
   });
 
-  it("opens and closes Feedback modal", () => {
+  it("opens and closes Feedback modal", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     fireEvent.click(screen.getByRole("button", { name: /Feedback/i }));
 
@@ -220,8 +242,9 @@ describe("SerpCompetitorsView Component", () => {
     expect(screen.queryByRole("heading", { name: "Send Feedback" })).not.toBeInTheDocument();
   });
 
-  it("opens Guest Link Modal when clicking Guest link", () => {
+  it("opens Guest Link Modal when clicking Guest link", async () => {
     render(<SerpCompetitorsView {...defaultProps} />);
+    await screen.findAllByText("work composer download");
 
     fireEvent.click(screen.getByTitle("Get access to guest links"));
 

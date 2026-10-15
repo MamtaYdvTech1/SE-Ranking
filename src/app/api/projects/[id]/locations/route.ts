@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 import { LocationCreateSchema } from '@/lib/validation/schemas';
-import { getAuthSession } from '@/lib/server/auth';
 import { getCountryInfo } from '@/lib/countryUtils';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const project = await prisma.project.findFirst({
-      where: { OR: [{ id }, { domain: id }] },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
 
     const locations = await prisma.location.findMany({
       where: {
@@ -73,16 +69,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const auth = await getAuthSession(req);
     const body = await req.json();
 
-    const project = await prisma.project.findFirst({
-      where: { OR: [{ id }, { domain: id }] },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
 
     const result = LocationCreateSchema.safeParse(body);
     if (!result.success) {
@@ -98,7 +89,7 @@ export async function POST(
     const location = await prisma.location.create({
       data: {
         projectId: project.id,
-        userId: auth?.user?.id || null,
+        userId: access.data.user.id,
         name,
         countryCode: countryCode.toLowerCase(),
         region: region || null,
@@ -129,8 +120,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: _projectId } = await params;
-    const auth = await getAuthSession(req);
+    const { id } = await params;
+    const access = await verifyProjectAccess(req, id);
+    if (!access.success) return access.error;
+    const project = access.data.project;
     const { searchParams } = new URL(req.url);
     const locationId = searchParams.get('id') || (await req.json().catch(() => ({}))).id;
 
@@ -138,13 +131,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Location ID is required' }, { status: 400 });
     }
 
-    await prisma.location.update({
-      where: { id: locationId },
+    const deleted = await prisma.location.updateMany({
+      where: { id: locationId, projectId: project.id, deletedAt: null },
       data: {
         deletedAt: new Date(),
-        deletedBy: auth?.user?.email || 'admin',
+        deletedBy: access.data.user.email,
       },
     });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: 'Location not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, message: 'Location deleted successfully.' });
   } catch (err: unknown) {

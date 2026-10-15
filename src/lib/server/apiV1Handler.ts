@@ -141,27 +141,56 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
           ...(isSuperAdmin ? {} : { userId: currentUser.id }),
         },
         include: {
+          integrations: {
+            where: { provider: "gsc", status: "connected" },
+            select: { id: true, status: true },
+          },
+          auditPages: {
+            take: 1,
+            select: { id: true },
+          },
+          auditIssues: {
+            select: { severity: true },
+          },
           _count: { select: { keywords: true, tasks: true } },
         },
       });
 
-      const globalProjects = dbProjects.map((p) => ({
-        projectId: p.id,
-        name: p.name,
-        primaryDomain: p.domain,
-        healthScore: 0,
-        trackedKeywords: p._count.keywords,
-        openTasks: p._count.tasks,
-        overdueTasks: 0,
-        lastCrawledAt: p.lastRankingCheckAt ? p.lastRankingCheckAt.toISOString() : null,
-        lastSyncedAt: p.updatedAt.toISOString(),
-        gscSyncStatus: "Not Connected",
-      }));
+      const globalProjects = dbProjects.map((p) => {
+        const hasAudit = p.auditPages.length > 0;
+        let healthScore: number | null = null;
+        if (hasAudit) {
+          const errors = p.auditIssues.filter((i) => i.severity === "Error").length;
+          const warnings = p.auditIssues.filter((i) => i.severity === "Warning").length;
+          healthScore = Math.max(0, 100 - (errors * 5 + warnings * 2));
+        }
+
+        const gscSyncStatus = p.integrations.length > 0 ? "Connected" : "Not Connected";
+
+        return {
+          projectId: p.id,
+          name: p.name,
+          primaryDomain: p.domain,
+          healthScore,
+          trackedKeywords: p._count.keywords,
+          openTasks: p._count.tasks,
+          overdueTasks: 0,
+          lastCrawledAt: p.lastRankingCheckAt ? p.lastRankingCheckAt.toISOString() : null,
+          lastSyncedAt: p.updatedAt.toISOString(),
+          gscSyncStatus,
+        };
+      });
+
+      const auditedProjects = globalProjects.filter((p) => p.healthScore !== null);
+      const averageHealthScore =
+        auditedProjects.length > 0
+          ? Math.round(auditedProjects.reduce((acc, p) => acc + (p.healthScore as number), 0) / auditedProjects.length)
+          : null;
 
       return successResponse({
         totalProjects: globalProjects.length,
         totalTrackedKeywords: globalProjects.reduce((acc, p) => acc + p.trackedKeywords, 0),
-        averageHealthScore: 0,
+        averageHealthScore,
         totalOpenTasks: globalProjects.reduce((acc, p) => acc + p.openTasks, 0),
         totalOverdueTasks: 0,
         projects: globalProjects,
@@ -336,10 +365,15 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
       const auditIssues = await prisma.auditIssue.findMany({ where: { projectId: project.id } });
       const errorsCount = auditIssues.filter((i) => i.severity === "Error").length;
       const warningsCount = auditIssues.filter((i) => i.severity === "Warning").length;
-      const healthScore = auditPages.length > 0 ? Math.max(0, 100 - (errorsCount * 5 + warningsCount * 2)) : 0;
+      const healthScore = auditPages.length > 0 ? Math.max(0, 100 - (errorsCount * 5 + warningsCount * 2)) : null;
 
       const openTasks = await prisma.task.count({ where: { projectId: project.id, status: { not: "Done" } } });
       const closedTasks = await prisma.task.count({ where: { projectId: project.id, status: "Done" } });
+
+      const gscIntegration = await prisma.projectIntegration.findFirst({
+        where: { projectId: project.id, provider: "gsc", status: "connected" },
+      });
+      const gscSyncStatus = gscIntegration ? "Connected" : "Not Connected";
 
       return successResponse({
         projectId: project.id,
@@ -349,8 +383,8 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
           isRankingsStale: false,
           lastRankCheckAt: project.lastRankingCheckAt ? project.lastRankingCheckAt.toISOString() : null,
           lastAuditCrawlAt: auditPages.length > 0 ? auditPages[0].crawledAt.toISOString() : null,
-          lastGscSyncAt: null,
-          gscSyncStatus: "Not Connected",
+          lastGscSyncAt: gscIntegration?.lastSyncedAt ? gscIntegration.lastSyncedAt.toISOString() : null,
+          gscSyncStatus,
         },
         health: {
           healthScore,
@@ -418,10 +452,11 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
         take: 5,
       });
 
+      // Most recent 30 days of snapshots, returned oldest-first for the trend chart
+      const trendSince = new Date(Date.now() - 30 * 86400000);
       const historyRecords = await prisma.rankingHistory.findMany({
-        where: { projectId: project.id },
+        where: { projectId: project.id, checkedAt: { gte: trendSince } },
         orderBy: { checkedAt: "asc" },
-        take: 30,
       });
 
       const historyByDate: Record<string, { total: number; count: number }> = {};
@@ -498,11 +533,20 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
       }
 
       if (subPath === "rankings/check" && method === "POST") {
-        await prisma.project.update({
-          where: { id: project.id },
-          data: { lastRankingCheckAt: new Date() },
+        const { collectRankingsForProject } = await import("@/services/seo/ranking.service");
+        const result = await collectRankingsForProject(project.id, { timeoutMs: 25000 });
+        if (result.providerStatus === "UNCONFIGURED") {
+          return errorResponse(result.message, 503);
+        }
+        if (kws.length > 0 && result.checkedCount === 0) {
+          return errorResponse(result.message, 502);
+        }
+        return successResponse({
+          checkedCount: result.checkedCount,
+          rankedCount: result.rankedCount,
+          unrankedCount: result.unrankedCount,
+          message: result.message,
         });
-        return successResponse({ checkedCount: kws.length, message: `Checked ${kws.length} keywords.` });
       }
 
       if (subPath === "rankings/detailed" || subPath === "rankings/historical") {
@@ -615,68 +659,14 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
 
     // COMPETITORS: /api/v1/projects/:id/competitors/...
     if (subPath.startsWith("competitors")) {
-      if (subPath === "competitors" && method === "GET") {
-        const comps = await prisma.projectCompetitor.findMany({ where: { projectId: project.id, deletedAt: null } });
-        return successResponse(comps);
-      }
-      if (subPath === "competitors" && method === "POST") {
-        const body = await request.json();
-        const created = await prisma.projectCompetitor.create({
-          data: {
-            projectId: project.id,
-            name: body.name || body.domain || "Competitor",
-            domain: (body.domain || "competitor.com").replace(/^https?:\/\//, "").split("/")[0],
-            visibilityScore: 0,
-            avgPosition: 0,
-            commonKeywordsCount: 0,
-          },
-        });
-        return successResponse(created, 201);
-      }
-      if (subPath === "competitors/gap") {
-        const compRankings = await prisma.competitorRanking.findMany({
-          where: { projectId: project.id },
-          include: { competitor: true, keyword: true },
-        });
-        const gapKeywords = compRankings
-          .filter(
-            (r) =>
-              r.keyword &&
-              r.competitor &&
-              r.position &&
-              (r.keyword.currentPosition === null || r.keyword.currentPosition > r.position)
-          )
-          .slice(0, 25)
-          .map((r) => ({
-            id: r.id,
-            keyword: r.keyword.keywordText,
-            volume: r.keyword.monthlySearchVolume || 0,
-            competitorRank: r.position,
-            yourRank: r.keyword.currentPosition,
-            opportunityScore: 75,
-          }));
-
-        return successResponse({
-          gapKeywords,
-          totalCount: gapKeywords.length,
-        });
-      }
-      if (subPath === "competitors/visibility") {
-        const comps = await prisma.projectCompetitor.findMany({ where: { projectId: project.id, deletedAt: null } });
-        return successResponse({ competitors: comps });
-      }
+      const { handleCompetitorsV1 } = await import("@/lib/server/competitorsV1");
+      return handleCompetitorsV1(request, method, subPath, project);
     }
 
     // AUDIT: /api/v1/projects/:id/audit/...
     if (subPath.startsWith("audit")) {
-      const issues = await prisma.auditIssue.findMany({ where: { projectId: project.id, deletedAt: null } });
-      return successResponse({
-        items: issues,
-        page: 1,
-        pageSize: 20,
-        totalCount: issues.length,
-        totalPages: 1,
-      });
+      const { handleAuditV1 } = await import("@/lib/server/auditV1");
+      return handleAuditV1(request, method, subPath, project);
     }
 
     // TASKS: /api/v1/projects/:id/tasks

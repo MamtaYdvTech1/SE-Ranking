@@ -8,6 +8,7 @@ import { useApp } from '@/components/providers/AppProviders';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { CountryFlag } from '@/components/ui/CountryFlag';
 import { validateRealEmail } from '@/lib/validation/email-validator';
+import { safeRedirectPath } from '@/lib/safeRedirect';
 import { GoogleAccountChooserModal } from '@/components/auth/GoogleAccountChooserModal';
 
 const AUTH_LANGUAGES = [
@@ -131,8 +132,7 @@ export default function LoginPage() {
         // ignore
       }
 
-      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/projects';
-      window.location.href = redirectUrl;
+      window.location.href = safeRedirectPath(new URLSearchParams(window.location.search).get('redirect'));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Invalid pair username/password!';
       setError(msg);

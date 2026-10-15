@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,39 +13,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'analysisId is required' }, { status: 400 });
     }
 
-    let analysis: any = null;
-    try {
-      analysis = await prisma.analysis.findUnique({
-        where: { id: analysisId },
-        include: {
-          prompts: true,
-          citations: true,
-          competitors: true,
-        },
-      });
-    } catch (dbErr) {
-      console.warn('Prisma DB unavailable for export, using fallback dataset:', dbErr);
-    }
+    const analysis: any = await prisma.analysis.findUnique({
+      where: { id: analysisId },
+      include: {
+        prompts: true,
+        citations: true,
+        competitors: true,
+      },
+    });
 
     if (!analysis) {
-      // Fallback export dataset so user never experiences an error
-      analysis = {
-        id: analysisId,
-        domain: 'seranking.com',
-        prompts: [
-          { prompt: 'best seo tools 2026', topic: 'SEO Software', engine: 'ChatGPT', mention: true, link: true, ads: false, visibility: 94, answerDate: new Date() },
-          { prompt: 'how to do keyword research', topic: 'Keyword Strategy', engine: 'Google AI Overview', mention: true, link: true, ads: false, visibility: 88, answerDate: new Date() },
-          { prompt: 'rank tracking software review', topic: 'Reviews', engine: 'Perplexity', mention: true, link: false, ads: false, visibility: 76, answerDate: new Date() },
-        ],
-        citations: [
-          { sourceDomain: 'forbes.com', sourceUrl: 'https://forbes.com/advisor/business/software/best-seo-tools', mentionCount: 14, linkCount: 12, avgPosition: 2.1, presenceScore: 88 },
-          { sourceDomain: 'hubspot.com', sourceUrl: 'https://blog.hubspot.com/marketing/seo-tools', mentionCount: 10, linkCount: 9, avgPosition: 3.4, presenceScore: 82 },
-        ],
-        competitors: [
-          { domain: 'semrush.com', brandName: 'Semrush', aiPresence: 86, domainPresence: 82, shareOfVoice: 31.4 },
-          { domain: 'ahrefs.com', brandName: 'Ahrefs', aiPresence: 84, domainPresence: 80, shareOfVoice: 28.9 },
-        ],
-      };
+      return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
+    }
+
+    if (analysis.projectId) {
+      const access = await verifyProjectAccess(req, analysis.projectId);
+      if (!access.success) return access.error;
     }
 
     if (format === 'json') {

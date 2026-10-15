@@ -16,8 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate user
     const session = await getAuthSession(req);
-    const isDev = process.env.NODE_ENV !== 'production';
-    if (!session?.user && !isDev) {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required. Please sign in.' },
         { status: 401 }
@@ -72,11 +71,14 @@ export async function POST(req: NextRequest) {
 
     if (!ideasRes.ok || !ideasRes.data) {
       const statusCode = ideasRes.error?.statusCode || 502;
+      const isCredits = ideasRes.error?.code === 'NO_CREDITS' || statusCode === 402;
       return NextResponse.json(
         {
           success: false,
-          error: ideasRes.error?.message || 'YepAPI keyword ideas request failed',
-          code: ideasRes.error?.code,
+          error: isCredits
+            ? 'YepAPI keyword ideas provider quota exhausted (HTTP 402). Please top up YepAPI credits.'
+            : (ideasRes.error?.message || 'YepAPI keyword ideas request failed'),
+          code: ideasRes.error?.code || (isCredits ? 'NO_CREDITS' : 'UPSTREAM_ERROR'),
         },
         { status: statusCode }
       );

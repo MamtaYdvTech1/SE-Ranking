@@ -39,7 +39,7 @@ export async function GET(
       }),
       prisma.backlink.findMany({
         where: { projectId: project.id, deletedAt: null },
-        select: { sourceUrl: true, domainTrust: true, pageTrust: true },
+        select: { sourceUrl: true, targetUrl: true, anchorText: true, domainTrust: true, pageTrust: true, isDoFollow: true },
       }),
       prisma.aiSearchRecord.findMany({
         where: { projectId: project.id },
@@ -89,11 +89,46 @@ export async function GET(
       }
     });
 
-    const totalKeywords = rankingSummary.summary.totalKeywords;
-    const trafficChange =
-      rankingSummary.summary.trafficForecastChange !== 0
-        ? rankingSummary.summary.trafficForecastChange
-        : rankingSummary.summary.improved - rankingSummary.summary.declined;
+    const s = rankingSummary.summary;
+    const trafficChange = s.trafficForecastChange || 0;
+
+    // Bucket changes are per band (top1, 2-3, 4-5, ...); cumulative "Top N" changes sum the bands inside N
+    const top3Change = (s.top1Change || 0) + (s.top2_3Change || 0);
+    const top5Change = top3Change + (s.top4_5Change || 0);
+    const top10Change = top5Change + (s.top6_10Change || 0);
+    const top30Change = top10Change + (s.top11_30Change || 0);
+    const top100Change = top30Change + (s.top31_100Change || 0);
+
+    // Insight counts derived from stored rankings
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+    const [recentHistory, competitorJumps] = await Promise.all([
+      prisma.rankingHistory.findMany({
+        where: { projectId: project.id, checkedAt: { gte: thirtyDaysAgo }, url: { not: null } },
+        select: { keywordId: true, url: true },
+      }),
+      prisma.competitorRanking.findMany({
+        where: {
+          projectId: project.id,
+          checkedAt: { gte: thirtyDaysAgo },
+          position: { lte: 10 },
+          OR: [{ previousPosition: null }, { previousPosition: { gt: 10 } }],
+        },
+        select: { competitorId: true },
+      }),
+    ]);
+
+    const urlsByKeyword = new Map<string, Set<string>>();
+    for (const h of recentHistory) {
+      if (!urlsByKeyword.has(h.keywordId)) urlsByKeyword.set(h.keywordId, new Set());
+      urlsByKeyword.get(h.keywordId)!.add(h.url!);
+    }
+    const cannibalizedKeywords = [...urlsByKeyword.values()].filter((urls) => urls.size > 1).length;
+    const easyToImprove = rankingSummary.keywords.filter((k) => k.rank != null && k.rank >= 4 && k.rank <= 20).length;
+    const competitorsJumpedTop10 = new Set(competitorJumps.map((c) => c.competitorId)).size;
+
+    // Low-trust links (Domain Trust under 20) stand in for toxicity; no spam-score source is wired up
+    const LOW_TRUST_THRESHOLD = 20;
+    const lowTrustBacklinks = backlinks.filter((b) => b.domainTrust != null && b.domainTrust < LOW_TRUST_THRESHOLD);
 
     return NextResponse.json({
       success: true,
@@ -115,17 +150,17 @@ export async function GET(
         top1: rankingSummary.summary.top1,
         top1Change: rankingSummary.summary.top1Change || 0,
         top3: rankingSummary.summary.top3,
-        top3Change: (rankingSummary.summary.top1Change || 0) + (rankingSummary.summary.top2_3Change || 0),
+        top3Change,
         top5: rankingSummary.summary.top5,
-        top5Change: (rankingSummary.summary.top4_5Change || 0),
+        top5Change,
         top10: rankingSummary.summary.top10,
-        top10Change: (rankingSummary.summary.top4_5Change || 0) + (rankingSummary.summary.top6_10Change || 0),
+        top10Change,
         top20: rankingSummary.summary.top20,
         top30: rankingSummary.summary.top30,
-        top30Change: rankingSummary.summary.top11_30Change || 0,
+        top30Change,
         top50: rankingSummary.summary.top50,
         top100: rankingSummary.summary.top100,
-        top100Change: rankingSummary.summary.top31_100Change || 0,
+        top100Change,
         unranked: rankingSummary.summary.unranked,
         improved: rankingSummary.summary.improved,
         declined: rankingSummary.summary.declined,
@@ -139,6 +174,23 @@ export async function GET(
         trafficChange,
         backlinksCount,
         referringDomainsCount,
+      },
+      insights: {
+        easyToImprove,
+        cannibalizedKeywords,
+        competitorsJumpedTop10,
+      },
+      backlinkQuality: {
+        threshold: LOW_TRUST_THRESHOLD,
+        lowTrustCount: lowTrustBacklinks.length,
+        totalBacklinks: backlinksCount,
+        lowTrustLinks: lowTrustBacklinks.slice(0, 200).map((b) => ({
+          sourceUrl: b.sourceUrl,
+          targetUrl: b.targetUrl,
+          anchorText: b.anchorText || '',
+          domainTrust: b.domainTrust,
+          isDoFollow: b.isDoFollow,
+        })),
       },
       aiSearch: {
         totalChecks: totalAiChecks,
@@ -180,6 +232,8 @@ export async function GET(
         currentPosition: k.rank,
         previousPosition: k.prevRank,
         positionChange: k.change,
+        difficulty: k.difficulty,
+        cpc: k.cpc,
         url: k.url,
         searchEngine: k.searchEngine,
       })),

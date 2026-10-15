@@ -39,7 +39,7 @@ export function GlobalSettingsView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, refreshUser } = useAuth();
-  const { projects } = useApp();
+  const { projects, activeProject } = useApp();
 
   const tabParam = searchParams.get('tab') as SettingsTab | null;
   const siteIdParam = searchParams.get('site_id');
@@ -902,12 +902,13 @@ export function GlobalSettingsView() {
                         <button
                           type="button"
                           onClick={() => {
-                            if (projects[0]?.id) {
+                            const targetProjId = activeProject?.id;
+                            if (targetProjId) {
                               fetch('/api/integrations', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                  projectId: projects[0].id,
+                                  projectId: targetProjId,
                                   provider: item.id,
                                   isActive: !item.connected,
                                 }),

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { CalendarYearDropdown } from "../competitors/CalendarYearDropdown";
 import { GuestLinkModal } from "../competitors/GuestLinkModal";
+import { useAiTrackerData } from "./aiTrackerData";
 
 const CAL_FULL_MONTHS = [
   "January",
@@ -117,263 +118,24 @@ export interface SourceDomainItem {
   lastCheck?: string;
 }
 
-const INITIAL_BRAND_CHECKBOXES: BrandCheckboxItem[] = [
-  {
-    id: "asana",
-    name: "Asana",
-    color: "#3b82f6",
-    borderColor: "border-blue-500",
-    bgColor: "bg-blue-50 dark:bg-blue-950/40",
-    textColor: "text-blue-700 dark:text-blue-300",
-    active: true,
-    x: 12,
-    y: 16,
-    radius: 28,
-  },
-  {
-    id: "slack",
-    name: "Slack",
-    color: "#10b981",
-    borderColor: "border-emerald-500",
-    bgColor: "bg-emerald-50 dark:bg-emerald-950/40",
-    textColor: "text-emerald-700 dark:text-emerald-300",
-    active: true,
-    x: 8,
-    y: 12,
-    radius: 24,
-  },
-  {
-    id: "jira",
-    name: "Jira",
-    color: "#f97316",
-    borderColor: "border-orange-500",
-    bgColor: "bg-orange-50 dark:bg-orange-950/40",
-    textColor: "text-orange-700 dark:text-orange-300",
-    active: true,
-    x: 8.5,
-    y: 12,
-    radius: 24,
-  },
-  {
-    id: "microsoft-teams",
-    name: "Microsoft Teams",
-    color: "#eab308",
-    borderColor: "border-amber-500",
-    bgColor: "bg-amber-50 dark:bg-amber-950/40",
-    textColor: "text-amber-700 dark:text-amber-300",
-    active: true,
-    x: 9,
-    y: 7,
-    radius: 20,
-  },
-  {
-    id: "clickup",
-    name: "ClickUp",
-    color: "#a855f7",
-    borderColor: "border-purple-500",
-    bgColor: "bg-purple-50 dark:bg-purple-950/40",
-    textColor: "text-purple-700 dark:text-purple-300",
-    active: true,
-    x: 10,
-    y: 8,
-    radius: 22,
-  },
-  {
-    id: "zoho-projects",
-    name: "Zoho Projects",
-    color: "#ef4444",
-    borderColor: "border-red-500",
-    bgColor: "bg-red-50 dark:bg-red-950/40",
-    textColor: "text-red-700 dark:text-red-300",
-    active: true,
-    x: 9.2,
-    y: 7,
-    radius: 20,
-  },
-  {
-    id: "notion",
-    name: "Notion",
-    color: "#8b5cf6",
-    borderColor: "border-violet-500",
-    bgColor: "bg-violet-50 dark:bg-violet-950/40",
-    textColor: "text-violet-700 dark:text-violet-300",
-    active: true,
-    x: 5,
-    y: 5,
-    radius: 16,
-  },
-  {
-    id: "trello",
-    name: "Trello",
-    color: "#ec4899",
-    borderColor: "border-pink-500",
-    bgColor: "bg-pink-50 dark:bg-pink-950/40",
-    textColor: "text-pink-700 dark:text-pink-300",
-    active: true,
-    x: 6,
-    y: 5,
-    radius: 18,
-  },
-  {
-    id: "google-workspace",
-    name: "Google Workspace",
-    color: "#84cc16",
-    borderColor: "border-lime-600",
-    bgColor: "bg-lime-50 dark:bg-lime-950/40",
-    textColor: "text-lime-800 dark:text-lime-300",
-    active: true,
-    x: 7,
-    y: 4,
-    radius: 16,
-  },
-  {
-    id: "microsoft-365",
-    name: "Microsoft 365",
-    color: "#14b8a6",
-    borderColor: "border-teal-500",
-    bgColor: "bg-teal-50 dark:bg-teal-950/40",
-    textColor: "text-teal-700 dark:text-teal-300",
-    active: true,
-    x: 5.2,
-    y: 5,
-    radius: 16,
-  },
-  {
-    id: "zoom",
-    name: "Zoom",
-    color: "#06b6d4",
-    borderColor: "border-cyan-500",
-    bgColor: "bg-cyan-50 dark:bg-cyan-950/40",
-    textColor: "text-cyan-700 dark:text-cyan-300",
-    active: false,
-    x: 4,
-    y: 3,
-    radius: 15,
-  },
-  {
-    id: "monday-com",
-    name: "monday.com",
-    color: "#f43f5e",
-    borderColor: "border-rose-500",
-    bgColor: "bg-rose-50 dark:bg-rose-950/40",
-    textColor: "text-rose-700 dark:text-rose-300",
-    active: false,
-    x: 7.5,
-    y: 9,
-    radius: 20,
-  },
-  {
-    id: "clockify",
-    name: "Clockify",
-    color: "#0284c7",
-    borderColor: "border-sky-500",
-    bgColor: "bg-sky-50 dark:bg-sky-950/40",
-    textColor: "text-sky-700 dark:text-sky-300",
-    active: false,
-    x: 3.5,
-    y: 4,
-    radius: 14,
-  },
-  {
-    id: "n8n",
-    name: "n8n",
-    color: "#ea580c",
-    borderColor: "border-orange-600",
-    bgColor: "bg-orange-50 dark:bg-orange-950/40",
-    textColor: "text-orange-800 dark:text-orange-300",
-    active: false,
-    x: 2.5,
-    y: 2,
-    radius: 12,
-  },
-  {
-    id: "toggl-track",
-    name: "Toggl Track",
-    color: "#dc2626",
-    borderColor: "border-red-600",
-    bgColor: "bg-red-50 dark:bg-red-950/40",
-    textColor: "text-red-800 dark:text-red-300",
-    active: false,
-    x: 4.2,
-    y: 3.5,
-    radius: 14,
-  },
-  {
-    id: "zapier",
-    name: "Zapier",
-    color: "#ff4f00",
-    borderColor: "border-amber-600",
-    bgColor: "bg-amber-50 dark:bg-amber-950/40",
-    textColor: "text-amber-800 dark:text-amber-300",
-    active: false,
-    x: 6.5,
-    y: 6,
-    radius: 17,
-  },
-  {
-    id: "confluence",
-    name: "Confluence",
-    color: "#2563eb",
-    borderColor: "border-blue-600",
-    bgColor: "bg-blue-50 dark:bg-blue-950/40",
-    textColor: "text-blue-800 dark:text-blue-300",
-    active: false,
-    x: 5.5,
-    y: 4.5,
-    radius: 15,
-  },
-  {
-    id: "zoho-cliq",
-    name: "Zoho Cliq",
-    color: "#16a34a",
-    borderColor: "border-green-600",
-    bgColor: "bg-green-50 dark:bg-green-950/40",
-    textColor: "text-green-800 dark:text-green-300",
-    active: false,
-    x: 3,
-    y: 2.5,
-    radius: 13,
-  },
-  {
-    id: "darwinbox",
-    name: "Darwinbox",
-    color: "#7c3aed",
-    borderColor: "border-purple-600",
-    bgColor: "bg-purple-50 dark:bg-purple-950/40",
-    textColor: "text-purple-800 dark:text-purple-300",
-    active: false,
-    x: 2,
-    y: 1.5,
-    radius: 11,
-  },
-  {
-    id: "miro",
-    name: "Miro",
-    color: "#f59e0b",
-    borderColor: "border-yellow-500",
-    bgColor: "bg-yellow-50 dark:bg-yellow-950/40",
-    textColor: "text-yellow-800 dark:text-yellow-300",
-    active: false,
-    x: 4.8,
-    y: 3.8,
-    radius: 15,
-  },
+const ENGINE_LABELS: Record<string, string> = {
+  chatgpt: "ChatGPT (GPT-4o)",
+  "google-ai-overview": "Google AI Overviews",
+  "google-ai-mode": "Google AI Mode",
+};
+
+const BRAND_PALETTE = [
+  { color: "#3b82f6", borderColor: "border-blue-500", bgColor: "bg-blue-50 dark:bg-blue-950/40", textColor: "text-blue-700 dark:text-blue-300" },
+  { color: "#10b981", borderColor: "border-emerald-500", bgColor: "bg-emerald-50 dark:bg-emerald-950/40", textColor: "text-emerald-700 dark:text-emerald-300" },
+  { color: "#f59e0b", borderColor: "border-amber-500", bgColor: "bg-amber-50 dark:bg-amber-950/40", textColor: "text-amber-700 dark:text-amber-300" },
+  { color: "#ec4899", borderColor: "border-pink-500", bgColor: "bg-pink-50 dark:bg-pink-950/40", textColor: "text-pink-700 dark:text-pink-300" },
+  { color: "#8b5cf6", borderColor: "border-violet-500", bgColor: "bg-violet-50 dark:bg-violet-950/40", textColor: "text-violet-700 dark:text-violet-300" },
+  { color: "#14b8a6", borderColor: "border-teal-500", bgColor: "bg-teal-50 dark:bg-teal-950/40", textColor: "text-teal-700 dark:text-teal-300" },
+  { color: "#ef4444", borderColor: "border-red-500", bgColor: "bg-red-50 dark:bg-red-950/40", textColor: "text-red-700 dark:text-red-300" },
+  { color: "#64748b", borderColor: "border-slate-500", bgColor: "bg-slate-50 dark:bg-slate-900/40", textColor: "text-slate-700 dark:text-slate-300" },
 ];
 
 export const AVAILABLE_GROUPS = ["General"];
-
-export const ALL_AVAILABLE_PROMPTS = [
-  "What are the best tools for enhancing team productivity and collaboration?",
-  "What are some reliable work management tools to help my team stay organized?",
-  "What are the best tools for improving team communication and collaboration?",
-  "What features should I look for in a project management software for my remote team?",
-  "I'm looking for a way to automate our team's workflows; can you recommend a solution?",
-  "Can you recommend a reliable time tracking software for my remote team?",
-  "What are the best remote work tools that help with team collaboration?",
-  "What are the best tools for improving employee engagement in our company?",
-  "How can I improve resource allocation for my team?",
-  "What are the best tools for streamlining my team's workflow?",
-];
 
 export const TABLE_FILTER_OPTIONS = [
   { id: "brandsInAiAnswer", label: "Brands in AI answer" },
@@ -435,197 +197,10 @@ export const BUILT_IN_FILTER_PRESETS = [
   { id: "No backlink", label: "No backlink" },
 ];
 
-const INITIAL_SOURCE_PAGES: SourcePageItem[] = [
-  {
-    id: "sp-1",
-    title: "The 8 Best Team Communication Tools to Boost Collaboration in 2026",
-    url: "https://slack.com/blog/collaboration/team-communication-tools",
-    domain: "slack.com",
-    categories: ["Blog/content", "Article"],
-    aiAnswersCount: 4,
-    aiAnswers: [
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-22" },
-      { engine: "Google AI Overviews", date: "2026-09-22" },
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-21" },
-      { engine: "Google AI Overviews", date: "2026-09-20" },
-    ],
-    promptsCount: 3,
-    prompts: [
-      "What are the best tools for enhancing team productivity and collaboration?",
-      "Top workplace communication platforms for remote teams",
-      "Best messaging apps for enterprise business collaboration",
-    ],
-    coverage: "13.3%",
-    domainTrust: "97",
-    pageTraffic: "10.6K",
-    isBrandMentioned: false,
-    mentions: ["Slack", "Flowace"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-2",
-    title: "Best Project Management Software & Productivity Suites 2026 - AppAdvisor",
-    url: "https://www.appadvisor.in/best-productivity-tools-2026",
-    domain: "appadvisor.in",
-    categories: ["Blog/content", "Listicle"],
-    aiAnswersCount: 3,
-    aiAnswers: [
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-22" },
-      { engine: "Perplexity AI", date: "2026-09-22" },
-      { engine: "Google AI Overviews", date: "2026-09-21" },
-    ],
-    promptsCount: 2,
-    prompts: [
-      "What are the best tools for enhancing team productivity and collaboration?",
-      "Leading project task management software in India",
-    ],
-    coverage: "10%",
-    domainTrust: "91",
-    pageTraffic: "339",
-    isBrandMentioned: false,
-    mentions: ["Appadvisor"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-3",
-    title: "Microsoft Teams Pricing, Features, and Enterprise Video Calls",
-    url: "https://www.microsoft.com/en-us/microsoft-teams/group-chat-software",
-    domain: "microsoft.com",
-    categories: ["Homepage", "App/SaaS/tools"],
-    aiAnswersCount: 3,
-    aiAnswers: [
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-22" },
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-21" },
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-20" },
-    ],
-    promptsCount: 2,
-    prompts: [
-      "What are the best tools for enhancing team productivity and collaboration?",
-      "Microsoft 365 vs Google Workspace suite comparison",
-    ],
-    coverage: "10%",
-    domainTrust: "100",
-    pageTraffic: "40K",
-    isBrandMentioned: false,
-    mentions: ["Microsoft"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-4",
-    title: "ClickUp vs Asana: Features, Project Tracking, and Workflows Breakdown",
-    url: "https://help.clickup.com/hc/en-us/articles/clickup-vs-asana",
-    domain: "clickup.com",
-    categories: ["Documentation", "Comparison page"],
-    aiAnswersCount: 2,
-    aiAnswers: [
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-22" },
-      { engine: "Google AI Overviews", date: "2026-09-22" },
-    ],
-    promptsCount: 2,
-    prompts: [
-      "What are the best tools for enhancing team productivity and collaboration?",
-      "Asana alternative for agile sprint planning",
-    ],
-    coverage: "6.7%",
-    domainTrust: "85",
-    pageTraffic: "24K",
-    isBrandMentioned: false,
-    mentions: ["ClickUp", "Asana"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-5",
-    title: "Best Employee Engagement and Collaboration Guide - AppAdvisor India",
-    url: "https://www.appadvisor.in/team-collaboration-guide",
-    domain: "appadvisor.in",
-    categories: ["Blog/content", "How-to guide"],
-    aiAnswersCount: 2,
-    aiAnswers: [
-      { engine: "ChatGPT (GPT-4o)", date: "2026-09-22" },
-      { engine: "Perplexity AI", date: "2026-09-20" },
-    ],
-    promptsCount: 1,
-    prompts: ["What are the best tools for enhancing team productivity and collaboration?"],
-    coverage: "6.7%",
-    domainTrust: "91",
-    pageTraffic: "75",
-    isBrandMentioned: false,
-    mentions: ["Appadvisor"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-6",
-    title: "Capacity Planning for IT, Agile Projects, and Enterprise Operations",
-    url: "https://www.workday.com/en-us/solutions/capacity-planning.html",
-    domain: "workday.com",
-    categories: ["Community/forum", "Q&A/knowledge sharing", "Other"],
-    aiAnswersCount: 1,
-    aiAnswers: [{ engine: "ChatGPT (GPT-4o)", date: "2026-09-22" }],
-    promptsCount: 1,
-    prompts: ["What are the best tools for enhancing team productivity and collaboration?"],
-    coverage: "3.3%",
-    domainTrust: "89",
-    pageTraffic: "63",
-    isBrandMentioned: false,
-    mentions: ["N/A"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-7",
-    title: "Workforce Capacity Planning & Employee Performance Monitoring Guide",
-    url: "https://www.insightful.io/blog/workforce-capacity-planning",
-    domain: "insightful.io",
-    categories: ["Blog/content", "Education/courses"],
-    aiAnswersCount: 1,
-    aiAnswers: [{ engine: "Google AI Overviews", date: "2026-09-22" }],
-    promptsCount: 1,
-    prompts: ["What are the best tools for enhancing team productivity and collaboration?"],
-    coverage: "3.3%",
-    domainTrust: "83",
-    pageTraffic: "11",
-    isBrandMentioned: false,
-    mentions: ["N/A"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-8",
-    title: "Slack Features: Team Messaging, Canvas, and Automation Huddles",
-    url: "https://slack.com/features",
-    domain: "slack.com",
-    categories: ["Product page", "Video"],
-    aiAnswersCount: 1,
-    aiAnswers: [{ engine: "ChatGPT (GPT-4o)", date: "2026-09-22" }],
-    promptsCount: 1,
-    prompts: ["What are the best tools for enhancing team productivity and collaboration?"],
-    coverage: "3.3%",
-    domainTrust: "97",
-    pageTraffic: "0",
-    isBrandMentioned: false,
-    mentions: ["Slack"],
-    hasBacklink: false,
-  },
-  {
-    id: "sp-9",
-    title: "Capture, organize, and prioritize work with flexible Trello boards",
-    url: "https://trello.com/",
-    domain: "trello.com",
-    categories: ["Homepage", "Jobs/careers"],
-    aiAnswersCount: 1,
-    aiAnswers: [{ engine: "ChatGPT (GPT-4o)", date: "2026-09-22" }],
-    promptsCount: 1,
-    prompts: ["What are the best tools for enhancing team productivity and collaboration?"],
-    coverage: "3.3%",
-    domainTrust: "95",
-    pageTraffic: "0",
-    isBrandMentioned: false,
-    mentions: ["Trello"],
-    hasBacklink: false,
-  },
-];
 
 export function AiSourcesView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "",
 }: AiSourcesViewProps) {
   const router = useRouter();
   const baseHref = `/projects/${projectId}`;
@@ -687,8 +262,56 @@ export function AiSourcesView({
   // 4b. Prompts Filter state
   const [isPromptFilterOpen, setIsPromptFilterOpen] = useState(false);
   const [promptSearchQuery, setPromptSearchQuery] = useState("");
-  const [selectedPrompts, setSelectedPrompts] = useState<string[]>(ALL_AVAILABLE_PROMPTS);
-  const [stagedSelectedPrompts, setStagedSelectedPrompts] = useState<string[]>(ALL_AVAILABLE_PROMPTS);
+  // Source pages linked by stored AI answers for this project
+  const { insights: aiInsights } = useAiTrackerData(projectId);
+  const ownDomain = (projectDomain || aiInsights.domain).replace(/^https?:\/\//, "").replace(/^www\./, "").toLowerCase();
+  const ALL_AVAILABLE_PROMPTS = useMemo(
+    () => Array.from(new Set(aiInsights.answers.map((a) => a.prompt))),
+    [aiInsights.answers]
+  );
+  const INITIAL_SOURCE_PAGES: SourcePageItem[] = useMemo(() => {
+    const totalPrompts = ALL_AVAILABLE_PROMPTS.length;
+    const byUrl = new Map<string, { domain: string; answers: { engine: string; date: string }[]; prompts: Set<string>; mentioned: boolean }>();
+    for (const a of aiInsights.answers) {
+      for (const src of a.sources || []) {
+        const entry = byUrl.get(src.url) || { domain: src.domain, answers: [], prompts: new Set<string>(), mentioned: false };
+        entry.answers.push({ engine: ENGINE_LABELS[a.engine] || a.engine, date: a.answeredAt.slice(0, 10) });
+        entry.prompts.add(a.prompt);
+        entry.mentioned = entry.mentioned || a.mention;
+        byUrl.set(src.url, entry);
+      }
+    }
+    return [...byUrl.entries()]
+      .map(([url, e], idx) => {
+        const dates = e.answers.map((x) => x.date).sort();
+        const isOwn = Boolean(ownDomain) && (e.domain === ownDomain || e.domain.endsWith(`.${ownDomain}`));
+        return {
+          id: `sp-${idx + 1}`,
+          title: e.domain,
+          url,
+          domain: e.domain,
+          categories: [],
+          aiAnswersCount: e.answers.length,
+          aiAnswers: e.answers,
+          promptsCount: e.prompts.size,
+          prompts: [...e.prompts],
+          coverage: totalPrompts > 0 ? `${((e.prompts.size / totalPrompts) * 100).toFixed(1)}%` : "0%",
+          domainTrust: "—",
+          pageTraffic: "—",
+          // Whether the AI answer citing this page mentioned the project's brand
+          isBrandMentioned: e.mentioned,
+          mentions: [],
+          hasBacklink: isOwn,
+          firstSeen: dates[0],
+          lastSeen: dates[dates.length - 1],
+          lastCheck: dates[dates.length - 1],
+        };
+      })
+      .sort((x, y) => y.aiAnswersCount - x.aiAnswersCount);
+  }, [aiInsights.answers, ALL_AVAILABLE_PROMPTS, ownDomain]);
+
+  const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
+  const [stagedSelectedPrompts, setStagedSelectedPrompts] = useState<string[]>([]);
   const [selectedPromptFilter, setSelectedPromptFilter] = useState("All prompts");
   const promptFilterRef = useRef<HTMLDivElement>(null);
 
@@ -696,9 +319,23 @@ export function AiSourcesView({
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(true);
 
   // 6. Bubble Scatter Chart state
-  const [brandCheckboxes, setBrandCheckboxes] = useState<BrandCheckboxItem[]>(
-    INITIAL_BRAND_CHECKBOXES
-  );
+  const [brandHidden, setBrandHidden] = useState<Record<string, boolean>>({});
+  const brandCheckboxes: BrandCheckboxItem[] = useMemo(() => {
+    const linkCount = new Map<string, number>();
+    for (const src of aiInsights.sources) linkCount.set(src.domain, (linkCount.get(src.domain) || 0) + src.citations);
+    return aiInsights.competitors.slice(0, BRAND_PALETTE.length).map((c, idx) => {
+      const style = BRAND_PALETTE[idx % BRAND_PALETTE.length];
+      return {
+        id: c.domain,
+        name: c.domain,
+        ...style,
+        active: !brandHidden[c.domain],
+        x: c.answers,
+        y: linkCount.get(c.domain) || 0,
+        radius: Math.min(32, 12 + c.prompts * 4),
+      };
+    });
+  }, [aiInsights.competitors, aiInsights.sources, brandHidden]);
   const [hoveredBubble, setHoveredBubble] = useState<BrandCheckboxItem | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -906,9 +543,8 @@ export function AiSourcesView({
       // Group filter
       if (selectedGroups.length === 0) return false;
 
-      // Prompt filter
-      if (selectedPrompts.length === 0) return false;
-      if (selectedPrompts.length < ALL_AVAILABLE_PROMPTS.length) {
+      // Prompt filter (no explicit selection = all prompts)
+      if (selectedPrompts.length > 0 && selectedPrompts.length < ALL_AVAILABLE_PROMPTS.length) {
         const matchesPrompt = page.prompts.some((p) => selectedPrompts.includes(p));
         if (!matchesPrompt) return false;
       }
@@ -959,7 +595,7 @@ export function AiSourcesView({
 
       return true;
     });
-  }, [
+  }, [INITIAL_SOURCE_PAGES, ALL_AVAILABLE_PROMPTS.length, 
     tableSearchQuery,
     isBrandMentionedFilter,
     selectedBrandInAnswer,
@@ -1123,9 +759,7 @@ export function AiSourcesView({
 
   // Toggle brand checkbox for scatter chart
   const toggleBrandCheckbox = (id: string) => {
-    setBrandCheckboxes((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
-    );
+    setBrandHidden((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   // Calendar click handlers
@@ -2076,8 +1710,8 @@ export function AiSourcesView({
               .filter((b) => b.active)
               .map((b) => {
                 // Map coordinates: X [0..14] -> [50..778], Y [0..25] -> [275..25]
-                const cx = 50 + (b.x / 14) * (778 - 50);
-                const cy = 275 - (b.y / 25) * (275 - 25);
+                const cx = 50 + (Math.min(b.x, 14) / 14) * (778 - 50);
+                const cy = 275 - (Math.min(b.y, 25) / 25) * (275 - 25);
 
                 const isHovered = hoveredBubble?.id === b.id;
 

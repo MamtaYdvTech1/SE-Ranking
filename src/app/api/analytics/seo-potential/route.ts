@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { getSessionFromCookie } from '@/lib/server/auth';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 // Standard organic SERP CTR by position (1 to 100)
 function getCtrForPosition(pos: number | null | undefined): number {
@@ -46,22 +46,23 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');
-
-    // 1. Resolve project
-    let project = null;
-    if (projectId) {
-      project = await prisma.project.findUnique({
-        where: { id: projectId },
-        include: { searchEngines: true, keywords: true },
-      });
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: 'Project ID is required' }, { status: 400 });
     }
 
+    const authResult = await verifyProjectAccess(req, projectId);
+    if (!authResult.success) {
+      return authResult.error;
+    }
+
+    // 1. Resolve project
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { searchEngines: true, keywords: true },
+    });
+
     if (!project) {
-      project = await prisma.project.findFirst({
-        where: { isArchived: false, deletedAt: null },
-        include: { searchEngines: true, keywords: true },
-        orderBy: { updatedAt: 'desc' },
-      });
+      return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 });
     }
 
     // 2. Fetch saved configuration or default
@@ -172,8 +173,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      projectId: project?.id,
-      projectDomain: project?.domain || 'teams.com',
+      projectId: project.id,
+      projectDomain: project.domain,
       conversionRatio: conversionRatioStr,
       conversionDenominator,
       avgRevenue,
@@ -190,21 +191,19 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSessionFromCookie();
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { projectId, conversionRatio, avgRevenue, estimatedTop } = body;
 
-    let targetProjectId = projectId;
-    if (!targetProjectId) {
-      const firstProj = await prisma.project.findFirst({
-        where: { isArchived: false, deletedAt: null },
-      });
-      targetProjectId = firstProj?.id;
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: 'Project ID is required' }, { status: 400 });
     }
 
-    if (!targetProjectId) {
-      return NextResponse.json({ success: false, error: 'Project not found' }, { status: 400 });
+    const authResult = await verifyProjectAccess(req, projectId);
+    if (!authResult.success) {
+      return authResult.error;
     }
+
+    const targetProjectId = projectId;
 
     // Parse conversion ratio
     let denom = 100;

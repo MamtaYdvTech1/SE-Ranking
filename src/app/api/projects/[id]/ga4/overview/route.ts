@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Ga4OverviewDto } from '@/lib/types';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function GET(
   request: NextRequest,
@@ -8,9 +9,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const access = await verifyProjectAccess(request, id);
+    if (!access.success) return access.error;
+    const projectId = access.data.project.id;
 
     const integration = await prisma.projectIntegration.findFirst({
-      where: { projectId: id, provider: 'ga4', status: 'connected' },
+      where: { projectId, provider: 'ga4', status: 'connected' },
     });
 
     if (!integration) {

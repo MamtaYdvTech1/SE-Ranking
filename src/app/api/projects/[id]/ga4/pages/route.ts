@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Ga4PageRowDto, PaginatedList } from '@/lib/types';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function GET(
   request: NextRequest,
@@ -8,11 +9,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const access = await verifyProjectAccess(request, id);
+    if (!access.success) return access.error;
+    const projectId = access.data.project.id;
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.toLowerCase() || '';
 
     const integration = await prisma.projectIntegration.findFirst({
-      where: { projectId: id, provider: 'ga4', status: 'connected' },
+      where: { projectId, provider: 'ga4', status: 'connected' },
     });
 
     let pages: Ga4PageRowDto[] = [];

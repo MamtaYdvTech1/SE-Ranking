@@ -82,7 +82,7 @@ export function GoogleColorIcon({ className = 'w-4 h-4' }: { className?: string 
 }
 
 // ============================================================================
-// DYNAMIC AUDIT DATA GENERATORS (Tailored to active project domain)
+// AUDIT HELPERS
 // ============================================================================
 
 export function getCleanDomain(rawDomain?: string | null): string {
@@ -90,371 +90,16 @@ export function getCleanDomain(rawDomain?: string | null): string {
   return rawDomain.replace(/^https?:\/\//i, '').replace(/\/+$/, '') || '';
 }
 
-export function generateAuditPagesForDomain(rawDomain?: string | null) {
-  const d = getCleanDomain(rawDomain);
-  return [
-    { url: `https://${d}/`, issues: 14, traffic: 4500, status: 200, depth: 1, respTime: '0.08s' },
-    { url: `https://${d}/plans/`, issues: 11, traffic: 2200, status: 200, depth: 2, respTime: '0.09s' },
-    { url: `https://${d}/prepaid/`, issues: 10, traffic: 1800, status: 200, depth: 2, respTime: '0.07s' },
-    { url: `https://${d}/postpaid/`, issues: 12, traffic: 1400, status: 200, depth: 2, respTime: '0.10s' },
-    { url: `https://${d}/fiber/`, issues: 9, traffic: 1600, status: 200, depth: 2, respTime: '0.08s' },
-    { url: `https://${d}/5g/`, issues: 7, traffic: 3100, status: 200, depth: 2, respTime: '0.06s' },
-    { url: `https://${d}/devices/`, issues: 12, traffic: 890, status: 200, depth: 2, respTime: '0.09s' },
-    { url: `https://${d}/recharge/`, issues: 6, traffic: 4200, status: 200, depth: 2, respTime: '0.05s' },
-    { url: `https://${d}/about-us/`, issues: 11, traffic: 450, status: 200, depth: 2, respTime: '0.07s' },
-    { url: `https://${d}/support/`, issues: 8, traffic: 1250, status: 200, depth: 2, respTime: '0.08s' },
-    { url: `https://${d}/contact-us/`, issues: 9, traffic: 320, status: 200, depth: 2, respTime: '0.06s' },
-    { url: `https://${d}/locate-store/`, issues: 10, traffic: 780, status: 200, depth: 2, respTime: '0.09s' },
-    { url: `https://${d}/privacy-policy/`, issues: 5, traffic: 140, status: 200, depth: 3, respTime: '0.07s' },
-    { url: `https://${d}/terms-and-conditions/`, issues: 5, traffic: 110, status: 200, depth: 3, respTime: '0.08s' },
-    { url: `https://${d}/refund-policy/`, issues: 6, traffic: 80, status: 200, depth: 3, respTime: '0.08s' },
-    { url: `https://${d}/faq/`, issues: 7, traffic: 520, status: 200, depth: 2, respTime: '0.07s' },
-    { url: `https://${d}/careers/`, issues: 8, traffic: 310, status: 200, depth: 2, respTime: '0.09s' },
-    { url: `https://${d}/investors/`, issues: 9, traffic: 240, status: 200, depth: 2, respTime: '0.08s' },
-    { url: `https://${d}/press-release/`, issues: 7, traffic: 180, status: 200, depth: 3, respTime: '0.09s' },
-    { url: `https://${d}/blog/`, issues: 11, traffic: 960, status: 200, depth: 2, respTime: '0.10s' },
-    { url: `https://${d}/login/`, issues: 4, traffic: 2100, status: 200, depth: 2, respTime: '0.05s' },
-    { url: `https://${d}/recharge/Home`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.04s' },
-    { url: `https://${d}/plans/Home`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.04s' },
-    { url: `https://${d}/support/Home`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.05s' },
-    { url: `https://${d}/about-us/Home`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.04s' },
-    { url: `https://${d}/contact-us/Home`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.04s' },
-    { url: `https://${d}/portal/legacy`, issues: 1, traffic: null, status: 301, depth: 2, respTime: '0.05s' },
-    { url: `https://${d}/promo-2024`, issues: 1, traffic: null, status: 301, depth: 3, respTime: '0.04s' },
-  ];
+export interface AuditIssueRow {
+  category: string;
+  name: string;
+  severity: string;
+  count: number;
+  current: number;
+  fixed: number;
+  newCount: number;
+  desc: string;
 }
-
-export function generateAuditResourcesForDomain(rawDomain?: string | null) {
-  const d = getCleanDomain(rawDomain);
-  const brand = d.split('.')[0] || 'site';
-  return [
-    { url: `https://${d}/assets/images/logo.svg`, sourceCount: 96, type: 'IMG', size: '28 KB' },
-    { url: `https://${d}/assets/images/hero-banner.webp`, sourceCount: 18, type: 'IMG', size: '245 KB' },
-    { url: `https://${d}/assets/images/hero-mobile-banner.webp`, sourceCount: 18, type: 'IMG', size: '180 KB' },
-    { url: `https://${d}/assets/images/${brand}-services-grid.png`, sourceCount: 12, type: 'IMG', size: '420 KB' },
-    { url: `https://${d}/assets/images/plans-comparison.webp`, sourceCount: 8, type: 'IMG', size: '310 KB' },
-    { url: `https://${d}/assets/images/app-preview-mockup.png`, sourceCount: 15, type: 'IMG', size: '520 KB' },
-    { url: `https://${d}/assets/images/network-connectivity-map.jpg`, sourceCount: 6, type: 'IMG', size: '610 KB' },
-    { url: `https://${d}/assets/images/sim-delivery-graphic.webp`, sourceCount: 4, type: 'IMG', size: '290 KB' },
-    { url: `https://${d}/assets/images/5g-ultra-speed.png`, sourceCount: 8, type: 'IMG', size: '440 KB' },
-    { url: `https://${d}/assets/images/fiber-wifi-router.jpg`, sourceCount: 5, type: 'IMG', size: '380 KB' },
-    { url: `https://${d}/assets/images/customer-care-badge.svg`, sourceCount: 96, type: 'IMG', size: '15 KB' },
-    { url: `https://${d}/assets/images/security-pci-shield.svg`, sourceCount: 40, type: 'IMG', size: '22 KB' },
-    { url: `https://${d}/assets/images/payment-visa-mastercard.png`, sourceCount: 30, type: 'IMG', size: '45 KB' },
-    { url: `https://${d}/assets/images/google-play-download.svg`, sourceCount: 96, type: 'IMG', size: '18 KB' },
-    { url: `https://${d}/assets/images/apple-app-store.svg`, sourceCount: 96, type: 'IMG', size: '19 KB' },
-    { url: `https://${d}/assets/images/entertainment-bundle.webp`, sourceCount: 7, type: 'IMG', size: '490 KB' },
-    { url: `https://${d}/assets/images/business-enterprise.jpg`, sourceCount: 4, type: 'IMG', size: '510 KB' },
-    { url: `https://${d}/assets/images/cloud-storage-backup.png`, sourceCount: 5, type: 'IMG', size: '350 KB' },
-    { url: `https://${d}/assets/images/devices-showcase.webp`, sourceCount: 6, type: 'IMG', size: '640 KB' },
-    { url: `https://${d}/assets/images/footer-award-trophy.png`, sourceCount: 96, type: 'IMG', size: '65 KB' },
-    { url: `https://${d}/assets/images/testimonial-avatar-01.jpg`, sourceCount: 4, type: 'IMG', size: '85 KB' },
-    { url: `https://${d}/assets/images/testimonial-avatar-02.jpg`, sourceCount: 4, type: 'IMG', size: '92 KB' },
-    { url: `https://${d}/assets/images/promotional-festive-deal.jpg`, sourceCount: 14, type: 'IMG', size: '580 KB' },
-    { url: `https://${d}/assets/images/support-chat-icon.svg`, sourceCount: 96, type: 'IMG', size: '12 KB' },
-    { url: `https://${d}/assets/css/main-style.css`, sourceCount: 96, type: 'CSS', size: '48 KB' },
-    { url: `https://${d}/assets/css/responsive-layout.css`, sourceCount: 96, type: 'CSS', size: '32 KB' },
-    { url: `https://${d}/assets/css/components.min.css`, sourceCount: 96, type: 'CSS', size: '54 KB' },
-    { url: `https://${d}/assets/css/theme-tokens.css`, sourceCount: 96, type: 'CSS', size: '21 KB' },
-    { url: `https://${d}/assets/css/vendor-swiper.min.css`, sourceCount: 30, type: 'CSS', size: '28 KB' },
-    { url: `https://${d}/assets/css/font-outfit.css`, sourceCount: 96, type: 'CSS', size: '16 KB' },
-    { url: `https://${d}/assets/js/bundle.min.js`, sourceCount: 96, type: 'JS', size: '120 KB' },
-    { url: `https://${d}/assets/js/runtime-polyfills.js`, sourceCount: 96, type: 'JS', size: '45 KB' },
-    { url: `https://${d}/assets/js/analytics-tracker.js`, sourceCount: 96, type: 'JS', size: '36 KB' },
-    { url: `https://${d}/assets/js/checkout-flow.min.js`, sourceCount: 22, type: 'JS', size: '89 KB' },
-    { url: `https://${d}/assets/js/speed-test.js`, sourceCount: 18, type: 'JS', size: '58 KB' },
-    { url: `https://${d}/assets/js/header-navigation.js`, sourceCount: 96, type: 'JS', size: '24 KB' },
-  ];
-}
-
-export function generateAuditLinksForDomain(rawDomain?: string | null) {
-  const d = getCleanDomain(rawDomain);
-  const brand = d.split('.')[0] || 'site';
-  return [
-    { url: `https://${d}/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/about-us/` },
-    { url: `https://${d}/plans/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/prepaid/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/plans/` },
-    { url: `https://${d}/postpaid/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/plans/` },
-    { url: `https://${d}/fiber/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/5g/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/devices/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/recharge/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/about-us/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/support/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/contact-us/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/locate-store/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/support/` },
-    { url: `https://${d}/faq/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/support/` },
-    { url: `https://${d}/privacy-policy/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/terms-and-conditions/`, status: 200, type: 'HFLNK', sourceUrl: `https://${d}/` },
-    { url: `https://${d}/plans/Home`, status: 301, type: 'HFLNK', sourceUrl: `https://${d}/plans/` },
-    { url: `https://${d}/recharge/Home`, status: 301, type: 'HFLNK', sourceUrl: `https://${d}/recharge/` },
-    { url: `https://${d}/support/Home`, status: 301, type: 'HFLNK', sourceUrl: `https://${d}/support/` },
-    { url: `https://facebook.com/${brand}`, status: 200, type: 'EXT', sourceUrl: `https://${d}/` },
-    { url: `https://instagram.com/${brand}`, status: 200, type: 'EXT', sourceUrl: `https://${d}/` },
-    { url: `https://twitter.com/${brand}`, status: 200, type: 'EXT', sourceUrl: `https://${d}/` },
-    { url: `https://linkedin.com/company/${brand}`, status: 200, type: 'EXT', sourceUrl: `https://${d}/` },
-    { url: `https://youtube.com/@${brand}`, status: 200, type: 'EXT', sourceUrl: `https://${d}/` },
-  ];
-}
-
-export const AUDIT_PAGES_DATA = generateAuditPagesForDomain('jio.com');
-export const AUDIT_RESOURCES_DATA = generateAuditResourcesForDomain('jio.com');
-export const AUDIT_LINKS_DATA = generateAuditLinksForDomain('jio.com');
-
-export const ISSUE_CATEGORIES = [
-  { id: 'redirects', name: 'Redirects', errors: 0, warnings: 13, notices: 0, weight: '+2 pts' },
-  { id: 'meta_tags', name: 'Meta Tags', errors: 72, warnings: 88, notices: 0, weight: '+7 pts' },
-  { id: 'content', name: 'Content', errors: 71, warnings: 101, notices: 0, weight: '+10 pts' },
-  { id: 'localization', name: 'Localization', errors: 0, warnings: 0, notices: 72, weight: '0 pt' },
-  { id: 'performance', name: 'Speed & Performance', errors: 0, warnings: 3, notices: 0, weight: '+1 pt' },
-  { id: 'css', name: 'CSS', errors: 0, warnings: 0, notices: 33, weight: '0 pt' },
-  { id: 'links', name: 'Links', errors: 72, warnings: 11, notices: 23, weight: '+7 pts' },
-  { id: 'mobile', name: 'Mobile Optimization', errors: 72, warnings: 72, notices: 0, weight: '+3 pts' },
-  { id: 'other', name: 'Other', errors: 0, warnings: 0, notices: 72, weight: '0 pt' },
-];
-
-export const DETAILED_ISSUES = [
-  {
-    category: 'redirects',
-    name: '3XX HTTP status code',
-    severity: 'Warning',
-    count: 13,
-    current: 13,
-    fixed: 0,
-    newCount: 0,
-    desc: 'The crawl identified 13 URLs returning HTTP 301 permanent redirects. Update internal links to target final destinations directly to preserve crawl budget and prevent redirect delay.'
-  },
-  {
-    category: 'meta_tags',
-    name: 'Title tag missing',
-    severity: 'Error',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: '72 crawled pages do not have a defined <title> tag. Search engines rely heavily on title elements to classify content and produce SERP snippets.'
-  },
-  {
-    category: 'meta_tags',
-    name: 'Title too short',
-    severity: 'Warning',
-    count: 10,
-    current: 10,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Page title contains fewer than 30 characters. Expand the title with primary business keywords and regional branding targeting.'
-  },
-  {
-    category: 'meta_tags',
-    name: 'Description missing',
-    severity: 'Warning',
-    count: 83,
-    current: 83,
-    fixed: 0,
-    newCount: 0,
-    desc: '83 pages lack a meta description attribute. Provide informative, 140-160 character descriptions to boost click-through rates from search results.'
-  },
-  {
-    category: 'meta_tags',
-    name: 'Multiple description tags',
-    severity: 'Warning',
-    count: 5,
-    current: 5,
-    fixed: 0,
-    newCount: 0,
-    desc: '5 pages contain more than one <meta name="description"> tag in the head HTML. Remove conflicting duplicate tags.'
-  },
-  {
-    category: 'content',
-    name: 'Duplicate content',
-    severity: 'Error',
-    count: 71,
-    current: 71,
-    fixed: 0,
-    newCount: 0,
-    desc: '71 pages share highly similar body text or default layout templates. Add unique service copy, distinct product specifications, and custom client narratives.'
-  },
-  {
-    category: 'content',
-    name: 'H1 tag missing',
-    severity: 'Warning',
-    count: 82,
-    current: 82,
-    fixed: 0,
-    newCount: 0,
-    desc: '82 pages lack an <h1> header element. Add a single, relevant <h1> containing main target keywords.'
-  },
-  {
-    category: 'content',
-    name: 'Alt text missing',
-    severity: 'Warning',
-    count: 12,
-    current: 12,
-    fixed: 0,
-    newCount: 0,
-    desc: '12 image tags omit the alt attribute. Provide descriptive alt text for visual search indexing and screen reader accessibility.'
-  },
-  {
-    category: 'content',
-    name: 'Image too big',
-    severity: 'Warning',
-    count: 7,
-    current: 7,
-    fixed: 0,
-    newCount: 0,
-    desc: '7 images exceed 500 KB file size. Compress and serve next-gen WebP formats to speed up page rendering.'
-  },
-  {
-    category: 'performance',
-    name: 'Largest Contentful Paint (LCP) in a lab environment',
-    severity: 'Warning',
-    count: 1,
-    current: 1,
-    fixed: 0,
-    newCount: 0,
-    desc: 'LCP exceeds 2.5 seconds on desktop. Preload hero banner photography to speed up visual loading.'
-  },
-  {
-    category: 'performance',
-    name: 'Cumulative Layout Shift (CLS) in a lab environment',
-    severity: 'Warning',
-    count: 1,
-    current: 1,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Unexpected layout shift detected during initial DOM font loading. Define explicit width/height dimensions on gallery images.'
-  },
-  {
-    category: 'performance',
-    name: 'Time to interactive (TTI)',
-    severity: 'Warning',
-    count: 1,
-    current: 1,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Main thread CPU execution delayed by third-party plugin scripts. Defer non-critical slider libraries.'
-  },
-  {
-    category: 'links',
-    name: 'No inbound links',
-    severity: 'Error',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: '72 pages are isolated without incoming internal links from other indexed site pages.'
-  },
-  {
-    category: 'links',
-    name: 'One inbound internal link',
-    severity: 'Notice',
-    count: 1,
-    current: 1,
-    fixed: 0,
-    newCount: 0,
-    desc: '1 page has only a single inbound link, putting it at risk of becoming an orphan page.'
-  },
-  {
-    category: 'links',
-    name: 'Internal links to 3XX redirect pages',
-    severity: 'Warning',
-    count: 11,
-    current: 11,
-    fixed: 0,
-    newCount: 0,
-    desc: '11 links point to redirecting URLs instead of direct destination paths.'
-  },
-  {
-    category: 'links',
-    name: 'Internal links missing anchor',
-    severity: 'Notice',
-    count: 12,
-    current: 12,
-    fixed: 0,
-    newCount: 0,
-    desc: '12 internal link tags lack descriptive anchor text or aria-labels.'
-  },
-  {
-    category: 'links',
-    name: 'External links to 3XX',
-    severity: 'Notice',
-    count: 11,
-    current: 11,
-    fixed: 0,
-    newCount: 0,
-    desc: '11 external outbound hyperlinks redirect before reaching target destinations.'
-  },
-  {
-    category: 'mobile',
-    name: 'Viewport meta tag missing',
-    severity: 'Error',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: '72 pages do not contain <meta name="viewport" content="width=device-width, initial-scale=1">, breaking mobile rendering.'
-  },
-  {
-    category: 'mobile',
-    name: 'Fixed width value in viewport meta tag',
-    severity: 'Warning',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Viewport uses fixed pixel widths that prevent responsive scaling on smartphones.'
-  },
-  {
-    category: 'localization',
-    name: 'HTML lang missing',
-    severity: 'Notice',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: '72 pages do not specify a lang attribute on the <html> tag (e.g. lang="en-GB").'
-  },
-  {
-    category: 'css',
-    name: 'CSS too big',
-    severity: 'Notice',
-    count: 11,
-    current: 11,
-    fixed: 0,
-    newCount: 0,
-    desc: '11 stylesheets exceed 100 KB uncompressed. Purge unused CSS rules.'
-  },
-  {
-    category: 'css',
-    name: 'CSS not compressed',
-    severity: 'Notice',
-    count: 11,
-    current: 11,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Gzip or Brotli compression is disabled for CSS static assets on the host web server.'
-  },
-  {
-    category: 'css',
-    name: 'CSS not minified',
-    severity: 'Notice',
-    count: 11,
-    current: 11,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Whitespace and comments are not stripped from production stylesheets.'
-  },
-  {
-    category: 'other',
-    name: 'X (ex-Twitter) Card tag missing',
-    severity: 'Notice',
-    count: 72,
-    current: 72,
-    fixed: 0,
-    newCount: 0,
-    desc: 'Missing twitter:card and twitter:title OpenGraph meta attributes for rich social previews.'
-  },
-];
 
 // ============================================================================
 // MAIN WEBSITE AUDIT SUITE COMPONENT
@@ -506,7 +151,7 @@ export function SeRankingWebsiteAuditSuite() {
   const [linksTypeFilter, setLinksTypeFilter] = useState<'INTERNAL' | 'EXTERNAL'>('INTERNAL');
 
   // Drawer / Modals
-  const [selectedIssueDetail, setSelectedIssueDetail] = useState<typeof DETAILED_ISSUES[0] | null>(null);
+  const [selectedIssueDetail, setSelectedIssueDetail] = useState<AuditIssueRow | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showAddPagesModal, setShowAddPagesModal] = useState(false);
@@ -556,8 +201,8 @@ export function SeRankingWebsiteAuditSuite() {
             notices: auditOverview.summary.notices,
             pages: pagesRes.pages,
             issues: issuesRes?.issues || [],
-            resources: generateAuditResourcesForDomain(cleanDomain),
-            links: generateAuditLinksForDomain(cleanDomain),
+            resources: [],
+            links: [],
           };
           setLiveAuditData(dbAudit);
           try {
@@ -598,26 +243,12 @@ export function SeRankingWebsiteAuditSuite() {
           return;
         }
       }
-      const freshData = {
-        healthScore: 78,
-        pagesCrawled: 28,
-        issuesFound: 48,
-        criticalIssues: 8,
-        warnings: 22,
-        notices: 18,
-        pages: generateAuditPagesForDomain(clean),
-        resources: generateAuditResourcesForDomain(clean),
-        links: generateAuditLinksForDomain(clean),
-      };
-      setLiveAuditData(freshData);
-      try {
-        localStorage.setItem(`seranking_audit_${clean}`, JSON.stringify(freshData));
-      } catch {}
-      setAuditSuccessToast(`Audit crawl completed for ${urlToAudit}. Health Score updated.`);
-      setTimeout(() => setAuditSuccessToast(null), 4000);
+      const errBody = await resp.json().catch(() => null);
+      setAuditSuccessToast(`Audit failed for ${urlToAudit}: ${errBody?.error || `HTTP ${resp.status}`}`);
+      setTimeout(() => setAuditSuccessToast(null), 6000);
     } catch {
-      setAuditSuccessToast(`Audit completed for ${urlToAudit}.`);
-      setTimeout(() => setAuditSuccessToast(null), 4000);
+      setAuditSuccessToast(`Audit failed for ${urlToAudit}: network error.`);
+      setTimeout(() => setAuditSuccessToast(null), 6000);
     } finally {
       setIsReauditing(false);
       setAuditProgressText(null);
@@ -727,6 +358,23 @@ export function SeRankingWebsiteAuditSuite() {
     }
     return [];
   }, [liveAuditData]);
+
+  const issueCategoryStats = useMemo(() => {
+    const byId = new Map<string, { id: string; name: string; errors: number; warnings: number; notices: number }>();
+    for (const issue of currentIssuesList) {
+      const id = issue.category || 'other';
+      const stat = byId.get(id) || { id, name: id.charAt(0).toUpperCase() + id.slice(1), errors: 0, warnings: 0, notices: 0 };
+      if (issue.severity === 'Error') stat.errors += issue.count;
+      else if (issue.severity === 'Warning') stat.warnings += issue.count;
+      else stat.notices += issue.count;
+      byId.set(id, stat);
+    }
+    return [...byId.values()].sort((a, b) => b.errors + b.warnings - (a.errors + a.warnings));
+  }, [currentIssuesList]);
+  const totalIssueCount = useMemo(
+    () => currentIssuesList.reduce((acc: number, i: { count: number }) => acc + i.count, 0),
+    [currentIssuesList]
+  );
 
   const currentHealthScore = liveAuditData?.healthScore ?? null;
   const currentPagesCrawled = liveAuditData?.pagesCrawled ?? 0;
@@ -1296,7 +944,7 @@ export function SeRankingWebsiteAuditSuite() {
                     onClick={() => setTab('issue-report')}
                     className="text-xs text-[#1863FD] hover:underline font-medium"
                   >
-                    View all (798)
+                    View all ({totalIssueCount})
                   </button>
                 </div>
 
@@ -1621,7 +1269,7 @@ export function SeRankingWebsiteAuditSuite() {
                       <Calendar className="w-4 h-4 text-slate-400" />
                       <span>Domain expiration</span>
                     </div>
-                    <strong className="text-[#1E293B]">Jun-11 2027</strong>
+                    <strong className="text-[#1E293B]">—</strong>
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -1632,7 +1280,7 @@ export function SeRankingWebsiteAuditSuite() {
                         Get full report <ExternalLink className="w-3 h-3" />
                       </span>
                     </div>
-                    <strong className="text-[#1E293B]">61</strong>
+                    <strong className="text-[#1E293B]">—</strong>
                   </div>
 
                   <div className="flex items-center justify-between py-2">
@@ -1643,7 +1291,7 @@ export function SeRankingWebsiteAuditSuite() {
                         Get full report <ExternalLink className="w-3 h-3" />
                       </span>
                     </div>
-                    <strong className="text-[#1E293B]">5</strong>
+                    <strong className="text-[#1E293B]">—</strong>
                   </div>
                 </div>
 
@@ -1654,7 +1302,7 @@ export function SeRankingWebsiteAuditSuite() {
                       <Shield className="w-4 h-4 text-slate-400" />
                       <span>Domain Trust</span>
                     </div>
-                    <strong className="text-[#1E293B]">3</strong>
+                    <strong className="text-[#1E293B]">—</strong>
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -1662,7 +1310,7 @@ export function SeRankingWebsiteAuditSuite() {
                       <GoogleColorIcon className="w-4 h-4" />
                       <span>Pages in Google</span>
                     </div>
-                    <strong className="text-[#1E293B]">8</strong>
+                    <strong className="text-[#1E293B]">—</strong>
                   </div>
                 </div>
               </div>
@@ -1856,7 +1504,7 @@ export function SeRankingWebsiteAuditSuite() {
                         : 'bg-[#F1F5F9] text-[#64748B] hover:bg-slate-200'
                     }`}
                   >
-                    {status} {status === 'CURRENT' ? '(798)' : '(0)'}
+                    {status} {status === 'CURRENT' ? `(${totalIssueCount})` : '(0)'}
                   </button>
                 ))}
               </div>
@@ -1867,8 +1515,8 @@ export function SeRankingWebsiteAuditSuite() {
                   onChange={(e) => setSelectedIssueCategory(e.target.value)}
                   className="bg-white border border-[#CBD5E1] rounded px-3 py-1.5 text-xs text-[#1E293B] font-medium"
                 >
-                  <option value="all">All issue categories (9)</option>
-                  {ISSUE_CATEGORIES.map((c) => (
+                  <option value="all">All issue categories ({issueCategoryStats.length})</option>
+                  {issueCategoryStats.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
@@ -1895,9 +1543,9 @@ export function SeRankingWebsiteAuditSuite() {
                   }`}
                 >
                   <span>All Categories</span>
-                  <span>798</span>
+                  <span>{totalIssueCount}</span>
                 </button>
-                {ISSUE_CATEGORIES.map((cat) => (
+                {issueCategoryStats.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedIssueCategory(cat.id)}

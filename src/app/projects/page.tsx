@@ -488,7 +488,7 @@ function ProjectsDashboardPageContent() {
 
   const projectList = projects && projects.length > 0 ? projects : [];
 
-  const currentDomain = activeProject?.domain || (projects[0]?.domain ?? '');
+  const currentDomain = activeProject?.domain ?? '';
   const currentDomainFormatted = currentDomain
     ? (currentDomain.startsWith('http') ? currentDomain : `https://${currentDomain}/`)
     : '';
@@ -543,112 +543,36 @@ function ProjectsDashboardPageContent() {
     return projectList.slice(0, 5);
   }, [projectList, selectedWebsites]);
 
-  // Dynamic realistic SEO metrics series based on active metric tab, timeRange and groupBy
+  // Per-project metric history from stored ranking checks (null buckets render as gaps)
+  const [historyPoints, setHistoryPoints] = useState<Array<Record<string, any>>>([]);
+  const chartProjectIds = chartProjects.map((p) => p.id).join(',');
+
+  useEffect(() => {
+    if (!chartProjectIds) return;
+    const controller = new AbortController();
+    const params = new URLSearchParams({ ids: chartProjectIds, range: timeRange, groupBy });
+    fetch(`/api/projects/history?${params.toString()}`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success && Array.isArray(json.points)) setHistoryPoints(json.points);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [chartProjectIds, timeRange, groupBy]);
+
   const chartData = React.useMemo(() => {
-    let dateLabels: string[] = [];
-
-    if (timeRange === 'WEEK') {
-      if (groupBy === 'DAYS') {
-        dateLabels = ['Sep 23', 'Sep 24', 'Sep 25', 'Sep 26', 'Sep 27', 'Sep 28', 'Sep 29'];
-      } else if (groupBy === 'WEEKS') {
-        dateLabels = ['Week 38', 'Week 39'];
-      } else {
-        dateLabels = ['Sep 2026'];
-      }
-    } else if (timeRange === 'MONTH') {
-      if (groupBy === 'DAYS') {
-        dateLabels = ['Sep 01', 'Sep 05', 'Sep 09', 'Sep 13', 'Sep 17', 'Sep 21', 'Sep 25', 'Sep 29'];
-      } else if (groupBy === 'WEEKS') {
-        dateLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-      } else {
-        dateLabels = ['Sep 2026'];
-      }
-    } else if (timeRange === '3 MONTHS') {
-      if (groupBy === 'DAYS') {
-        dateLabels = ['Jul 01', 'Jul 15', 'Aug 01', 'Aug 15', 'Sep 01', 'Sep 15', 'Sep 29'];
-      } else if (groupBy === 'WEEKS') {
-        dateLabels = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
-      } else {
-        dateLabels = ['Jul 2026', 'Aug 2026', 'Sep 2026'];
-      }
-    } else {
-      // 6 MONTHS
-      if (groupBy === 'DAYS') {
-        dateLabels = ['Apr 01', 'May 01', 'Jun 01', 'Jul 01', 'Aug 01', 'Sep 01', 'Sep 29'];
-      } else if (groupBy === 'WEEKS') {
-        dateLabels = ['W1', 'W4', 'W8', 'W12', 'W16', 'W20', 'W24'];
-      } else {
-        dateLabels = ['Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026', 'Sep 2026'];
-      }
-    }
-
-    const n = dateLabels.length;
-
-    return dateLabels.map((date, idx) => {
-      const progress = n > 1 ? idx / (n - 1) : 1;
-      const point: Record<string, any> = { date };
-
+    return historyPoints.map((bucket) => {
+      const point: Record<string, any> = { date: bucket.date };
       chartProjects.forEach((proj, pIdx) => {
-        const pAny = proj as any;
-        const dHash = (proj.domain || proj.name || '')
-          .split('')
-          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-
-        // Project specific real target metrics
-        const currentAvgPos = pAny.avgPosition != null && Number(pAny.avgPosition) > 0 ? Number(pAny.avgPosition) : ((dHash % 28) + 8);
-        const currentTraffic = pAny.trafficForecast != null && Number(pAny.trafficForecast) > 0 ? Number(pAny.trafficForecast) : (((dHash * 19) % 3200) + 450);
-        const currentVis = pAny.searchVisibility != null && Number(pAny.searchVisibility) > 0 ? Number(pAny.searchVisibility) : Number((((dHash % 55) + 18)).toFixed(2));
-        const currentTop10 = pAny.keywordsCount ? Math.round(pAny.keywordsCount * 0.45) : ((dHash % 22) + 6);
-
-        let val: number;
-        switch (activeMetricTab) {
-          case 'avg_pos': {
-            const startPos = Number((currentAvgPos + ((dHash % 6) + 2)).toFixed(1));
-            const variance = Math.sin(idx * 1.5 + pIdx * 2 + dHash) * 0.3;
-            val = Number((startPos - (startPos - currentAvgPos) * progress + variance).toFixed(1));
-            break;
-          }
-          case 'traffic': {
-            const startTraffic = Math.round(currentTraffic * 0.72);
-            const variance = Math.round(Math.sin(idx * 1.2 + pIdx + dHash) * 20);
-            val = Math.max(0, Math.round(startTraffic + (currentTraffic - startTraffic) * progress + variance));
-            break;
-          }
-          case 'visibility': {
-            const startVis = Number((currentVis * 0.68).toFixed(2));
-            const variance = Number((Math.sin(idx * 1.3 + pIdx + dHash) * 0.5).toFixed(2));
-            val = Number(Math.max(0, startVis + (currentVis - startVis) * progress + variance).toFixed(2));
-            break;
-          }
-          case 'top10': {
-            const startTop = Math.max(0, currentTop10 - 4);
-            val = Math.round(startTop + (currentTop10 - startTop) * progress);
-            break;
-          }
-          case 'mention': {
-            const baseMention = (dHash % 14) + 4;
-            const startMention = Math.max(0, baseMention - 3);
-            val = Math.round(startMention + (baseMention - startMention) * progress);
-            break;
-          }
-          case 'link':
-          default: {
-            const baseLink = (dHash % 11) + 3;
-            const startLink = Math.max(0, baseLink - 2);
-            val = Math.round(startLink + (baseLink - startLink) * progress);
-            break;
-          }
-        }
-
+        const val = bucket[proj.id]?.[activeMetricTab] ?? null;
         point[proj.id] = val;
         if (pIdx === 0) {
           point.val = val;
         }
       });
-
       return point;
     });
-  }, [timeRange, groupBy, activeMetricTab, chartProjects]);
+  }, [historyPoints, activeMetricTab, chartProjects]);
 
   // COLUMNS DEFINITIONS with exact HTML and classes matching user's raw HTML
   const COLUMNS_DEF: Record<

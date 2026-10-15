@@ -173,6 +173,18 @@ export class SerperProvider implements RankingProvider {
           }
         }
 
+        const topResults = organicList
+          .filter((item) => item.link && item.position)
+          .slice(0, 20)
+          .map((item) => {
+            let domain = '';
+            try {
+              domain = new URL(item.link!).hostname.replace(/^www\./i, '').toLowerCase();
+            } catch {}
+            return { position: item.position!, url: item.link!, domain };
+          })
+          .filter((r) => r.domain);
+
         const serpFeatures: string[] = [];
         if (data.answerBox) serpFeatures.push('featured_snippet');
         if (data.peopleAlsoAsk && data.peopleAlsoAsk.length > 0) serpFeatures.push('people_also_ask');
@@ -192,6 +204,7 @@ export class SerperProvider implements RankingProvider {
           serpFeatures,
           checkedAt,
           provider: this.id,
+          topResults,
         });
       } catch (err: unknown) {
         const isAbort = err instanceof Error && err.name === 'AbortError';

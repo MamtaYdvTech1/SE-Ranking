@@ -67,8 +67,8 @@ const DEFAULT_SUGGESTIONS: CompetitorData[] = [];
 
 
 function CompetitorsPageContent() {
-  const { activeProject, projects } = useApp();
-  const targetProject = activeProject || (projects && projects.length > 0 ? projects[0] : null);
+  const { activeProject } = useApp();
+  const targetProject = activeProject || null;
   const domain = targetProject?.domain || '';
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -101,13 +101,13 @@ function CompetitorsPageContent() {
   // Load competitors from backend API
   React.useEffect(() => {
     async function loadCompetitors() {
-      if (!activeProject?.id) {
+      if (!targetProject?.id) {
         setAddedCompetitors([]);
         setHasLoadedCompetitorsStorage(true);
         return;
       }
       try {
-        const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/competitors`);
+        const res = await fetch(`/api/projects/${encodeURIComponent(targetProject.id)}/competitors`);
         if (res.ok) {
           const json = await res.json();
           if (json.data && Array.isArray(json.data)) {
@@ -136,11 +136,11 @@ function CompetitorsPageContent() {
     }
 
     loadCompetitors();
-  }, [activeProject?.id, domain]);
+  }, [targetProject?.id, domain]);
 
   // Persist addedCompetitors to localStorage as offline cache
   React.useEffect(() => {
-    if (!hasLoadedCompetitorsStorage) return;
+    if (!hasLoadedCompetitorsStorage || !domain) return;
     try {
       localStorage.setItem(`se_ranking_competitors_${domain}`, JSON.stringify(addedCompetitors));
     } catch (e) {

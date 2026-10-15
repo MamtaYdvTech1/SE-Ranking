@@ -3,6 +3,6 @@
 import React from "react";
 import { BacklinkReferringDomainsView } from "./BacklinkReferringDomainsView";
 
-export function ReferringDomainsTab({ projectDomain = "workcomposer.com" }: { projectDomain?: string }) {
-  return <BacklinkReferringDomainsView projectDomain={projectDomain} showSubTabs={false} />;
+export function ReferringDomainsTab({ projectId, projectDomain = "" }: { projectId?: string; projectDomain?: string }) {
+  return <BacklinkReferringDomainsView projectId={projectId} projectDomain={projectDomain} showSubTabs={false} />;
 }

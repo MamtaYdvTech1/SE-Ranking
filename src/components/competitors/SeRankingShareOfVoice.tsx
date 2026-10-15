@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { SeRankingDualCalendar } from './SeRankingDualCalendar';
+import { useSerpLandscape } from './useSerpLandscape';
 
 export interface CompetitorItem {
   id: string;
@@ -65,17 +66,23 @@ export interface SovRow {
   expandedUrls?: SovUrl[];
 }
 
+// Organic click-through share by position (top 20), used to weight share of voice
+const SOV_CTR: Record<number, number> = {
+  1: 0.317, 2: 0.247, 3: 0.187, 4: 0.136, 5: 0.095, 6: 0.062, 7: 0.041, 8: 0.031, 9: 0.024, 10: 0.019,
+  11: 0.01, 12: 0.009, 13: 0.008, 14: 0.007, 15: 0.006, 16: 0.005, 17: 0.005, 18: 0.004, 19: 0.004, 20: 0.003,
+};
+
 export function SeRankingShareOfVoice({
   projectDomain = '',
   projectId,
-  addedCompetitors = [],
   showToast = () => {},
   onOpenGuestLink = () => {},
   onOpenFeedback = () => {},
   onOpenNotes = () => {},
   notesCount = 50,
 }: SeRankingShareOfVoiceProps) {
-  const [selectedDates, setSelectedDates] = useState('8 Oct 2026; 9 Oct 2026');
+  const { data: serpLandscape } = useSerpLandscape(projectId);
+  const [selectedDatesOverride, setSelectedDates] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [searchEngine, setSearchEngine] = useState('All search engines');
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
@@ -88,60 +95,68 @@ export function SeRankingShareOfVoice({
     ? projectDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase()
     : '';
 
+  const fmtTraffic = (n: number) => (n >= 1000000 ? `${(n / 1000000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toFixed(0));
+
   const baseRows = useMemo<SovRow[]>(() => {
-    if (!cleanDomain) return [];
+    const target = (serpLandscape.targetDomain || cleanDomain).replace(/^www\./, '');
+    const isTarget = (d: string) => Boolean(target) && (d === target || d.endsWith(`.${target}`));
+    type UrlAcc = { kw: Set<string>; ctr: number; traffic: number };
+    const byDomain = new Map<string, { kw: Set<string>; ctr: number; traffic: number; urls: Map<string, UrlAcc> }>();
+    let totalCtr = 0;
+    for (const k of serpLandscape.keywords) {
+      for (const r of k.results) {
+        if (r.position > 20) continue;
+        const domain = isTarget(r.domain) ? target : r.domain;
+        const ctr = SOV_CTR[r.position] || 0;
+        totalCtr += ctr;
+        const d = byDomain.get(domain) || { kw: new Set<string>(), ctr: 0, traffic: 0, urls: new Map<string, UrlAcc>() };
+        d.kw.add(k.keywordId);
+        d.ctr += ctr;
+        d.traffic += k.searchVolume * ctr;
+        const u = d.urls.get(r.url) || { kw: new Set<string>(), ctr: 0, traffic: 0 };
+        u.kw.add(k.keywordId);
+        u.ctr += ctr;
+        u.traffic += k.searchVolume * ctr;
+        d.urls.set(r.url, u);
+        byDomain.set(domain, d);
+      }
+    }
+    const pct = (ctr: number) => (totalCtr > 0 ? Number(((ctr / totalCtr) * 100).toFixed(2)) : 0);
+    return [...byDomain.entries()]
+      .sort(([, a], [, b]) => b.ctr - a.ctr)
+      .map(([domain, d], idx) => ({
+        id: idx + 1,
+        domain,
+        urls: d.urls.size,
+        kw: d.kw.size,
+        sov: `${pct(d.ctr)}%`,
+        sovValue: pct(d.ctr),
+        traffic: fmtTraffic(d.traffic),
+        trafficValue: d.traffic,
+        isYou: domain === target,
+        expandedUrls: [...d.urls.entries()]
+          .sort(([, a], [, b]) => b.ctr - a.ctr)
+          .map(([url, u], uIdx) => ({
+            id: `u-${idx + 1}-${uIdx + 1}`,
+            url,
+            keywordsInTop20: u.kw.size,
+            shareOfVoice: `${pct(u.ctr)}%`,
+            sovValue: pct(u.ctr),
+            trafficForecast: fmtTraffic(u.traffic),
+            trafficValue: u.traffic,
+          })),
+      }));
+  }, [serpLandscape, cleanDomain]);
 
-    const youRow: SovRow = {
-      id: 1,
-      domain: cleanDomain,
-      urls: 1,
-      kw: 0,
-      sov: '100%',
-      sovValue: 100,
-      traffic: '—',
-      trafficValue: 0,
-      isYou: true,
-      expandedUrls: [
-        {
-          id: 'u1',
-          url: `https://${cleanDomain}/`,
-          keywordsInTop20: 0,
-          shareOfVoice: '100%',
-          sovValue: 100,
-          trafficForecast: '—',
-          trafficValue: 0,
-        },
-      ],
-    };
-
-    const compRows: SovRow[] = (addedCompetitors || []).map((c, i) => {
-      const sovScore = c.visibility || 0;
-      return {
-        id: i + 2,
-        domain: c.domain,
-        urls: 1,
-        kw: c.totalKeywords || c.commonKeywords || 0,
-        sov: `${sovScore}%`,
-        sovValue: sovScore,
-        traffic: c.organicTraffic || '—',
-        trafficValue: 0,
-        isYou: false,
-        expandedUrls: [
-          {
-            id: `comp-u-${i + 1}`,
-            url: `https://${c.domain}/`,
-            keywordsInTop20: c.commonKeywords || 0,
-            shareOfVoice: `${sovScore}%`,
-            sovValue: sovScore,
-            trafficForecast: c.organicTraffic || '—',
-            trafficValue: 0,
-          },
-        ],
-      };
-    });
-
-    return [youRow, ...compRows];
-  }, [cleanDomain, addedCompetitors]);
+  const youRow = baseRows.find((r) => r.isYou);
+  const runnerUp = baseRows.find((r) => !r.isYou);
+  const kpiTotalTraffic = fmtTraffic(baseRows.reduce((acc, r) => acc + r.trafficValue, 0));
+  const kpiUrlsTop20 = baseRows.reduce((acc, r) => acc + r.urls, 0);
+  const kpiKeywordsTop20 = serpLandscape.keywords.filter((k) => k.results.some((r) => r.position <= 20)).length;
+  const lastCheckLabel = serpLandscape.lastCheckedAt
+    ? new Date(serpLandscape.lastCheckedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'No checks yet';
+  const selectedDates = selectedDatesOverride ?? lastCheckLabel;
 
   const filteredRows = useMemo(() => {
     let rows = [...baseRows];
@@ -326,10 +341,8 @@ export function SeRankingShareOfVoice({
               <span>TOTAL TRAFFIC FORECAST</span>
               <Info className="w-3 h-3 text-[#8F94A6] cursor-help" />
             </div>
-            <div className="text-2xl font-extrabold text-[#171B24]">1.3M</div>
-            <div className="text-[11px] text-[#EF4444] font-semibold flex items-center gap-1">
-              <span>▼ -22.4K vs previous period</span>
-            </div>
+            <div className="text-2xl font-extrabold text-[#171B24]">{kpiTotalTraffic}</div>
+            <div className="text-[11px] text-[#8F94A6]">Across {serpLandscape.queriesAnalyzed} tracked keywords</div>
           </div>
 
           <div className="p-4 space-y-1">
@@ -337,9 +350,17 @@ export function SeRankingShareOfVoice({
               <span>SHARE OF VOICE</span>
               <Info className="w-3 h-3 text-[#8F94A6] cursor-help" />
             </div>
-            <div className="text-2xl font-extrabold text-[#2563EB]">96.7%</div>
-            <div className="text-[11px] text-[#10B981] font-semibold flex items-center gap-1">
-              <span>▲ +53.8% lead against #2</span>
+            <div className="text-2xl font-extrabold text-[#2563EB]">{youRow ? youRow.sov : '0%'}</div>
+            <div className="text-[11px] font-semibold flex items-center gap-1">
+              {youRow && runnerUp ? (
+                youRow.sovValue >= runnerUp.sovValue ? (
+                  <span className="text-[#10B981]">▲ +{(youRow.sovValue - runnerUp.sovValue).toFixed(2)}% lead against {runnerUp.domain}</span>
+                ) : (
+                  <span className="text-[#EF4444]">▼ {(runnerUp.sovValue - youRow.sovValue).toFixed(2)}% behind {baseRows[0]?.domain}</span>
+                )
+              ) : (
+                <span className="text-[#8F94A6]">Not ranking in the top 20 yet</span>
+              )}
             </div>
           </div>
 
@@ -348,7 +369,7 @@ export function SeRankingShareOfVoice({
               <span>TOTAL URLS IN THE TOP 20</span>
               <Info className="w-3 h-3 text-[#8F94A6] cursor-help" />
             </div>
-            <div className="text-2xl font-extrabold text-[#171B24]">84</div>
+            <div className="text-2xl font-extrabold text-[#171B24]">{kpiUrlsTop20}</div>
             <div className="text-[11px] text-[#8F94A6]">Aggregated across all competitors</div>
           </div>
 
@@ -357,7 +378,7 @@ export function SeRankingShareOfVoice({
               <span>TOTAL KEYWORDS IN THE TOP 20</span>
               <Info className="w-3 h-3 text-[#8F94A6] cursor-help" />
             </div>
-            <div className="text-2xl font-extrabold text-[#171B24]">142</div>
+            <div className="text-2xl font-extrabold text-[#171B24]">{kpiKeywordsTop20}</div>
             <div className="text-[11px] text-[#10B981] font-semibold">Active ranking tracked</div>
           </div>
         </div>

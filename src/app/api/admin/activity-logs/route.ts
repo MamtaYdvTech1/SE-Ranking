@@ -1,86 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { ActivityLogDto } from '@/lib/types';
+import { prisma } from '@/lib/db/prisma';
+import { getAuthSession, getSessionFromCookie } from '@/lib/server/auth';
 
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_ACTIVITY_LOGS: ActivityLogDto[] = [
-  {
-    id: 101,
-    actorId: 'user-1',
-    actorEmail: 'admin@internal.local',
-    actorRole: 'SuperAdmin',
-    actionType: 'Project.Created',
-    entityType: 'Project',
-    entityId: 'proj-1',
-    projectId: 'proj-1',
-    projectName: 'Test Project',
-    payloadJson: JSON.stringify({ name: 'Test Project', domain: 'example.com' }),
-    ipAddress: '127.0.0.1',
-    createdAt: '2026-09-08T10:00:00.000Z',
-  },
-  {
-    id: 102,
-    actorId: 'user-2',
-    actorEmail: 'manager@internal.local',
-    actorRole: 'ProjectManager',
-    actionType: 'Keyword.Added',
-    entityType: 'Keyword',
-    entityId: 'kw-101',
-    projectId: 'proj-1',
-    projectName: 'Test Project',
-    payloadJson: JSON.stringify({ keyword: 'seo rank tracker', volume: 18200 }),
-    ipAddress: '192.168.1.45',
-    createdAt: '2026-09-08T11:15:00.000Z',
-  },
-  {
-    id: 103,
-    actorId: 'user-1',
-    actorEmail: 'admin@internal.local',
-    actorRole: 'SuperAdmin',
-    actionType: 'Report.Generated',
-    entityType: 'Report',
-    entityId: 'rep-501',
-    projectId: 'proj-1',
-    projectName: 'Test Project',
-    payloadJson: JSON.stringify({ format: 'PDF', recipients: ['client@corp.com'] }),
-    ipAddress: '127.0.0.1',
-    createdAt: '2026-09-08T14:30:00.000Z',
-  },
-];
-
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
-    const entityType = searchParams.get('entityType');
-    const projectId = searchParams.get('projectId');
-    const search = searchParams.get('search')?.toLowerCase();
-
-    let filtered = [...DEFAULT_ACTIVITY_LOGS];
-
-    if (entityType && entityType !== 'All') {
-      filtered = filtered.filter((l) => l.entityType.toLowerCase() === entityType.toLowerCase());
-    }
-
-    if (projectId && projectId !== 'All') {
-      filtered = filtered.filter((l) => l.projectId === projectId);
-    }
-
-    if (search) {
-      filtered = filtered.filter(
-        (l) =>
-          l.actionType.toLowerCase().includes(search) ||
-          (l.actorEmail && l.actorEmail.toLowerCase().includes(search)) ||
-          (l.projectName && l.projectName.toLowerCase().includes(search)) ||
-          (l.ipAddress && l.ipAddress.includes(search))
+    const auth = (await getAuthSession(req)) || (await getSessionFromCookie());
+    if (!auth?.user) {
+      return NextResponse.json(
+        { success: false, statusCode: 401, timestamp: new Date().toISOString(), error: 'Authentication required.' },
+        { status: 401 }
       );
     }
+    const user = auth.user;
 
-    const totalCount = filtered.length;
-    const totalPages = Math.ceil(totalCount / pageSize) || (totalCount > 0 ? 1 : 0);
-    const startIndex = (page - 1) * pageSize;
-    const items = filtered.slice(startIndex, startIndex + pageSize);
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10) || 20));
+    const entityType = searchParams.get('entityType');
+    const projectId = searchParams.get('projectId');
+    const search = searchParams.get('search')?.trim();
+
+    // Users see their own activity; SUPERADMIN sees everyone's
+    const where: Prisma.ActivityLogWhereInput = user.role === 'SUPERADMIN' ? {} : { userId: user.id };
+    if (entityType && entityType !== 'All') {
+      where.entityType = { equals: entityType, mode: 'insensitive' };
+    }
+    if (projectId && projectId !== 'All') {
+      where.entityId = projectId;
+    }
+    if (search) {
+      where.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { userName: { contains: search, mode: 'insensitive' } },
+        { ipAddress: { contains: search } },
+      ];
+    }
+
+    const [totalCount, logs] = await Promise.all([
+      prisma.activityLog.count({ where }),
+      prisma.activityLog.findMany({
+        where,
+        include: { user: { select: { email: true, role: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    const items: ActivityLogDto[] = logs.map((l) => ({
+      id: l.id,
+      actorId: l.userId,
+      actorEmail: l.user?.email || l.userName,
+      actorRole: l.user?.role || null,
+      actionType: l.action,
+      entityType: l.entityType,
+      entityId: l.entityId,
+      projectId: l.entityType.toLowerCase() === 'project' ? l.entityId : null,
+      projectName: null,
+      payloadJson: l.details,
+      ipAddress: l.ipAddress,
+      createdAt: l.createdAt.toISOString(),
+    }));
+
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return NextResponse.json({
       success: true,

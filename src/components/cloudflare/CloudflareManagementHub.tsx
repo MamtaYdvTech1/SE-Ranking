@@ -50,7 +50,7 @@ export function CloudflareManagementHub() {
   const [purgeLog, setPurgeLog] = useState<any[]>([]);
 
   // DNS Inspector state
-  const defaultDomain = activeProject?.domain || (projects[0]?.domain || 'workcomposer.com');
+  const defaultDomain = activeProject?.domain || '';
   const [dnsDomain, setDnsDomain] = useState(defaultDomain);
   const [dnsType, setDnsType] = useState('ALL');
   const [isQueryingDns, setIsQueryingDns] = useState(false);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import type { CompetitorOverviewDto } from '@/lib/types';
 import {
   Calendar,
   Check,
@@ -56,6 +57,8 @@ interface VisibilityCompetitor {
   isYou: boolean;
   isActive: boolean;
   seriesData?: number[];
+  /** Daily points from stored rank checks */
+  history?: Array<{ date: string; visibility: number }>;
 }
 
 const COMPETITOR_COLORS = [
@@ -87,53 +90,39 @@ export function SeRankingVisibilityRating({
 
   const [competitors, setCompetitors] = useState<VisibilityCompetitor[]>([]);
 
+  // Project + tracked competitors with real daily visibility from rank checks
   useEffect(() => {
-    if (!cleanDomain) {
-      setCompetitors([]);
-      return;
-    }
-
-    const youComp: VisibilityCompetitor = {
-      id: 1,
-      domain: cleanDomain,
-      keywordsCount: '—',
-      visibility: 100,
-      visibilityStr: '100%',
-      trafficForecast: '—',
-      percentInTop10: '—',
-      backlinks: '—',
-      refDomains: '—',
-      color: '#c5158e', // SE Ranking Magenta
-      isYou: true,
-      isActive: true,
-      seriesData: [100, 100, 100, 100, 100, 100],
+    if (!projectId) return;
+    let active = true;
+    fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=30`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!active || !json?.success) return;
+        const overview = json.data as CompetitorOverviewDto;
+        const total = overview.totalKeywordsCount || 0;
+        setCompetitors(
+          overview.summaries.map((sum, idx) => ({
+            id: idx + 1,
+            domain: sum.domain,
+            keywordsCount: String(total),
+            visibility: sum.currentVisibility,
+            visibilityStr: `${sum.currentVisibility}%`,
+            trafficForecast: String(sum.estimatedTraffic ?? 0),
+            percentInTop10: total > 0 ? `${Math.round((sum.top10Count / total) * 100)}%` : '0%',
+            backlinks: '—',
+            refDomains: '—',
+            color: sum.isTargetDomain ? '#c5158e' : COMPETITOR_COLORS[idx % COMPETITOR_COLORS.length],
+            isYou: sum.isTargetDomain,
+            isActive: true,
+            history: (sum.history || []).map((h) => ({ date: h.date, visibility: h.visibility })),
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
     };
-
-    const compRows: VisibilityCompetitor[] = (addedCompetitors || []).map((c, idx) => ({
-      id: idx + 2,
-      domain: c.domain,
-      keywordsCount: `${c.totalKeywords || c.commonKeywords || 0}`,
-      visibility: c.visibility || 0,
-      visibilityStr: `${c.visibility || 0}%`,
-      trafficForecast: c.organicTraffic || '—',
-      percentInTop10: '—',
-      backlinks: c.backlinks || '—',
-      refDomains: '—',
-      color: COMPETITOR_COLORS[idx % COMPETITOR_COLORS.length],
-      isYou: false,
-      isActive: true,
-      seriesData: [
-        c.visibility || 0,
-        c.visibility || 0,
-        c.visibility || 0,
-        c.visibility || 0,
-        c.visibility || 0,
-        c.visibility || 0,
-      ],
-    }));
-
-    setCompetitors([youComp, ...compRows]);
-  }, [cleanDomain, addedCompetitors]);
+  }, [projectId, addedCompetitors.length]);
   const [activeMetricTab, setActiveMetricTab] = useState<'visibility' | 'traffic' | 'top10' | 'distribution'>('visibility');
   const [period, setPeriod] = useState<'week' | '2weeks' | 'month'>('month');
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
@@ -152,22 +141,39 @@ export function SeRankingVisibilityRating({
     showToast(`Removed ${domain} from visibility chart.`);
   };
 
-  const filteredCompetitors = competitors.filter((c) =>
-    c.domain.toLowerCase().includes(searchFilter.toLowerCase().trim())
-  );
-
   // Dynamic dates matching period selection (Week / 2 Weeks / Month)
-  const dates = useMemo(() => {
-    if (period === 'week') {
-      return ['06 Oct', '07 Oct', '08 Oct', '09 Oct', '10 Oct', '11 Oct'];
-    }
-    if (period === '2weeks') {
-      return ['28 Sep', '30 Sep', '02 Oct', '04 Oct', '06 Oct', '08 Oct', '10 Oct', '11 Oct'];
-    }
-    return ['12 Sep', '17 Sep', '22 Sep', '27 Sep', '02 Oct', '06 Oct', '09 Oct', '11 Oct'];
+  const dayKeys = useMemo(() => {
+    const n = period === 'week' ? 7 : period === '2weeks' ? 14 : 30;
+    const today = new Date();
+    return Array.from({ length: n }, (_, i) => {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (n - 1 - i));
+      return {
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        year: d.getFullYear(),
+      };
+    });
   }, [period]);
+  const dates = useMemo(() => dayKeys.map((d) => d.label), [dayKeys]);
 
-  const [hoverDateIdx, setHoverDateIdx] = useState<number>(3); // Default to '09 Oct' matching Screenshot
+  const filteredCompetitors = competitors
+    .filter((c) => c.domain.toLowerCase().includes(searchFilter.toLowerCase().trim()))
+    .map((c) => {
+      const points = [...(c.history || [])].sort((x, y) => x.date.localeCompare(y.date));
+      let last = 0;
+      let cursor = 0;
+      const seriesData = dayKeys.map(({ key }) => {
+        while (cursor < points.length && points[cursor].date <= key) {
+          last = points[cursor].visibility;
+          cursor++;
+        }
+        return last;
+      });
+      return { ...c, seriesData };
+    });
+
+
+  const [hoverDateIdx, setHoverDateIdx] = useState<number>(Number.MAX_SAFE_INTEGER); // latest day
   const activeDateIndex = Math.max(0, Math.min(hoverDateIdx, (dates?.length || 1) - 1));
 
   const svgWidth = 920;
@@ -504,7 +510,7 @@ export function SeRankingVisibilityRating({
               }}
             >
               <div className="text-[11px] font-bold text-gray-800 pb-1.5 border-b border-gray-100 flex items-center justify-between">
-                <span>{dates[activeDateIndex] ? dates[activeDateIndex].toUpperCase() : 'OCTOBER'} 2026</span>
+                <span>{dates[activeDateIndex] ? `${dates[activeDateIndex].toUpperCase()} ${dayKeys[activeDateIndex]?.year ?? ''}` : '—'}</span>
                 <span className="text-[10px] text-gray-400 font-semibold tracking-wider">VISIBILITY</span>
               </div>
               <div className="space-y-1 pt-1">

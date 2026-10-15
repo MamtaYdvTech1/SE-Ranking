@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Folder,
   FolderOpen,
@@ -27,6 +27,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { SeRankingDualCalendar } from './SeRankingDualCalendar';
+import { useSerpLandscape } from './useSerpLandscape';
 export interface CompetitorData {
   id: string;
   domain: string;
@@ -58,215 +59,13 @@ interface SerpRankingEntry {
   isOwn?: boolean;
 }
 
-// RAW OCT-08 DATA EXTRACTED 1:1 FROM USER PRODUCTION SE RANKING DOM
-const OCT_08_RAW_DOMAINS: string[] = [
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'facebook.com',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'tracxn.com',
-  'TARGET_DOMAIN',
-  'facebook.com',
-  'TARGET_DOMAIN',
-  'scanner.pcrisk.com',
-  'uk.indeed.com',
-  'southampton.cylex-uk.co.uk',
-  'mapquest.com',
-  'yably.co.uk',
-  'dailyecho.co.uk',
-  'cylex-uk.co.uk',
-  'uk.linkedin.com',
-  'TARGET_DOMAIN',
-  'newindia.co.in',
-  'hal-india.co.in',
-  'cspdcl.co.in',
-  'nesl.co.in',
-  'onlineupsrtc.co.in',
-  'ihmcl.co.in',
-  'skoda-auto.co.in',
-  'facebook.com',
-  'oecd.org',
-  'TARGET_DOMAIN',
-  'nationalinsurance.nic.co.in',
-  'skoda-auto.co.in',
-  'facebook.com',
-  'oecd.org',
-  'federal.bank.in',
-  'bankofindia.bank.in',
-  'cspc.co.in',
-  'irel.co.in',
-  'uiic.co.in',
-  'TARGET_DOMAIN',
-  'landrecords.karnataka.gov.in',
-  'gem.gov.in',
-  'youtube.com',
-  'indianvisaonline.gov.in',
-  'eprocure.gov.in',
-  'voters.eci.gov.in',
-  'youtube.com',
-  'youtube.com',
-  'youtube.com',
-  'youtube.com',
-  'cdslindia.com',
-  'titan.co.in',
-  'webanywhere.cs.washington.edu',
-  'kohler.co.in',
-  'thdc.co.in',
-  'oecd.org',
-  'sail.co.in',
-  'TARGET_DOMAIN',
-  'epa.gov',
-  'eatatco.com',
-  'railwire.co.in',
-  'msc.com',
-  'tanishq.co.in',
-  'thdc.co.in',
-  'oecd.org',
-  'sail.co.in',
-  'TARGET_DOMAIN',
-  'epa.gov',
-  'eatatco.com',
-  'TARGET_DOMAIN',
-  'oecd.org',
-  'sail.co.in',
-  'epa.gov',
-  'eatatco.com',
-  'dmv.colorado.gov',
-  'cioins.co.in',
-  'nationalinsurance.nic.co.in',
-  // Remaining up to 100
-  'trustpilot.com',
-  'clutch.co',
-  'yelp.com',
-  'yellowpages.com',
-  'thomsonlocal.com',
-  'scoot.co.uk',
-  'freeindex.co.uk',
-  'barkinganddagenham.cylex-uk.co.uk',
-  'businessmagnet.co.uk',
-  '192.com',
-  'zoominfo.com',
-  'linkedin.com',
-  'twitter.com',
-  'instagram.com',
-  'pinterest.com',
-  'crunchbase.com',
-  'glassdoor.co.uk',
-  'reed.co.uk',
-  'cv-library.co.uk',
-  'totaljobs.com',
-  'gov.uk',
-  'companieshouse.gov.uk',
-  'wikipedia.org',
-];
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// RAW OCT-09 DATA EXTRACTED 1:1 FROM USER PRODUCTION SE RANKING DOM
-const OCT_09_RAW_DOMAINS: string[] = [
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'facebook.com',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'TARGET_DOMAIN',
-  'tracxn.com',
-  'TARGET_DOMAIN',
-  'facebook.com',
-  'nmdc.co.in',
-  'sbilife.co.in',
-  'newindia.co.in',
-  'hal-india.co.in',
-  'cspdcl.co.in',
-  'nesl.co.in',
-  'onlineupsrtc.co.in',
-  'epa.gov',
-  'oecd.org',
-  'eatatco.com',
-  'newindia.co.in',
-  'hal-india.co.in',
-  'cspdcl.co.in',
-  'nesl.co.in',
-  'onlineupsrtc.co.in',
-  'ihmcl.co.in',
-  'skoda-auto.co.in',
-  'facebook.com',
-  'oecd.org',
-  'TARGET_DOMAIN',
-  'nationalinsurance.nic.co.in',
-  'skoda-auto.co.in',
-  'facebook.com',
-  'oecd.org',
-  'federal.bank.in',
-  'bankofindia.bank.in',
-  'cspc.co.in',
-  'irel.co.in',
-  'uiic.co.in',
-  'TARGET_DOMAIN',
-  'landrecords.karnataka.gov.in',
-  'gem.gov.in',
-  'youtube.com',
-  'indianvisaonline.gov.in',
-  'eprocure.gov.in',
-  'voters.eci.gov.in',
-  'youtube.com',
-  'youtube.com',
-  'youtube.com',
-  'youtube.com',
-  'cdslindia.com',
-  'titan.co.in',
-  'webanywhere.cs.washington.edu',
-  'kohler.co.in',
-  'thdc.co.in',
-  'oecd.org',
-  'sail.co.in',
-  'TARGET_DOMAIN',
-  'epa.gov',
-  'eatatco.com',
-  'railwire.co.in',
-  'msc.com',
-  'tanishq.co.in',
-  'thdc.co.in',
-  'oecd.org',
-  'sail.co.in',
-  'TARGET_DOMAIN',
-  'epa.gov',
-  'eatatco.com',
-  'TARGET_DOMAIN',
-  'oecd.org',
-  'sail.co.in',
-  'epa.gov',
-  'eatatco.com',
-  'dmv.colorado.gov',
-  'cioins.co.in',
-  'nationalinsurance.nic.co.in',
-  // Remaining up to 100
-  'trustpilot.com',
-  'clutch.co',
-  'yelp.com',
-  'yellowpages.com',
-  'thomsonlocal.com',
-  'scoot.co.uk',
-  'freeindex.co.uk',
-  'barkinganddagenham.cylex-uk.co.uk',
-  'businessmagnet.co.uk',
-  '192.com',
-  'zoominfo.com',
-  'linkedin.com',
-  'twitter.com',
-  'instagram.com',
-  'pinterest.com',
-  'crunchbase.com',
-  'glassdoor.co.uk',
-  'reed.co.uk',
-  'cv-library.co.uk',
-  'totaljobs.com',
-  'gov.uk',
-  'companieshouse.gov.uk',
-  'wikipedia.org',
-];
+/** "2026-10-09" -> "Oct-09 2026" */
+function columnLabel(isoDay: string): string {
+  const [y, m, d] = isoDay.split('-');
+  return `${MONTH_ABBR[Number(m) - 1]}-${d} ${y}`;
+}
 
 export function SeRankingSerpCompetitors({
   projectDomain = '',
@@ -281,41 +80,11 @@ export function SeRankingSerpCompetitors({
 }: SeRankingSerpCompetitorsProps) {
   const cleanDomain = projectDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
 
-  // Keyword List dynamically matching active project
-  const defaultKeywords = useMemo(() => {
-    if (cleanDomain.includes('pinterest')) {
-      return [
-        { id: 'kw-1', name: 'pint login', group: 'General' },
-        { id: 'kw-2', name: 'pint download', group: 'General' },
-        { id: 'kw-3', name: 'pint web app', group: 'General' },
-        { id: 'kw-4', name: 'pint online', group: 'General' },
-        { id: 'kw-5', name: 'pint pricing', group: 'General' },
-      ];
-    }
-    if (cleanDomain.includes('flipkart')) {
-      return [
-        { id: 'kw-1', name: 'flipkart online shopping', group: 'Brand' },
-        { id: 'kw-2', name: 'flipkart big billion days', group: 'Brand' },
-        { id: 'kw-3', name: 'flipkart login', group: 'Brand' },
-        { id: 'kw-4', name: 'flipkart mobile offers', group: 'Deals' },
-        { id: 'kw-5', name: 'flipkart grocery', group: 'General' },
-      ];
-    }
-    if (cleanDomain.includes('workcomposer')) {
-      return [
-        { id: 'kw-1', name: 'workcomposer', group: 'General' },
-        { id: 'kw-2', name: 'workcomposer download', group: 'General' },
-        { id: 'kw-3', name: 'workcomposer login', group: 'General' },
-        { id: 'kw-4', name: 'workcomposer pricing', group: 'General' },
-        { id: 'kw-5', name: 'workcompone', group: 'General' },
-      ];
-    }
-    return [
-      { id: 'kw-1', name: cleanDomain, group: 'General' },
-      { id: 'kw-2', name: `${cleanDomain} login`, group: 'General' },
-      { id: 'kw-3', name: `${cleanDomain} app`, group: 'Brand' },
-    ];
-  }, [cleanDomain]);
+  const { data: serpLandscape } = useSerpLandscape(projectId);
+  const defaultKeywords = useMemo(
+    () => serpLandscape.keywords.map((k) => ({ id: k.keywordId, name: k.keyword, group: 'General' })),
+    [serpLandscape.keywords]
+  );
 
   // Filters State
   const [selectedGroup, setSelectedGroup] = useState('All groups');
@@ -336,7 +105,7 @@ export function SeRankingSerpCompetitors({
   const [topRange, setTopRange] = useState<'100' | '50' | '30' | '20' | '10'>('100');
   const [engineCountry, setEngineCountry] = useState('India');
   const [isEngineOpen, setIsEngineOpen] = useState(false);
-  const [dateRangeText, setDateRangeText] = useState('8 Oct 2026 - 9 Oct 2026');
+  const [dateRangeOverride, setDateRangeText] = useState<string | null>(null);
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
 
   // Modals
@@ -357,69 +126,33 @@ export function SeRankingSerpCompetitors({
     });
   }, [defaultKeywords, selectedGroup, keywordFilter]);
 
-  // Construct Oct 08 entries with active project domain
-  const oct08Entries = useMemo<SerpRankingEntry[]>(() => {
-    return OCT_08_RAW_DOMAINS.map((rawDomain, index) => {
-      const rank = index + 1;
-      const target = cleanDomain || 'your-domain.com';
-      const domain = rawDomain === 'TARGET_DOMAIN' ? target : rawDomain;
-      const isOwn = domain.toLowerCase() === target || domain.toLowerCase().includes(target);
-      const samplePath =
-        rank === 1
-          ? ''
-          : rank === 2
-          ? 'about'
-          : rank === 4
-          ? 'services'
-          : rank === 5
-          ? 'gallery'
-          : rank === 6
-          ? 'packages'
-          : rank === 7
-          ? 'portfolio'
-          : rank === 9
-          ? 'contact'
-          : `item-${rank}`;
-      return {
-        rank,
-        domain,
-        url: `https://${domain}/${samplePath}`,
-        isOwn,
-      };
-    });
-  }, [cleanDomain]);
+  const keywordSnapshots = useMemo(
+    () => serpLandscape.snapshots.filter((snap) => snap.keywords[selectedKeyword]),
+    [serpLandscape.snapshots, selectedKeyword]
+  );
+  const latestSnap = keywordSnapshots[keywordSnapshots.length - 1];
+  const prevSnap = keywordSnapshots[keywordSnapshots.length - 2];
+  const prevLabel = prevSnap ? columnLabel(prevSnap.date) : '—';
+  const latestLabel = latestSnap ? columnLabel(latestSnap.date) : '—';
 
-  // Construct Oct 09 entries with active project domain
-  const oct09Entries = useMemo<SerpRankingEntry[]>(() => {
-    return OCT_09_RAW_DOMAINS.map((rawDomain, index) => {
-      const rank = index + 1;
-      const target = cleanDomain || 'your-domain.com';
-      const domain = rawDomain === 'TARGET_DOMAIN' ? target : rawDomain;
-      const isOwn = domain.toLowerCase() === target || domain.toLowerCase().includes(target);
-      const samplePath =
-        rank === 1
-          ? ''
-          : rank === 2
-          ? 'about'
-          : rank === 4
-          ? 'services'
-          : rank === 5
-          ? 'gallery'
-          : rank === 6
-          ? 'packages'
-          : rank === 7
-          ? 'portfolio'
-          : rank === 9
-          ? 'contact'
-          : `item-${rank}`;
-      return {
-        rank,
-        domain,
-        url: `https://${domain}/${samplePath}`,
-        isOwn,
-      };
-    });
-  }, [cleanDomain]);
+  const toEntries = useCallback(
+    (snap: (typeof keywordSnapshots)[number] | undefined): SerpRankingEntry[] => {
+      if (!snap) return [];
+      const target = cleanDomain.replace(/^www\./, '');
+      return snap.keywords[selectedKeyword].map((r) => ({
+        rank: r.position,
+        domain: r.domain,
+        url: r.url,
+        isOwn: Boolean(target) && (r.domain === target || r.domain.endsWith(`.${target}`)),
+      }));
+    },
+    [cleanDomain, selectedKeyword]
+  );
+
+  const oct08Entries = useMemo<SerpRankingEntry[]>(() => toEntries(prevSnap), [prevSnap, toEntries]);
+  const oct09Entries = useMemo<SerpRankingEntry[]>(() => toEntries(latestSnap), [latestSnap, toEntries]);
+
+  const dateRangeText = dateRangeOverride ?? (latestSnap ? `${prevLabel} - ${latestLabel}` : 'No checks yet');
 
   // Apply range slicing (Top 100/50/30/20/10) and URL filtering
   const visibleLimit = parseInt(topRange, 10);
@@ -449,7 +182,7 @@ export function SeRankingSerpCompetitors({
   // Export handler
   const handleExport = (format: 'csv' | 'xlsx') => {
     const rows = [
-      ['Rank', 'Oct-08 Domain', 'Oct-08 URL', 'Oct-09 Domain', 'Oct-09 URL', 'Highlight Own'],
+      ['Rank', `${prevLabel} Domain`, `${prevLabel} URL`, `${latestLabel} Domain`, `${latestLabel} URL`, 'Highlight Own'],
     ];
 
     for (let i = 0; i < visibleLimit; i++) {
@@ -469,7 +202,7 @@ export function SeRankingSerpCompetitors({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `serp_competitors_${cleanDomain}_oct08_oct09.${format === 'xlsx' ? 'csv' : 'csv'}`);
+    link.setAttribute('download', `serp_competitors_${cleanDomain}_${prevLabel}_${latestLabel}.${format === 'xlsx' ? 'csv' : 'csv'}`.replace(/\s+/g, '_'));
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -894,11 +627,11 @@ export function SeRankingSerpCompetitors({
               <div className="bg-[#F8F9FC] border-b border-[#E3E6EE] px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-[#171B24]">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#8F97A8]">#</span>
-                  <span>Oct-08 2026</span>
+                  <span>{prevLabel}</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFullscreenDate('Oct-08 2026')}
+                  onClick={() => setFullscreenDate(prevLabel)}
                   className="p-1 hover:bg-[#EAECEF] rounded text-[#8F97A8] hover:text-[#171B24] cursor-pointer transition-colors"
                   title="Expand to Fullscreen"
                 >
@@ -1036,11 +769,11 @@ export function SeRankingSerpCompetitors({
               <div className="bg-[#F8F9FC] border-b border-[#E3E6EE] px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-[#171B24]">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#8F97A8]">#</span>
-                  <span>Oct-09 2026</span>
+                  <span>{latestLabel}</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFullscreenDate('Oct-09 2026')}
+                  onClick={() => setFullscreenDate(latestLabel)}
                   className="p-1 hover:bg-[#EAECEF] rounded text-[#8F97A8] hover:text-[#171B24] cursor-pointer transition-colors"
                   title="Expand to Fullscreen"
                 >
@@ -1310,7 +1043,7 @@ export function SeRankingSerpCompetitors({
 
             {/* Scrollable Rows */}
             <div className="flex-1 overflow-y-auto divide-y divide-[#EEF0F5] p-6 text-xs">
-              {(fullscreenDate === 'Oct-08 2026' ? displayOct08 : displayOct09).map((item) => {
+              {(fullscreenDate === prevLabel ? displayOct08 : displayOct09).map((item) => {
                 const isTracked = addedCompetitors.some(
                   (c) => c.domain.toLowerCase() === item.domain.toLowerCase()
                 );

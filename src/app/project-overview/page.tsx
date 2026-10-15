@@ -214,7 +214,7 @@ function ProjectOverviewPageContent() {
   const router = useRouter();
   const { activeProject, projects } = useApp();
 
-  const targetProject = activeProject || (projects && projects.length > 0 ? projects[0] : null);
+  const targetProject = activeProject || null;
 
   const displayDomain = useMemo(() => {
     if (targetProject?.domain) {
@@ -487,14 +487,32 @@ function ProjectOverviewPageContent() {
   const [isBlUpdating, setIsBlUpdating] = useState(false);
   const [blUpdatedTimestamp, setBlUpdatedTimestamp] = useState('Oct-06 2026');
 
-  const handleUpdateBacklinks = () => {
+  const handleUpdateBacklinks = async () => {
+    if (!targetProject?.id) {
+      showToast('Please select a project first.');
+      return;
+    }
     setIsBlUpdating(true);
     showToast('Refreshing backlink database and referring domains...');
-    setTimeout(() => {
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(targetProject.id)}/backlinks`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Backlink provider unavailable or not configured.');
+      } else {
+        const now = new Date();
+        const stamp = `${now.toLocaleString('default', { month: 'short' })}-${String(now.getDate()).padStart(2, '0')} ${now.getFullYear()}`;
+        setBlUpdatedTimestamp(stamp);
+        showToast(data.message || 'Backlink database updated successfully!');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error updating backlinks.';
+      showToast(msg);
+    } finally {
       setIsBlUpdating(false);
-      setBlUpdatedTimestamp('Oct-06 2026');
-      showToast('Backlink database updated successfully!');
-    }, 1500);
+    }
   };
 
   // Toast
@@ -647,18 +665,36 @@ function ProjectOverviewPageContent() {
     setDragOverId(null);
   };
 
-  const handleStartAuditUpdate = () => {
+  const handleStartAuditUpdate = async () => {
     if (isAuditRunning) return;
+    if (!targetProject?.id) {
+      showToast('Please select a project first.');
+      return;
+    }
     setIsAuditRunning(true);
-    showToast('Running website audit crawl for ' + displayDomain + '...');
-    setTimeout(() => {
+    showToast(`Running website audit crawl for ${displayDomain}...`);
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(targetProject.id)}/audit/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxPages: 10 }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Audit crawl failed or provider unavailable.');
+      } else {
+        const now = new Date();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const stamp = `${months[now.getMonth()]}-${String(now.getDate()).padStart(2, '0')} ${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        setAuditTimestamp(stamp);
+        showToast(data.message || `Audit crawl completed for ${displayDomain}. Report updated successfully.`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error running audit.';
+      showToast(msg);
+    } finally {
       setIsAuditRunning(false);
-      const now = new Date();
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const stamp = `${months[now.getMonth()]}-${String(now.getDate()).padStart(2, '0')} ${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-      setAuditTimestamp(stamp);
-      showToast(`Audit crawl completed for ${displayDomain}. Report updated successfully.`);
-    }, 2200);
+    }
   };
 
   const handleOpenSettingsTab = (tab: 'general' | 'engines' | 'keywords' | 'prompts' | 'competitors' | 'statistics') => {
@@ -732,6 +768,8 @@ function ProjectOverviewPageContent() {
   const estimatedTrafficValue = overviewData?.summary?.estimatedTraffic ?? 0;
   const referringDomainsCount = overviewData?.summary?.referringDomainsCount ?? (overviewData?.summary?.backlinksCount ? Math.round(overviewData.summary.backlinksCount * 0.7) : (overviewData?.backlinksSummary?.referringDomains ?? 0));
   const healthScoreValue = overviewData?.audit?.healthScore ?? 0;
+  const toxicCount: number = overviewData?.backlinkQuality?.lowTrustCount ?? 0;
+  const backlinkTotal: number = overviewData?.backlinkQuality?.totalBacklinks ?? 0;
   const top3Count = overviewData?.summary?.top3 ?? 0;
   const top10Count = overviewData?.summary?.top10 ?? 0;
   const top30Count = overviewData?.summary?.top30 ?? 0;
@@ -744,19 +782,8 @@ function ProjectOverviewPageContent() {
       const pct = (overviewData.aiSearch.mentionedCount / overviewData.aiSearch.totalChecks) * 100;
       return `${pct.toFixed(2)}%`;
     }
-    // Proportional to active project rankings and SERP presence
-    if (top10Count > 0) {
-      const val = Math.min(100, Number(((top10Count / totalKeywordsCount) * 18.5 + (top3Count > 0 ? 12 : 0)).toFixed(2)));
-      return `${val}%`;
-    }
-    if (visibilityScoreValue > 0) {
-      const val = Math.min(100, Number((visibilityScoreValue * 0.45).toFixed(2)));
-      return `${val}%`;
-    }
-    // Honest proportional score for newly added project with keywords
-    const baseVal = Math.min(15, Number((totalKeywordsCount * 0.12).toFixed(2)));
-    return `${baseVal}%`;
-  }, [totalKeywordsCount, top10Count, top3Count, visibilityScoreValue, overviewData?.aiSearch]);
+    return '0%';
+  }, [totalKeywordsCount, overviewData?.aiSearch]);
 
   const aiPresenceDelta = useMemo(() => {
     if (!totalKeywordsCount || totalKeywordsCount === 0) return '0%';
@@ -779,9 +806,9 @@ function ProjectOverviewPageContent() {
   // Dynamic AI Tracker Metrics
   const aiTrackerMetrics = useMemo(() => {
     const activeEnginesCount = Object.values(aiEnginesConfig).filter(Boolean).length;
-    if (activeEnginesCount === 0 || totalKeywordsCount === 0) {
+    if (activeEnginesCount === 0 || totalKeywordsCount === 0 || !overviewData?.aiSearch || overviewData.aiSearch.totalChecks === 0) {
       return {
-        promptCount: totalKeywordsCount > 0 ? Math.max(totalKeywordsCount * 2, 8) : 0,
+        promptCount: 0,
         mentionPresence: '0%',
         mentionTop3: '0%',
         linkPresence: '0%',
@@ -791,49 +818,19 @@ function ProjectOverviewPageContent() {
       };
     }
 
-    if (overviewData?.aiSearch?.totalChecks && overviewData.aiSearch.totalChecks > 0) {
-      const { totalChecks, mentionedCount, citedCount } = overviewData.aiSearch;
-      const mentionPct = Math.round((mentionedCount / totalChecks) * 100);
-      const linkPct = Math.round((citedCount / totalChecks) * 100);
-      return {
-        promptCount: totalChecks,
-        mentionPresence: `${mentionPct}%`,
-        mentionTop3: `${Math.round(mentionPct * 0.8)}%`,
-        linkPresence: `${linkPct}%`,
-        linkTop3: `${Math.round(linkPct * 0.85)}%`,
-        aiOverviewPresence: `${Math.round(mentionPct * 0.9)}%`,
-        aiOverviewTop3: `${Math.round(mentionPct * 0.75)}%`,
-      };
-    }
-
-    // Dynamic brand mention presence derived from active project's keywords and SERP citations
-    const promptCount = Math.max(10, totalKeywordsCount * 2);
-    const kwFactor = Math.min(48, totalKeywordsCount * 3.1);
-    const visFactor = Math.min(30, (visibilityScoreValue || 0) * 0.6);
-    const topFactor = top10Count > 0 ? Math.min(30, (top10Count / totalKeywordsCount) * 50) : 0;
-
-    const rawMention = Math.min(94, Math.max(12, Math.round(kwFactor + visFactor + (top3Count > 0 ? 14 : 0))));
-    const rawMentionTop3 = Math.min(rawMention, Math.max(8, Math.round(rawMention * 0.82)));
-
-    // Link presence derived from referring domains and ranking pages
-    const blFactor = referringDomainsCount > 0 ? Math.min(40, referringDomainsCount * 1.4) : (totalKeywordsCount > 5 ? 16 : 4);
-    const rawLink = Math.min(88, Math.max(8, Math.round(blFactor + topFactor * 0.7)));
-    const rawLinkTop3 = Math.min(rawLink, Math.max(5, Math.round(rawLink * 0.84)));
-
-    // AI Overview presence derived from keyword rankings and Google SERP features
-    const rawAio = Math.min(92, Math.max(10, Math.round(topFactor * 1.2 + (totalKeywordsCount > 0 ? 18 : 0) + (visibilityScoreValue > 0 ? 8 : 0))));
-    const rawAioTop3 = Math.min(rawAio, Math.max(6, Math.round(rawAio * 0.78)));
-
+    const { totalChecks, mentionedCount, citedCount } = overviewData.aiSearch;
+    const mentionPct = Math.round((mentionedCount / totalChecks) * 100);
+    const linkPct = Math.round((citedCount / totalChecks) * 100);
     return {
-      promptCount,
-      mentionPresence: `${rawMention}%`,
-      mentionTop3: `${rawMentionTop3}%`,
-      linkPresence: `${rawLink}%`,
-      linkTop3: `${rawLinkTop3}%`,
-      aiOverviewPresence: `${rawAio}%`,
-      aiOverviewTop3: `${rawAioTop3}%`,
+      promptCount: totalChecks,
+      mentionPresence: `${mentionPct}%`,
+      mentionTop3: `${Math.round(mentionPct * 0.8)}%`,
+      linkPresence: `${linkPct}%`,
+      linkTop3: `${Math.round(linkPct * 0.85)}%`,
+      aiOverviewPresence: `${Math.round(mentionPct * 0.9)}%`,
+      aiOverviewTop3: `${Math.round(mentionPct * 0.75)}%`,
     };
-  }, [aiEnginesConfig, totalKeywordsCount, visibilityScoreValue, top10Count, top3Count, referringDomainsCount, overviewData?.aiSearch]);
+  }, [aiEnginesConfig, totalKeywordsCount, overviewData?.aiSearch]);
 
   // Dynamic Competitive Research - AI Search breakdown
   const aiSearchCompetitive = useMemo(() => {
@@ -1114,8 +1111,8 @@ function ProjectOverviewPageContent() {
       return overviewData.topKeywords.slice(0, 5).map((k: any, idx: number) => ({
         keyword: k.keyword,
         volume: k.searchVolume ? Number(k.searchVolume).toLocaleString() : '—',
-        kd: k.difficulty || 25,
-        cpc: k.cpc ? `$${Number(k.cpc).toFixed(2)}` : '—',
+        kd: k.difficulty ? k.difficulty : '—',
+        cpc: k.cpc && k.cpc !== '$0.00' ? k.cpc : '—',
       }));
     }
     return [];
@@ -1126,7 +1123,7 @@ function ProjectOverviewPageContent() {
     if (overviewData?.competitors && overviewData.competitors.length > 0) {
       return overviewData.competitors.slice(0, 4).map((c: any) => ({
         domain: c.domain,
-        traffic: c.visibilityScore ? `${Math.round(c.visibilityScore * 1.5)}K` : '—',
+        traffic: '—',
         trust: c.avgPosition ? Math.max(1, Math.round(c.avgPosition / 10)) : 1,
       }));
     }
@@ -2493,9 +2490,8 @@ function ProjectOverviewPageContent() {
                           ? (projectAnalyticsData.summary.totalSessions >= 1000
                               ? `${(projectAnalyticsData.summary.totalSessions / 1000).toFixed(1)}K`
                               : projectAnalyticsData.summary.totalSessions.toLocaleString())
-                          : (analyticsTimeframe === '7d' ? '12.1K' : '42.8K')}
+                          : '—'}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600">▲ +14.2%</span>
                     </div>
                     <div className="text-[10px] text-gray-400 mt-0.5">vs previous {analyticsTimeframe === '7d' ? '7' : '30'} days</div>
                   </div>
@@ -2508,11 +2504,9 @@ function ProjectOverviewPageContent() {
                           ? (projectAnalyticsData.summary.totalUsers >= 1000
                               ? `${(projectAnalyticsData.summary.totalUsers / 1000).toFixed(1)}K`
                               : projectAnalyticsData.summary.totalUsers.toLocaleString())
-                          : (analyticsTimeframe === '7d' ? '8.4K' : '28.4K')}
+                          : '—'}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600">▲ +9.6%</span>
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">66.3% new visitors</div>
                   </div>
 
                   <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-2xs">
@@ -2521,14 +2515,13 @@ function ProjectOverviewPageContent() {
                       <span className="text-2xl font-black text-emerald-600">
                         {projectAnalyticsData?.summary?.organicSearchShare != null
                           ? `${projectAnalyticsData.summary.organicSearchShare}%`
-                          : '68.4%'}
+                          : '—'}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600">▲ +4.1%</span>
                     </div>
                     <div className="text-[10px] text-gray-400 mt-0.5">
-                      {projectAnalyticsData?.summary?.totalSessions != null
-                        ? `${Math.round(projectAnalyticsData.summary.totalSessions * 0.68).toLocaleString()} search visits`
-                        : '29.3K search visits'}
+                      {projectAnalyticsData?.summary?.totalSessions != null && projectAnalyticsData?.summary?.organicSearchShare != null
+                        ? `${Math.round((projectAnalyticsData.summary.totalSessions * projectAnalyticsData.summary.organicSearchShare) / 100).toLocaleString()} search visits`
+                        : 'Connect analytics to see search visits'}
                     </div>
                   </div>
 
@@ -3226,14 +3219,14 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-[#DC2626] group-hover:scale-105 transition-transform">
-                      82
+                      {toxicCount}
                     </span>
                   </div>
                   <div className="text-xs text-[#5D5F65] font-normal">
-                    96.5% out of 85
+                    {backlinkTotal > 0 ? `${((toxicCount / backlinkTotal) * 100).toFixed(1)}% out of ${backlinkTotal}` : 'No backlinks stored yet'}
                   </div>
                   <div className="text-[11px] text-[#DC2626] font-semibold pt-1 flex items-center gap-1">
-                    <span>Audit & Search 82 Toxic Links →</span>
+                    <span>Audit & Search {toxicCount} Toxic Links →</span>
                   </div>
                 </div>
 
@@ -3248,11 +3241,11 @@ function ProjectOverviewPageContent() {
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-[#3093DB]">
-                      0
+                      —
                     </span>
                   </div>
                   <div className="text-xs text-[#5D5F65] font-normal">
-                    0% out of 85
+                    Not checked yet
                   </div>
                 </div>
               </div>
@@ -3331,9 +3324,8 @@ function ProjectOverviewPageContent() {
                       href="/competitors"
                       className="text-2xl font-black text-[#0B69FF] hover:underline"
                     >
-                      {totalKeywordsCount > 0 ? (estimatedTrafficValue > 0 ? Math.round(estimatedTrafficValue * 0.05) : 1) : 0}
+                      —
                     </Link>
-                    <span className="text-xs font-bold text-gray-400">0</span>
                   </div>
                 </div>
 
@@ -3587,7 +3579,7 @@ function ProjectOverviewPageContent() {
                     href="/insights"
                     className="text-3xl font-black text-[#0B69FF] hover:underline mt-1 block"
                   >
-                    {totalKeywordsCount > 0 ? Math.min(16, Math.max(1, Math.round(totalKeywordsCount * 0.6))) : 0}
+                    {((overviewData?.insights?.easyToImprove ?? 0) + (overviewData?.insights?.cannibalizedKeywords ?? 0) + (overviewData?.insights?.competitorsJumpedTop10 ?? 0))}
                   </Link>
                 </div>
 
@@ -3600,7 +3592,7 @@ function ProjectOverviewPageContent() {
                     href="/insights"
                     className="text-3xl font-black text-[#0B69FF] hover:underline mt-1 block"
                   >
-                    {totalKeywordsCount > 0 ? Math.min(16, Math.max(1, Math.round(totalKeywordsCount * 0.6))) : 0}
+                    {((overviewData?.insights?.easyToImprove ?? 0) + (overviewData?.insights?.cannibalizedKeywords ?? 0) + (overviewData?.insights?.competitorsJumpedTop10 ?? 0))}
                   </Link>
                 </div>
               </div>
@@ -3619,7 +3611,7 @@ function ProjectOverviewPageContent() {
                       <td className="py-2.5 font-medium text-gray-800">Keywords and pages with easy-to-improve positions</td>
                       <td className="py-2.5 text-right font-bold">
                         <Link href="/insights" className="text-[#0B69FF] hover:underline">
-                          {totalKeywordsCount > 0 ? Math.max(1, Math.round(totalKeywordsCount * 0.4)) : 0}
+                          {overviewData?.insights?.easyToImprove ?? 0}
                         </Link>
                       </td>
                     </tr>
@@ -3627,7 +3619,7 @@ function ProjectOverviewPageContent() {
                       <td className="py-2.5 font-medium text-gray-800">Keyword cannibalization</td>
                       <td className="py-2.5 text-right font-bold">
                         <Link href="/insights" className="text-[#0B69FF] hover:underline">
-                          {totalKeywordsCount > 0 ? Math.max(0, Math.round(totalKeywordsCount * 0.1)) : 0}
+                          {overviewData?.insights?.cannibalizedKeywords ?? 0}
                         </Link>
                       </td>
                     </tr>
@@ -3635,15 +3627,7 @@ function ProjectOverviewPageContent() {
                       <td className="py-2.5 font-medium text-gray-800">Competitors who jumped to the Top 10</td>
                       <td className="py-2.5 text-right font-bold">
                         <Link href="/insights" className="text-[#0B69FF] hover:underline">
-                          {totalKeywordsCount > 0 ? Math.max(0, Math.round(totalKeywordsCount * 0.05)) : 0}
-                        </Link>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-gray-50 transition-colors">
-                      <td className="py-2.5 font-medium text-gray-400 italic">Other performance signals</td>
-                      <td className="py-2.5 text-right font-bold">
-                        <Link href="/insights" className="text-[#0B69FF] hover:underline">
-                          {totalKeywordsCount > 0 ? Math.max(0, Math.round(totalKeywordsCount * 0.05)) : 0}
+                          {overviewData?.insights?.competitorsJumpedTop10 ?? 0}
                         </Link>
                       </td>
                     </tr>
@@ -3886,13 +3870,19 @@ function ProjectOverviewPageContent() {
   };
 
   // Empty projects guard
-  if (!targetProject && projects && projects.length === 0) {
+  if (!targetProject) {
     return (
       <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-6">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
           <Globe className="w-12 h-12 text-[#0B69FF] mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-gray-900 mb-1">No Projects Found</h2>
-          <p className="text-xs text-gray-500 mb-6">Create your first website project to begin tracking SEO rankings, audits, and traffic analytics.</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">
+            {projects && projects.length > 0 ? 'No Project Selected' : 'No Projects Found'}
+          </h2>
+          <p className="text-xs text-gray-500 mb-6">
+            {projects && projects.length > 0
+              ? 'Select a project from the header dropdown or create a new one to view its overview.'
+              : 'Create your first website project to begin tracking SEO rankings, audits, and traffic analytics.'}
+          </p>
           <button
             type="button"
             onClick={() => setIsCreateProjectModalOpen(true)}
@@ -4287,14 +4277,26 @@ function ProjectOverviewPageContent() {
                       <td className="py-2.5 px-3 text-center font-bold text-[#0B69FF]">{k.volume}</td>
                       <td className="py-2.5 px-3 text-center">
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                          {k.kd}%
+                          {k.kd === '—' ? k.kd : `${k.kd}%`}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-center text-gray-600">{k.cpc}</td>
                       <td className="py-2.5 px-3 text-right">
                         <button
                           type="button"
-                          onClick={() => showToast(`Added "${k.keyword}" to tracked project keywords!`)}
+                          onClick={async () => {
+                            if (!targetProject?.id) return;
+                            try {
+                              const res = await fetch(`/api/projects/${encodeURIComponent(targetProject.id)}/keywords`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ keywords: [k.keyword] }),
+                              });
+                              showToast(res.ok ? `Added "${k.keyword}" to tracked project keywords!` : `Could not add "${k.keyword}".`);
+                            } catch {
+                              showToast('Network error adding keyword.');
+                            }
+                          }}
                           className="px-2.5 py-1 bg-[#0B69FF] hover:bg-[#005FE0] text-white rounded text-[11px] font-bold shadow-2xs cursor-pointer"
                         >
                           + Track
@@ -4311,128 +4313,30 @@ function ProjectOverviewPageContent() {
 
       {/* Complete Interactive Toxic Backlinks Explorer & Disavow Modal */}
       {isToxicLinksOpen && (() => {
-        const TOXIC_BACKLINKS_DATA = [
-          {
-            domain: 'spamblog24.xyz',
-            url: `https://spamblog24.xyz/article-best-deals-2026`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'cheap tools online',
-            dt: 2,
-            score: 96,
-            risk: 'high',
-            marker: 'PBN Link Network',
-          },
-          {
-            domain: 'freelinkdirectory.top',
-            url: `https://freelinkdirectory.top/cat-tech/listing-88`,
-            targetUrl: `https://${displayDomain}/features`,
-            anchor: 'visit site',
-            dt: 4,
-            score: 92,
-            risk: 'high',
-            marker: 'Spam Directory Farm',
-          },
-          {
-            domain: 'autolinksfarm.ru',
-            url: `https://autolinksfarm.ru/pbn-links/network-29`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'click here',
-            dt: 1,
-            score: 94,
-            risk: 'high',
-            marker: 'Automated PBN Cluster',
-          },
-          {
-            domain: 'bestcasinopromo.cc',
-            url: `https://bestcasinopromo.cc/seo-referrals/post-44`,
-            targetUrl: `https://${displayDomain}/pricing`,
-            anchor: 'official site',
-            dt: 3,
-            score: 90,
-            risk: 'high',
-            marker: 'Casino / Adult Redirect',
-          },
-          {
-            domain: 'track-link-service.info',
-            url: `https://track-link-service.info/directory/submit`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'learn more',
-            dt: 5,
-            score: 88,
-            risk: 'medium',
-            marker: 'Sitewide Footer Spam',
-          },
-          {
-            domain: 'web-rank-booster.online',
-            url: `https://web-rank-booster.online/blog/growth-hacks`,
-            targetUrl: `https://${displayDomain}/blog`,
-            anchor: 'best seo software',
-            dt: 3,
-            score: 85,
-            risk: 'medium',
-            marker: 'Unnatural Anchor Text',
-          },
-          {
-            domain: 'free-article-syndicate.biz',
-            url: `https://free-article-syndicate.biz/view/2901`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'source link',
-            dt: 6,
-            score: 82,
-            risk: 'medium',
-            marker: 'Scraped Content Farm',
-          },
-          {
-            domain: 'cheap-backlink-seller.net',
-            url: `https://cheap-backlink-seller.net/buyer-list`,
-            targetUrl: `https://${displayDomain}/features`,
-            anchor: 'company profile',
-            dt: 2,
-            score: 86,
-            risk: 'medium',
-            marker: 'Paid Link Network',
-          },
-          {
-            domain: 'crypto-airdrop-rewards.xyz',
-            url: `https://crypto-airdrop-rewards.xyz/links/entry-7`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'secure login',
-            dt: 1,
-            score: 91,
-            risk: 'high',
-            marker: 'Cloaked Spam Link',
-          },
-          {
-            domain: 'fast-indexing-tool.org',
-            url: `https://fast-indexing-tool.org/ping-list/sites`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'track backlinks',
-            dt: 7,
-            score: 78,
-            risk: 'medium',
-            marker: 'Spam Pingback',
-          },
-          {
-            domain: 'global-ad-network.info',
-            url: `https://global-ad-network.info/partner/redirect`,
-            targetUrl: `https://${displayDomain}/pricing`,
-            anchor: 'recommended',
-            dt: 4,
-            score: 84,
-            risk: 'medium',
-            marker: 'Malicious Redirector',
-          },
-          {
-            domain: 'bulk-guest-post-service.biz',
-            url: `https://bulk-guest-post-service.biz/samples`,
-            targetUrl: `https://${displayDomain}/`,
-            anchor: 'read review',
-            dt: 5,
-            score: 81,
-            risk: 'medium',
-            marker: 'Spam Guest Post Farm',
-          },
-        ];
+        // Stored backlinks under the Domain Trust threshold; risk score = 100 - DT
+        const TOXIC_BACKLINKS_DATA = ((overviewData?.backlinkQuality?.lowTrustLinks ?? []) as Array<{
+          sourceUrl: string;
+          targetUrl: string;
+          anchorText: string;
+          domainTrust: number;
+          isDoFollow: boolean;
+        }>).map((l) => {
+          let host = l.sourceUrl;
+          try {
+            host = new URL(l.sourceUrl).hostname.replace(/^www\./i, '');
+          } catch {}
+          const score = 100 - (l.domainTrust ?? 0);
+          return {
+            domain: host,
+            url: l.sourceUrl,
+            targetUrl: l.targetUrl,
+            anchor: l.anchorText,
+            dt: l.domainTrust,
+            score,
+            risk: score >= 90 ? 'high' : 'medium',
+            marker: `Low Domain Trust (DT ${l.domainTrust})${l.isDoFollow ? '' : ' · nofollow'}`,
+          };
+        });
 
         const filteredToxicLinks = TOXIC_BACKLINKS_DATA.filter((item) => {
           if (toxicFilterTab === 'high' && item.score < 90) return false;

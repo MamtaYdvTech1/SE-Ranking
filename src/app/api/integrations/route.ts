@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession, getSessionFromCookie } from '@/lib/server/auth';
 import { prisma } from '@/lib/db/prisma';
+import { verifyProjectAccess } from '@/lib/server/projectAuth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,8 +13,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
 
+    // One owned project, or every project the caller owns (SUPERADMIN: all)
+    let scope: { projectId: string } | { project: { userId: string } } | Record<string, never>;
+    if (projectId) {
+      const access = await verifyProjectAccess(request, projectId);
+      if (!access.success) return access.error;
+      scope = { projectId: access.data.project.id };
+    } else {
+      scope = session.user.role === 'SUPERADMIN' ? {} : { project: { userId: session.user.id } };
+    }
+
     const integrations = await prisma.projectIntegration.findMany({
-      where: projectId ? { projectId } : {},
+      where: scope,
       orderBy: { createdAt: 'desc' },
     });
 
@@ -85,6 +96,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const access = await verifyProjectAccess(request, projectId);
+    if (!access.success) return access.error;
+    const ownedProjectId = access.data.project.id;
+
     // Normalize provider slug
     let normalizedProvider = provider.toLowerCase().trim();
     if (normalizedProvider === 'google analytics' || normalizedProvider === 'google_analytics_4') {
@@ -99,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     const existing = await prisma.projectIntegration.findFirst({
       where: {
-        projectId,
+        projectId: ownedProjectId,
         OR: [
           { provider: normalizedProvider },
           { provider: provider }
@@ -122,7 +137,7 @@ export async function POST(request: NextRequest) {
     } else {
       integration = await prisma.projectIntegration.create({
         data: {
-          projectId,
+          projectId: ownedProjectId,
           provider: normalizedProvider,
           status: targetStatus,
           accountName: accountName || null,

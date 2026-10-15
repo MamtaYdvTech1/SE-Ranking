@@ -18,8 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate user
     const session = await getAuthSession(req);
-    const isDev = process.env.NODE_ENV !== 'production';
-    if (!session?.user && !isDev) {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required. Please sign in.' },
         { status: 401 }

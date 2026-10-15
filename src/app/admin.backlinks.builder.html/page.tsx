@@ -52,12 +52,12 @@ export default function BacklinkGapAnalyzerPage() {
   const [mainDomain, setMainDomain] = useState(
     activeProject?.domain
       ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
-      : 'workcomposer.com'
+      : ''
   );
 
   // Competitor inputs
   const [competitors, setCompetitors] = useState<CompetitorRow[]>([
-    { id: 'comp-1', type: '*.domain.com/*', url: 'timecamp.com' },
+    { id: 'comp-1', type: '*.domain.com/*', url: '' },
   ]);
   const [openCompTypeDropdownId, setOpenCompTypeDropdownId] = useState<string | null>(null);
 
@@ -76,7 +76,7 @@ export default function BacklinkGapAnalyzerPage() {
       {
         id: `comp-${Date.now()}`,
         type: '*.domain.com/*',
-        url: competitors.length === 1 ? 'workco.com' : '',
+        url: '',
       },
     ]);
   };
@@ -92,115 +92,38 @@ export default function BacklinkGapAnalyzerPage() {
     );
   };
 
-  // Mock Gap dataset based on real SEO competitive research
   const [gapData, setGapData] = useState<GapItem[]>([]);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
-  const handleRunAnalysis = (e?: React.FormEvent) => {
+  const handleRunAnalysis = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!mainDomain.trim()) return;
 
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const comp1 = competitors[0]?.url || 'competitor.com';
-      const comp2 = competitors[1]?.url || 'competitor2.com';
-
-      const mockList: GapItem[] = [
-        {
-          domain: 'techcrunch.com',
-          domainTrust: 93,
-          pageTrust: 82,
-          mainCount: 0,
-          compCounts: { [comp1]: 4, [comp2]: 2 },
-          opportunityScore: 'High',
-          anchor: 'best remote team productivity tools',
-          linkType: 'follow',
-        },
-        {
-          domain: 'forbes.com',
-          domainTrust: 91,
-          pageTrust: 79,
-          mainCount: 0,
-          compCounts: { [comp1]: 6, [comp2]: 5 },
-          opportunityScore: 'High',
-          anchor: 'enterprise time tracking solution',
-          linkType: 'follow',
-        },
-        {
-          domain: 'g2.com',
-          domainTrust: 89,
-          pageTrust: 88,
-          mainCount: 1,
-          compCounts: { [comp1]: 14, [comp2]: 11 },
-          opportunityScore: 'Medium',
-          anchor: 'workcomposer reviews and alternatives',
-          linkType: 'follow',
-        },
-        {
-          domain: 'capterra.com',
-          domainTrust: 88,
-          pageTrust: 85,
-          mainCount: 1,
-          compCounts: { [comp1]: 9, [comp2]: 8 },
-          opportunityScore: 'Medium',
-          anchor: 'top rated screenshot tracker',
-          linkType: 'follow',
-        },
-        {
-          domain: 'hubspot.com',
-          domainTrust: 92,
-          pageTrust: 84,
-          mainCount: 0,
-          compCounts: { [comp1]: 3, [comp2]: 1 },
-          opportunityScore: 'High',
-          anchor: 'employee workflow automation',
-          linkType: 'follow',
-        },
-        {
-          domain: 'zapier.com',
-          domainTrust: 90,
-          pageTrust: 83,
-          mainCount: 0,
-          compCounts: { [comp1]: 5, [comp2]: 4 },
-          opportunityScore: 'High',
-          anchor: 'automatic activity recorder apps',
-          linkType: 'follow',
-        },
-        {
-          domain: 'pcmag.com',
-          domainTrust: 87,
-          pageTrust: 76,
-          mainCount: 0,
-          compCounts: { [comp1]: 2, [comp2]: 3 },
-          opportunityScore: 'High',
-          anchor: 'windows mac employee monitor',
-          linkType: 'follow',
-        },
-        {
-          domain: 'producthunt.com',
-          domainTrust: 86,
-          pageTrust: 81,
-          mainCount: 1,
-          compCounts: { [comp1]: 8, [comp2]: 6 },
-          opportunityScore: 'Medium',
-          anchor: 'workcomposer launch and features',
-          linkType: 'nofollow',
-        },
-        {
-          domain: 'medium.com',
-          domainTrust: 84,
-          pageTrust: 71,
-          mainCount: 0,
-          compCounts: { [comp1]: 7, [comp2]: 0 },
-          opportunityScore: 'High',
-          anchor: 'how we track remote developers',
-          linkType: 'follow',
-        },
-      ];
-
-      setGapData(mockList);
+    setAnalysisError(null);
+    try {
+      const res = await fetch('/api/seo/backlink-gap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target: mainDomain,
+          competitors: competitors.map((c) => c.url).filter((u) => u.trim()),
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        setAnalysisError(json?.error || 'Backlink gap analysis failed.');
+        setGapData([]);
+      } else {
+        setGapData(json.rows as GapItem[]);
+      }
+    } catch {
+      setAnalysisError('Network error while running the analysis.');
+      setGapData([]);
+    } finally {
       setIsAnalyzing(false);
       setHasRunAnalysis(true);
-    }, 600);
+    }
   };
 
   const filteredGapData = gapData.filter((item) => {
@@ -463,8 +386,14 @@ export default function BacklinkGapAnalyzerPage() {
 
           </form>
 
+          {analysisError && (
+            <div className="mt-6 px-4 py-3 border border-red-200 bg-red-50 text-red-700 text-xs rounded-[6px]">
+              {analysisError}
+            </div>
+          )}
+
           {/* ===================== RESULTS TABLE SECTION ===================== */}
-          {hasRunAnalysis && (
+          {hasRunAnalysis && !analysisError && (
             <div className="mt-10 bg-white border border-[#E2E8F0] rounded-[8px] shadow-2xs overflow-hidden animate-in fade-in duration-300">
               
               {/* Results Top Bar */}
@@ -574,7 +503,7 @@ export default function BacklinkGapAnalyzerPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-gray-600 truncate max-w-[180px]">
-                          {row.anchor}
+                          {row.anchor || '—'}
                         </td>
                       </tr>
                     ))}

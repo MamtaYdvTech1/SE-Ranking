@@ -47,11 +47,8 @@ export async function GET(req: NextRequest) {
       where: {
         deletedAt: null,
         isArchived: false,
-        OR: [
-          { rankingFrequency: 'Daily' },
-          // Run Weekly tracking on Mondays (1)
-          today === 1 ? { rankingFrequency: 'Weekly' } : {},
-        ],
+        // Daily projects every run; Weekly projects only on Mondays (1)
+        rankingFrequency: { in: today === 1 ? ['Daily', 'Weekly'] : ['Daily'] },
       },
       include: {
         keywords: {

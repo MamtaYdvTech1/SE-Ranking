@@ -71,6 +71,7 @@ export function KeywordResearchDashboard({
   const [metricData, setMetricData] = useState<RealKeywordData | null>(null);
   const [ideas, setIdeas] = useState<RealIdeaItem[]>([]);
   const [serpItems, setSerpItems] = useState<RealSerpItem[]>([]);
+  const [activeProviderName, setActiveProviderName] = useState<string>('SEO Provider');
 
   const cleanKeyword = keyword.trim().toLowerCase();
 
@@ -94,7 +95,7 @@ export function KeywordResearchDashboard({
         body: JSON.stringify({ keyword: cleanKeyword, limit: 30 }),
       }).then((r) => r.json());
 
-      // 3. Fetch real Google SERP top 10 via YepAPI
+      // 3. Fetch real Google SERP top 10 via YepAPI / Serper
       const serpPromise = fetch('/api/seo/serp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,6 +109,7 @@ export function KeywordResearchDashboard({
       ]);
 
       let hasAnySuccess = false;
+      let collectedError: string | null = null;
 
       // Handle Keywords
       if (kwResult.status === 'fulfilled' && kwResult.value.success && kwResult.value.data?.keywords?.[0]) {
@@ -133,7 +135,7 @@ export function KeywordResearchDashboard({
         hasAnySuccess = true;
       } else if (kwResult.status === 'fulfilled' && !kwResult.value.success) {
         if (kwResult.value.error) {
-          setErrorMessage(kwResult.value.error);
+          collectedError = kwResult.value.error;
         }
       }
 
@@ -162,16 +164,24 @@ export function KeywordResearchDashboard({
             snippet: r.description || '',
           }));
         setSerpItems(mappedSerp);
+        if (serpResult.value.provider) {
+          setActiveProviderName(serpResult.value.provider);
+        }
         hasAnySuccess = true;
+      } else if (serpResult.status === 'fulfilled' && !serpResult.value.success && !collectedError) {
+        collectedError = serpResult.value.error;
       }
 
-      if (!hasAnySuccess && !errorMessage) {
-        setErrorMessage('No data could be retrieved for this keyword from YepAPI. Please verify spelling or credit balance.');
+      if (!hasAnySuccess) {
+        setErrorMessage(collectedError || 'No live data could be retrieved for this keyword. Please check API credentials or credit balance.');
+      } else if (collectedError) {
+        // Partial success (e.g. SERP succeeded via Serper but keyword volume quota was exhausted on YepAPI)
+        setErrorMessage(`Partial data notice: ${collectedError}`);
       }
 
       setLastRefreshed(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to connect to YepAPI.');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to connect to SEO data provider.');
     } finally {
       setIsLoading(false);
     }
@@ -234,11 +244,11 @@ export function KeywordResearchDashboard({
                 </span>
                 <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                  YepAPI
+                  {activeProviderName}
                 </span>
               </div>
               <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                <span>Verified Data Provider: YepAPI</span>
+                <span>Verified Data Provider: {activeProviderName}</span>
                 <span>•</span>
                 <span>Last updated: {lastRefreshed || 'Live'}</span>
               </div>

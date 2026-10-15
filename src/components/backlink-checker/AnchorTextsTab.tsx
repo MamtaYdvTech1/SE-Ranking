@@ -2,28 +2,26 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
-  MOCK_ZOHO_ANCHORS,
-  MOCK_WORKCOMPOSER_ANCHORS,
-  MOCK_TOP_ANCHORS,
   AnchorData,
-} from "./mockBacklinkData";
+} from "./types";
+import { useBacklinkExplorer, formatLastChecked } from "./useBacklinkExplorer";
 
 interface AnchorTextsTabProps {
+  projectId?: string;
   projectDomain?: string;
   showSubTabs?: boolean;
   onNavigateTab?: (tab: string) => void;
 }
 
 export function AnchorTextsTab({
-  projectDomain = "workcomposer.com",
+  projectId,
+  projectDomain = "",
   showSubTabs = true,
   onNavigateTab,
 }: AnchorTextsTabProps) {
-  // Domain selection (workcomposer.com as primary)
-  const isZoho = (projectDomain || "").toLowerCase() === "workco.com" || (projectDomain || "").toLowerCase() === "zoho.com";
-  const [activeDomain, setActiveDomain] = useState<string>(projectDomain || "workcomposer.com");
+  const activeDomain = projectDomain || "";
+  const { data: explorer, loading: explorerLoading, refresh: refreshExplorer } = useBacklinkExplorer(projectId);
 
-  // Banners - in screenshot, trial banner is only shown for WorkCo
   const [showTrialBanner, setShowTrialBanner] = useState(false);
   const [showNoticeBanner, setShowNoticeBanner] = useState(true);
   const [showGuideBanner, setShowGuideBanner] = useState(true);
@@ -34,19 +32,9 @@ export function AnchorTextsTab({
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [tempEmailFreq, setTempEmailFreq] = useState("Bi-weekly");
 
-  // Report Update State - exact date from screenshot
-  const [lastCheckDate, setLastCheckDate] = useState(isZoho ? "September 23, 2026" : "September 26, 2026");
+  const lastCheckDate = formatLastChecked(explorer.lastChecked);
   const [isUpdatingReport, setIsUpdatingReport] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (projectDomain) {
-      setActiveDomain(projectDomain);
-      const isZ = projectDomain.toLowerCase().includes("WorkCo");
-      setLastCheckDate(isZ ? "September 23, 2026" : "September 26, 2026");
-      setShowTrialBanner(isZ);
-    }
-  }, [projectDomain]);
 
   // Term Tabs: ANCHOR TEXTS, 1-WORD TERMS, 2-WORD TERMS, 3-WORD TERMS, 4-WORD TERMS
   const [termTab, setTermTab] = useState<"ALL" | "1" | "2" | "3" | "4">("ALL");
@@ -235,12 +223,7 @@ export function AnchorTextsTab({
   }, []);
 
   // Base dataset depending on active domain
-  const rawDataset = useMemo(() => {
-    if (activeDomain.toLowerCase().includes("workcomposer")) {
-      return MOCK_WORKCOMPOSER_ANCHORS;
-    }
-    return MOCK_ZOHO_ANCHORS;
-  }, [activeDomain]);
+  const rawDataset = explorer.anchors;
 
   // Helper to parse dates
   const parseDateMs = (dStr: string) => {
@@ -406,14 +389,12 @@ export function AnchorTextsTab({
     }
   };
 
-  const handleUpdateReport = () => {
+  const handleUpdateReport = async () => {
     setIsUpdatingReport(true);
-    setTimeout(() => {
-      setIsUpdatingReport(false);
-      setLastCheckDate("September 26, 2026 (Live)");
-      setToastMessage("Report updated successfully! Latest backlink anchor data synchronized.");
-      setTimeout(() => setToastMessage(null), 4000);
-    }, 1200);
+    const result = await refreshExplorer();
+    setIsUpdatingReport(false);
+    setToastMessage(result.message);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const handleExportCSV = () => {
@@ -516,20 +497,7 @@ export function AnchorTextsTab({
       {/* 3. BREADCRUMB & UTILITY ROW - ALL IN ONE LINE */}
       <div className="flex items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
         <div className="flex items-center gap-2 font-medium">
-          <button
-            type="button"
-            onClick={() => {
-              const nextDomain = activeDomain === "workco.com" ? "workcomposer.com" : "workco.com";
-              setActiveDomain(nextDomain);
-              const isZ = nextDomain.toLowerCase().includes("WorkCo");
-              setLastCheckDate(isZ ? "September 23, 2026" : "September 26, 2026");
-              setShowTrialBanner(isZ);
-            }}
-            className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer font-medium"
-            title="Click to toggle between workcomposer.com and workco.com"
-          >
-            {activeDomain}
-          </button>
+          <span className="text-slate-600 dark:text-slate-300 font-medium">{activeDomain}</span>
           <span className="text-slate-400">›</span>
           <span className="text-slate-600 dark:text-slate-400 hover:text-slate-900 cursor-pointer">
             Backlink Checker

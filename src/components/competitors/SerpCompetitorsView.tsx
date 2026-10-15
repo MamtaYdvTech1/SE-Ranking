@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CompetitorDto } from "@/lib/types";
 import { GuestLinkModal } from "./GuestLinkModal";
 import { CalendarYearDropdown } from "./CalendarYearDropdown";
+import { useSerpLandscape } from "./useSerpLandscape";
 
 export interface SerpCompetitorsViewProps {
   projectId: string;
@@ -24,128 +25,6 @@ export interface SerpKeywordItem {
   group: string;
   tags?: string[];
 }
-
-export const SERP_PROJECT_KEYWORDS: SerpKeywordItem[] = [
-  {
-    id: "kw-1",
-    keyword: "work composer download",
-    searchVolume: 210,
-    searchVolumeDisplay: "210",
-    group: "Brand",
-    tags: ["core", "branded"],
-  },
-  {
-    id: "kw-2",
-    keyword: "work composer",
-    searchVolume: 590,
-    searchVolumeDisplay: "590",
-    group: "General",
-    tags: ["core", "branded"],
-  },
-  {
-    id: "kw-3",
-    keyword: "work composer hack",
-    searchVolume: 10,
-    searchVolumeDisplay: "10",
-    group: "Brand",
-    tags: ["high-intent"],
-  },
-  {
-    id: "kw-4",
-    keyword: "workpuls idle time",
-    searchVolume: 10,
-    searchVolumeDisplay: "10",
-    group: "Competitor",
-    tags: ["idle-time"],
-  },
-  {
-    id: "kw-5",
-    keyword: "idle time tracker",
-    searchVolume: 10,
-    searchVolumeDisplay: "10",
-    group: "Features",
-    tags: ["idle-time", "tracking"],
-  },
-  {
-    id: "kw-6",
-    keyword: "idle time tracking",
-    searchVolume: 10,
-    searchVolumeDisplay: "10",
-    group: "Features",
-    tags: ["idle-time", "tracking"],
-  },
-  {
-    id: "kw-7",
-    keyword: "idle time tracking software",
-    searchVolume: 10,
-    searchVolumeDisplay: "10",
-    group: "Features",
-    tags: ["software", "high-intent"],
-  },
-  {
-    id: "kw-8",
-    keyword: "composer download",
-    searchVolume: 1900,
-    searchVolumeDisplay: "1.9K",
-    group: "Brand",
-    tags: ["download"],
-  },
-  {
-    id: "kw-9",
-    keyword: "working track",
-    searchVolume: 480,
-    searchVolumeDisplay: "480",
-    group: "General",
-    tags: ["tracking"],
-  },
-  {
-    id: "kw-10",
-    keyword: "screenshot time tracking",
-    searchVolume: 110,
-    searchVolumeDisplay: "110",
-    group: "Features",
-    tags: ["tracking", "screenshot"],
-  },
-];
-
-export function getSerpKeywordsForDomain(domain: string): SerpKeywordItem[] {
-  const clean = domain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '').toLowerCase();
-  if (clean.includes('workcomposer')) {
-    return SERP_PROJECT_KEYWORDS;
-  }
-  if (clean.includes('flipkart')) {
-    return [
-      { id: "kw-1", keyword: "flipkart online shopping", searchVolume: 1240000, searchVolumeDisplay: "1.24M", group: "Brand", tags: ["core", "branded"] },
-      { id: "kw-2", keyword: "flipkart big billion days", searchVolume: 673000, searchVolumeDisplay: "673K", group: "Brand", tags: ["deals", "sale"] },
-      { id: "kw-3", keyword: "flipkart login", searchVolume: 450000, searchVolumeDisplay: "450K", group: "Brand", tags: ["login"] },
-      { id: "kw-4", keyword: "flipkart mobile offers", searchVolume: 165000, searchVolumeDisplay: "165K", group: "Deals", tags: ["deals"] },
-      { id: "kw-5", keyword: "online shopping app india", searchVolume: 246000, searchVolumeDisplay: "246K", group: "Generic", tags: ["ecommerce"] },
-      { id: "kw-6", keyword: "buy smartphones online", searchVolume: 90500, searchVolumeDisplay: "90.5K", group: "Electronics", tags: ["smartphones"] },
-      { id: "kw-7", keyword: "fashion clothes online sale", searchVolume: 74200, searchVolumeDisplay: "74.2K", group: "Fashion", tags: ["fashion"] },
-      { id: "kw-8", keyword: "flipkart customer care number", searchVolume: 110000, searchVolumeDisplay: "110K", group: "Support", tags: ["support"] },
-    ];
-  }
-  const brand = clean.split('.')[0];
-  const capitalized = brand.charAt(0).toUpperCase() + brand.slice(1);
-  return [
-    { id: "kw-1", keyword: `${capitalized} official website`, searchVolume: 14200, searchVolumeDisplay: "14.2K", group: "Brand", tags: ["core", "branded"] },
-    { id: "kw-2", keyword: `${capitalized} login online`, searchVolume: 8900, searchVolumeDisplay: "8.9K", group: "Brand", tags: ["login"] },
-    { id: "kw-3", keyword: `best ${capitalized} alternatives 2026`, searchVolume: 4200, searchVolumeDisplay: "4.2K", group: "Competitor", tags: ["high-intent"] },
-    { id: "kw-4", keyword: `${capitalized} pricing and plans`, searchVolume: 3100, searchVolumeDisplay: "3.1K", group: "Features", tags: ["software"] },
-    { id: "kw-5", keyword: `top software tools like ${capitalized}`, searchVolume: 2400, searchVolumeDisplay: "2.4K", group: "General", tags: ["software"] },
-  ];
-}
-
-export const ALL_KEYWORD_TAGS = [
-  "core",
-  "branded",
-  "high-intent",
-  "idle-time",
-  "tracking",
-  "software",
-  "download",
-  "screenshot",
-];
 
 const CAL_FULL_MONTHS = [
   "January",
@@ -179,118 +58,6 @@ interface SerpRankingEntry {
   snippet?: string;
 }
 
-// Mock SERP database generator for dates and keywords
-export function generateSerpData(keyword: string, date: string, targetDomain: string, competitors: string[]): SerpRankingEntry[] {
-  const compList = competitors.length > 0 ? competitors : ["insightful.io", "timedoctor.com", "hubstaff.com", "clockify.me", "activtrak.com"];
-
-  const commonDomains = [
-    { domain: "getcomposer.org", path: "/download" },
-    { domain: "softwarefinder.com", path: "/reviews/time-tracker" },
-    { domain: "softwareadvice.com", path: "/p/productivity-tools" },
-    { domain: "github.com", path: "/composer/composer" },
-    { domain: "capterra.com", path: "/software/workforce-tracker" },
-    { domain: "g2.com", path: "/categories/time-tracking" },
-    { domain: "trustradius.com", path: "/products/monitoring" },
-    { domain: "pcmag.com", path: "/picks/the-best-time-tracking-software" },
-    { domain: "techradar.com", path: "/best/best-time-management-apps" },
-    { domain: "zdnet.com", path: "/article/best-productivity-apps" },
-    { domain: "reddit.com", path: "/r/productivity/comments/best_tools" },
-    { domain: "quora.com", path: "/What-is-the-best-time-tracking-software" },
-    { domain: "wikipedia.org", path: "/wiki/Time_tracking_software" },
-    { domain: "alternativeto.net", path: "/software/time-doctor" },
-    { domain: "producthunt.com", path: "/topics/productivity" },
-    { domain: "slant.co", path: "/topics/time-trackers" },
-    { domain: "sourceforge.net", path: "/directory/productivity" },
-    { domain: "forbes.com", path: "/advisor/business/software/best-time-tracking" },
-    { domain: "medium.com", path: "/tag/productivity-apps" },
-    { domain: "atlassian.com", path: "/software/jira/time-tracking" },
-    { domain: "monday.com", path: "/features/time-tracking" },
-    { domain: "asana.com", path: "/features/work-management" },
-    { domain: "clickup.com", path: "/features/time-estimates" },
-    { domain: "toggl.com", path: "/track" },
-    { domain: "harvestapp.com", path: "/features" },
-    { domain: "everhour.com", path: "/integrations" },
-    { domain: "desktime.com", path: "/features" },
-    { domain: "rescuetime.com", path: "/tour" },
-    { domain: "teramind.co", path: "/product/employee-monitoring" },
-    { domain: "monitask.com", path: "/features" },
-  ];
-
-  const results: SerpRankingEntry[] = [];
-
-  // Rank 1: Project Target Domain
-  results.push({
-    rank: 1,
-    domain: targetDomain,
-    url: `https://${targetDomain}/features/time-tracking`,
-    change: 0,
-    snippet: `Official website for ${targetDomain} - Comprehensive workforce management and automated tracking.`,
-  });
-
-  // Rank 2 to 4: Non-competitor high authority sites
-  results.push({
-    rank: 2,
-    domain: "getcomposer.org",
-    url: "https://getcomposer.org/download",
-    change: 1,
-    snippet: "Composer is a tool for dependency management in PHP. It allows you to declare libraries.",
-  });
-  results.push({
-    rank: 3,
-    domain: "softwarefinder.com",
-    url: "https://softwarefinder.com/reviews/work-composer",
-    change: -1,
-    snippet: "Verified reviews, feature analysis, and pricing comparison of top workforce tools.",
-  });
-  results.push({
-    rank: 4,
-    domain: "softwareadvice.com",
-    url: "https://softwareadvice.com/productivity/time-tracking-guide",
-    change: 0,
-    snippet: "Buyer guide and user ratings for top-rated corporate monitoring platforms.",
-  });
-
-  // Inject known competitors in ranks 5-10
-  const compOffsets: Record<string, number> = {
-    "SEP-17 2026": 0,
-    "SEP-18 2026": 1,
-    "SEP-19 2026": -1,
-  };
-  const offset = compOffsets[date] || 0;
-
-  compList.forEach((cDomain, idx) => {
-    const cleanDomain = cDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    const rank = 5 + idx;
-    results.push({
-      rank,
-      domain: cleanDomain,
-      url: `https://${cleanDomain}/compare/${targetDomain.replace(/\..*$/, "")}`,
-      change: ((idx % 3) - 1) + offset,
-      snippet: `How ${cleanDomain} compares to other tools in the industry with modern features.`,
-    });
-  });
-
-  // Fill the remaining entries up to 100
-  let currentRank = results.length + 1;
-  let cycle = 0;
-  while (currentRank <= 100) {
-    const template = commonDomains[(currentRank + cycle) % commonDomains.length];
-    const pseudoSub = cycle > 0 ? `sub${cycle}.` : "";
-    const domain = `${pseudoSub}${template.domain}`;
-    results.push({
-      rank: currentRank,
-      domain,
-      url: `https://${domain}${template.path}?q=${encodeURIComponent(keyword)}`,
-      change: (currentRank % 5 === 0) ? 2 : (currentRank % 4 === 0) ? -1 : 0,
-      snippet: `Explore top tools and solutions for ${keyword} with expert benchmarks and evaluations.`,
-    });
-    currentRank++;
-    if (currentRank % commonDomains.length === 0) cycle++;
-  }
-
-  return results;
-}
-
 export function SerpCompetitorsView({
   projectId,
   projectDomain = "",
@@ -301,7 +68,28 @@ export function SerpCompetitorsView({
     .replace(/^www\./i, "")
     .replace(/\/$/, "");
   const brandTitle = cleanDomain ? cleanDomain.split(".")[0].toUpperCase() : "DOMAIN";
-  const domainKeywords = useMemo(() => getSerpKeywordsForDomain(projectDomain), [projectDomain]);
+  const { data: serpLandscape, resultsFor } = useSerpLandscape(projectId);
+  const domainKeywords: SerpKeywordItem[] = useMemo(
+    () =>
+      serpLandscape.keywords.map((k) => ({
+        id: k.keywordId,
+        keyword: k.keyword,
+        searchVolume: k.searchVolume,
+        searchVolumeDisplay:
+          k.searchVolume >= 1000000
+            ? `${(k.searchVolume / 1000000).toFixed(2)}M`
+            : k.searchVolume >= 1000
+            ? `${(k.searchVolume / 1000).toFixed(1)}K`
+            : String(k.searchVolume),
+        group: k.group,
+        tags: k.tags,
+      })),
+    [serpLandscape.keywords]
+  );
+  const ALL_KEYWORD_TAGS = useMemo(
+    () => [...new Set(serpLandscape.keywords.flatMap((k) => k.tags))].sort(),
+    [serpLandscape.keywords]
+  );
 
   // 1. Notice banner dismissal
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
@@ -462,7 +250,7 @@ export function SerpCompetitorsView({
     const rows: string[] = [];
     targetKeywords.forEach((kw) => {
       dates.forEach((d) => {
-        const serpList = generateSerpData(kw.keyword, d, projectDomain, competitorDomainList).slice(0, tierLimit);
+        const serpList = resultsFor(kw.keyword, d).slice(0, tierLimit);
         serpList.forEach((entry) => {
           const cleanSnippet = `"${(entry.snippet || "").replace(/"/g, '""')}"`;
           const cleanUrl = `"${(entry.url || "").replace(/"/g, '""')}"`;
@@ -727,7 +515,7 @@ export function SerpCompetitorsView({
     if (!tagSearchQuery.trim()) return ALL_KEYWORD_TAGS;
     const q = tagSearchQuery.toLowerCase();
     return ALL_KEYWORD_TAGS.filter((t) => t.toLowerCase().includes(q));
-  }, [tagSearchQuery]);
+  }, [tagSearchQuery, ALL_KEYWORD_TAGS]);
 
   // Filtered keywords list based on group, tag, search
   const filteredKeywords = useMemo(() => {
@@ -763,7 +551,10 @@ export function SerpCompetitorsView({
   const activeKeyword = useMemo(() => {
     const found = filteredKeywords.find((k) => k.id === selectedKeywordId);
     if (found) return found;
-    return filteredKeywords[0] || domainKeywords[0];
+    return (
+      filteredKeywords[0] ||
+      domainKeywords[0] || { id: "", keyword: "", searchVolume: 0, searchVolumeDisplay: "0", group: "All", tags: [] }
+    );
   }, [filteredKeywords, selectedKeywordId, domainKeywords]);
 
   // Extract competitor domain strings for matching
@@ -771,7 +562,7 @@ export function SerpCompetitorsView({
     if (competitors && competitors.length > 0) {
       return competitors.map((c) => c.domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, ""));
     }
-    return ["insightful.io", "timedoctor.com", "hubstaff.com", "clockify.me", "activtrak.com"];
+    return [];
   }, [competitors]);
 
   // Derive 3 date comparison columns
@@ -820,7 +611,7 @@ export function SerpCompetitorsView({
   // Generate SERP rows for each date
   const serpColumns = useMemo(() => {
     return dates.map((date) => {
-      const fullList = generateSerpData(activeKeyword.keyword, date, projectDomain, competitorDomainList);
+      const fullList = resultsFor(activeKeyword.keyword, date);
       let sliced = fullList.slice(0, tierLimit);
       if (urlFilter.trim()) {
         const q = urlFilter.toLowerCase();
@@ -832,7 +623,7 @@ export function SerpCompetitorsView({
         totalFound: fullList.length,
       };
     });
-  }, [activeKeyword.keyword, projectDomain, competitorDomainList, tierLimit, urlFilter, dates]);
+  }, [activeKeyword.keyword, resultsFor, tierLimit, urlFilter, dates]);
 
   return (
     <div className="space-y-4 text-slate-800 dark:text-slate-100" data-testid="serp-competitors-view">
@@ -1241,7 +1032,7 @@ export function SerpCompetitorsView({
                         <span>All tags</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {SERP_PROJECT_KEYWORDS.filter((k) => k.tags && k.tags.length > 0).length}
+                        {domainKeywords.filter((k) => k.tags && k.tags.length > 0).length}
                       </span>
                     </label>
                     <label className="flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer text-slate-700 dark:text-slate-200 text-xs select-none">
@@ -1262,7 +1053,7 @@ export function SerpCompetitorsView({
                         <span>Without tags</span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {SERP_PROJECT_KEYWORDS.filter((k) => !k.tags || k.tags.length === 0).length}
+                        {domainKeywords.filter((k) => !k.tags || k.tags.length === 0).length}
                       </span>
                     </label>
                   </div>
@@ -1275,7 +1066,7 @@ export function SerpCompetitorsView({
                       </div>
                     ) : (
                       filteredTagList.map((tag) => {
-                        const count = SERP_PROJECT_KEYWORDS.filter((k) => k.tags?.includes(tag)).length;
+                        const count = domainKeywords.filter((k) => k.tags?.includes(tag)).length;
                         const isChecked = selectedTags.includes(tag);
                         return (
                           <label
@@ -1698,7 +1489,7 @@ export function SerpCompetitorsView({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-              {generateSerpData(activeKeyword.keyword, expandedDate, projectDomain, competitorDomainList).map((row) => (
+              {resultsFor(activeKeyword.keyword, expandedDate).map((row) => (
                 <div key={row.rank} className="py-2.5 flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
                     <span className="w-8 font-bold text-slate-500 pt-0.5">{row.rank}.</span>

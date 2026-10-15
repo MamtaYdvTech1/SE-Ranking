@@ -44,9 +44,9 @@ function IndexStatusCheckerContent() {
   const isResultsTab = searchParams.get('tab') === 'results';
 
   const cleanDomain = useMemo(() => {
-    const raw = activeProject?.domain || (projects && projects[0]?.domain) || '';
+    const raw = activeProject?.domain || '';
     return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
-  }, [activeProject?.domain, projects]);
+  }, [activeProject?.domain]);
 
   const [showBanner, setShowBanner] = useState(true);
   const [engine, setEngine] = useState('Google');

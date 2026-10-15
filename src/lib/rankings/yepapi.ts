@@ -124,6 +124,14 @@ export class YepApiRankingProvider implements RankingProvider {
         let mappedCode: 'CREDITS_EXHAUSTED' | 'INVALID_API_KEY' | 'RATE_LIMITED' | 'TIMEOUT' | 'NETWORK_ERROR' = 'NETWORK_ERROR';
 
         if (errCode === 'NO_CREDITS' || serpRes.error?.statusCode === 402) {
+          const serperKey = process.env.SERPER_API_KEY;
+          if (serperKey && !serperKey.includes('placeholder') && !serperKey.includes('your_')) {
+            const { SerperProvider } = await import('./serper');
+            const serper = new SerperProvider();
+            if (serper.isConfigured()) {
+              return serper.checkRankings(requests, options);
+            }
+          }
           mappedCode = 'CREDITS_EXHAUSTED';
         } else if (errCode === 'INVALID_API_KEY' || serpRes.error?.statusCode === 401) {
           mappedCode = 'INVALID_API_KEY';

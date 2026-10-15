@@ -159,7 +159,7 @@ function AnalyticsPageContent() {
         if (found) return found;
       }
     }
-    return projects[0] || null;
+    return null;
   }, [queryProjectId, activeProject, projects]);
 
   const targetDomain = targetProject?.domain || (targetProject as any)?.websiteUrl || targetProject?.name || '';
@@ -498,6 +498,24 @@ function AnalyticsPageContent() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (!targetProject) {
+    return (
+      <div className="flex-1 bg-[#F5F7FB] min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
+          <Globe className="w-12 h-12 text-[#0B69FF] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 mb-1">
+            {projects && projects.length > 0 ? 'No Project Selected' : 'No Projects Found'}
+          </h2>
+          <p className="text-xs text-gray-500 mb-6">
+            {projects && projects.length > 0
+              ? 'Please select a project to view traffic and analytics telemetry.'
+              : 'Create your first website project to begin tracking SEO rankings, audits, and traffic analytics.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#F5F7FB] min-h-screen text-gray-800 relative pb-12 select-none overflow-x-hidden font-sans flex flex-col justify-between">

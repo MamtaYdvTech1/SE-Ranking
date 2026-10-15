@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import {
   Settings,
   Search,
@@ -62,19 +62,21 @@ const COUNTRIES_LIST: CountryItem[] = getAllCountries().map((c) => ({
 export function SEWizardView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { projects, refreshProjects } = useApp();
+  const params = useParams();
+  const { projects, activeProject, refreshProjects } = useApp();
 
-  const siteIdParam = searchParams.get('site_id');
+  const urlId = (params?.id as string) || searchParams.get('site_id');
 
-  // Match current active project or default to workcomposer
+  // Match route param ID, or active project from context
   const currentProject =
-    (siteIdParam ? projects.find((p) => String(p.id) === String(siteIdParam)) : null) ||
-    projects[0] || {
-      id: '13005482',
-      name: 'Teams',
-      domain: 'workcomposer.com',
-      url: 'https://www.workcomposer.com/',
+    (urlId ? projects.find((p) => String(p.id) === String(urlId)) : null) ||
+    activeProject || {
+      id: '',
+      name: '',
+      domain: '',
+      url: '',
       country: 'India',
+      countryCode: 'in',
     };
 
   // Tab State: supports both query param and hash (#engines, #keywords, etc.)

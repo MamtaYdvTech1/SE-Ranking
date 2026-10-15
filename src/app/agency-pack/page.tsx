@@ -405,7 +405,6 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
           if (d.smtpPort) setSmtpPort(d.smtpPort);
           if (d.smtpSenderEmail) setSmtpSenderEmail(d.smtpSenderEmail);
           if (d.smtpSenderName) setSmtpSenderName(d.smtpSenderName);
-          if (d.smtpPassword) setSmtpPassword(d.smtpPassword);
           if (d.useCustomEmailTemplate !== undefined) setUseCustomEmailTemplate(d.useCustomEmailTemplate);
         }
       })
@@ -523,7 +522,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpSenderEmail, setSmtpSenderEmail] = useState('reports@seranking.com');
   const [smtpSenderName, setSmtpSenderName] = useState('SE Ranking Reports');
-  const [smtpPassword, setSmtpPassword] = useState('kffk ajbh eftv nlmw');
+  const [smtpPassword, setSmtpPassword] = useState('');
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
   const [smtpAuth, setSmtpAuth] = useState(true);
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);

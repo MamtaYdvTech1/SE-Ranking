@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       token: sessionToken,
     });
 
-    return setSessionCookie(res, sessionToken, expiresAt);
+    return await setSessionCookie(res, sessionToken, expiresAt);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Google authentication failed';
     return NextResponse.json({ error: msg }, { status: 500 });

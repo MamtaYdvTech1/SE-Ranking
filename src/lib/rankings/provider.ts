@@ -17,21 +17,18 @@ export function getRankingProvider(): RankingProvider {
 
   const configuredProvider = (process.env.RANKING_PROVIDER || '').toLowerCase().trim();
 
-  if (configuredProvider === 'yepapi' || (!configuredProvider && process.env.YEPAPI_KEY)) {
-    cachedProvider = new YepApiRankingProvider();
-  } else if (configuredProvider === 'serper' || process.env.SERPER_API_KEY) {
+  if (configuredProvider === 'serper') {
     cachedProvider = new SerperProvider();
-  } else if (configuredProvider === 'serpapi' || process.env.SERPAPI_API_KEY) {
+  } else if (configuredProvider === 'yepapi') {
+    cachedProvider = new YepApiRankingProvider();
+  } else if (configuredProvider === 'serpapi') {
     cachedProvider = new SerpApiProvider();
+  } else if (process.env.SERPER_API_KEY && !process.env.SERPER_API_KEY.includes('placeholder') && !process.env.SERPER_API_KEY.includes('your_')) {
+    cachedProvider = new SerperProvider();
+  } else if (process.env.YEPAPI_KEY) {
+    cachedProvider = new YepApiRankingProvider();
   } else {
-    // Default to YepAPI if credentials exist, otherwise Serper or SerpApi
-    if (process.env.YEPAPI_KEY) {
-      cachedProvider = new YepApiRankingProvider();
-    } else if (process.env.SERPER_API_KEY) {
-      cachedProvider = new SerperProvider();
-    } else {
-      cachedProvider = new YepApiRankingProvider();
-    }
+    cachedProvider = new SerperProvider();
   }
 
   return cachedProvider;
