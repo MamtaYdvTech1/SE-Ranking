@@ -22,6 +22,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { CalendarYearDropdown } from "../competitors/CalendarYearDropdown";
+import { columnLabel, isoDay, useAiTrackerData } from "./aiTrackerData";
 
 const CAL_FULL_MONTHS = [
   "January",
@@ -103,553 +104,6 @@ export interface PromptItem {
 
 export const AVAILABLE_GROUPS = ["General"];
 
-export const ALL_AVAILABLE_PROMPTS = [
-  "What are the best tools for enhancing team productivity and collaboration?",
-  "What are some reliable work management tools to help my team stay organized?",
-  "What are the best tools for improving team communication and collaboration?",
-  "What features should I look for in a project management software for my remote team?",
-  "I'm looking for a way to automate our team's workflows; can you recommend a solution?",
-  "Can you recommend a reliable time tracking software for my remote team?",
-  "What are the best remote work tools that help with team collaboration?",
-  "What are the best tools for improving employee engagement in our company?",
-  "How can I improve resource allocation for my team?",
-  "What are the best tools for streamlining my team's workflow?",
-];
-
-export const PROMPT_ITEMS: PromptItem[] = [
-  {
-    id: "prompt-1",
-    text: "What are the best tools for enhancing team productivity and collaboration?",
-    sourcesCount: 5,
-    sources: [
-      {
-        id: "p1-s1",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/en-us/microsoft-teams/group-chat-software",
-        title: "Microsoft Teams | Group Chat, Video Calls & Collaboration",
-        brand: "microsoft",
-      },
-      {
-        id: "p1-s2",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/en-us/microsoft-365/business",
-        title: "Microsoft 365 for Business Suite",
-        brand: "microsoft",
-      },
-      {
-        id: "p1-s3",
-        domain: "appadvisor.in",
-        url: "https://appadvisor.in/best-productivity-tools-2026",
-        title: "Best Team Productivity Tools 2026 - AppAdvisor",
-        brand: "appadvisor",
-      },
-      {
-        id: "p1-s4",
-        domain: "slack.com",
-        url: "https://slack.com/solutions/team-productivity",
-        title: "Slack: Productivity Platform for Next-Gen Teams",
-        brand: "slack",
-      },
-      {
-        id: "p1-s5",
-        domain: "asana.com",
-        url: "https://asana.com/guide/collaboration-productivity",
-        title: "Asana Enterprise Collaboration & Team Productivity",
-        brand: "asana",
-      },
-    ],
-  },
-  {
-    id: "prompt-2",
-    text: "What are some reliable work management tools to help my team?",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p2-s1",
-        domain: "asana.com",
-        url: "https://asana.com/product/work-management",
-        title: "Asana Work Management & Project Coordination",
-        brand: "asana",
-      },
-      {
-        id: "p2-s2",
-        domain: "monday.com",
-        url: "https://monday.com/work-management",
-        title: "Monday.com: Work OS for High-Performance Teams",
-        brand: "monday",
-      },
-      {
-        id: "p2-s3",
-        domain: "clickup.com",
-        url: "https://clickup.com/features/work-management",
-        title: "ClickUp All-in-One Team Work Management",
-        brand: "clickup",
-      },
-      {
-        id: "p2-s4",
-        domain: "trello.com",
-        url: "https://trello.com/en/tour",
-        title: "Trello Visual Boards & Team Workflow Automation",
-        brand: "trello",
-      },
-    ],
-  },
-  {
-    id: "prompt-3",
-    text: "Best workforce management tools for remote engineering teams",
-    sourcesCount: 6,
-    sources: [
-      {
-        id: "p3-s1",
-        domain: "www.atlassian.com",
-        url: "https://www.atlassian.com/software/jira",
-        title: "Jira Software | Issue & Project Tracking for Agile Teams",
-        brand: "jira",
-      },
-      {
-        id: "p3-s2",
-        domain: "linear.app",
-        url: "https://linear.app/method",
-        title: "Linear: The Issue Tracker Built for High-Speed Software Teams",
-        brand: "linear",
-      },
-      {
-        id: "p3-s3",
-        domain: "github.com",
-        url: "https://github.com/features/issues",
-        title: "GitHub Issues & Projects for Distributed Engineering",
-        brand: "github",
-      },
-      {
-        id: "p3-s4",
-        domain: "about.gitlab.com",
-        url: "https://about.gitlab.com/solutions/remote",
-        title: "GitLab Remote Engineering Platform Guide",
-        brand: "gitlab",
-      },
-      {
-        id: "p3-s5",
-        domain: "slack.com",
-        url: "https://slack.com/solutions/remote-work",
-        title: "Slack for Remote Engineering Communication",
-        brand: "slack",
-      },
-      {
-        id: "p3-s6",
-        domain: "notion.so",
-        url: "https://www.notion.so/product/wikis",
-        title: "Notion Engineering Wikis and Async Docs",
-        brand: "notion",
-      },
-    ],
-  },
-  {
-    id: "prompt-4",
-    text: "Leading cloud collaboration software for enterprises",
-    sourcesCount: 5,
-    sources: [
-      {
-        id: "p4-s1",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/en-us/microsoft-365/enterprise",
-        title: "Microsoft 365 Enterprise Cloud Collaboration",
-        brand: "microsoft",
-      },
-      {
-        id: "p4-s2",
-        domain: "workspace.google.com",
-        url: "https://workspace.google.com/solutions/collaboration",
-        title: "Google Workspace Cloud Collaboration for Enterprise",
-        brand: "google",
-      },
-      {
-        id: "p4-s3",
-        domain: "slack.com",
-        url: "https://slack.com/enterprise",
-        title: "Slack Enterprise Grid: Secure Digital Headquarters",
-        brand: "slack",
-      },
-      {
-        id: "p4-s4",
-        domain: "box.com",
-        url: "https://www.box.com/content-cloud",
-        title: "Box Enterprise Content Management & Collaboration",
-        brand: "box",
-      },
-      {
-        id: "p4-s5",
-        domain: "dropbox.com",
-        url: "https://www.dropbox.com/business",
-        title: "Dropbox Business Secure Team Collaboration",
-        brand: "dropbox",
-      },
-    ],
-  },
-  {
-    id: "prompt-5",
-    text: "I'm looking for a way to automate our team's workflows; can you help?",
-    sourcesCount: 3,
-    sources: [
-      {
-        id: "p5-s1",
-        domain: "zapier.com",
-        url: "https://zapier.com/workflows",
-        title: "Zapier: Workflow Automation for Business",
-        brand: "zapier",
-      },
-      {
-        id: "p5-s2",
-        domain: "make.com",
-        url: "https://www.make.com/en/platform",
-        title: "Make.com: Visual Workflow Automation Engine",
-        brand: "make",
-      },
-      {
-        id: "p5-s3",
-        domain: "powerautomate.microsoft.com",
-        url: "https://powerautomate.microsoft.com",
-        title: "Microsoft Power Automate: Enterprise Process Automation",
-        brand: "microsoft",
-      },
-    ],
-  },
-  {
-    id: "prompt-6",
-    text: "Can you recommend a reliable time tracking software for my company?",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p6-s1",
-        domain: "clockify.me",
-        url: "https://clockify.me/features",
-        title: "Clockify: Free Employee Time Tracker & Timesheet",
-        brand: "clockify",
-      },
-      {
-        id: "p6-s2",
-        domain: "toggl.com",
-        url: "https://toggl.com/track",
-        title: "Toggl Track: Effortless Time Tracking & Reporting",
-        brand: "toggl",
-      },
-      {
-        id: "p6-s3",
-        domain: "getharvest.com",
-        url: "https://www.getharvest.com",
-        title: "Harvest: Time Tracking, Invoicing, & Expense Logging",
-        brand: "harvest",
-      },
-      {
-        id: "p6-s4",
-        domain: "quickbooks.intuit.com",
-        url: "https://quickbooks.intuit.com/time-tracking",
-        title: "QuickBooks Time: GPS & Mobile Time Clock System",
-        brand: "quickbooks",
-      },
-    ],
-  },
-  {
-    id: "prompt-7",
-    text: "What are the best tools for improving team communication and workflow?",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p7-s1",
-        domain: "slack.com",
-        url: "https://slack.com/features",
-        title: "Slack Channels and Huddles for Modern Teams",
-        brand: "slack",
-      },
-      {
-        id: "p7-s2",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/teams",
-        title: "Microsoft Teams: Instant Video, Chat, & Meetings",
-        brand: "microsoft",
-      },
-      {
-        id: "p7-s3",
-        domain: "zoom.us",
-        url: "https://zoom.us/products/team-chat",
-        title: "Zoom Team Chat & Workspace Collaboration",
-        brand: "zoom",
-      },
-      {
-        id: "p7-s4",
-        domain: "notion.so",
-        url: "https://notion.so/product",
-        title: "Notion: Connected Workspace for Wiki, Docs & Projects",
-        brand: "notion",
-      },
-    ],
-  },
-  {
-    id: "prompt-8",
-    text: "What are the best tools for improving employee engagement and culture?",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p8-s1",
-        domain: "cultureamp.com",
-        url: "https://www.cultureamp.com/platform",
-        title: "Culture Amp: Employee Engagement & Performance Management",
-        brand: "cultureamp",
-      },
-      {
-        id: "p8-s2",
-        domain: "15five.com",
-        url: "https://www.15five.com",
-        title: "15Five: Holistic Performance & Continuous Feedback",
-        brand: "15five",
-      },
-      {
-        id: "p8-s3",
-        domain: "lattice.com",
-        url: "https://lattice.com/products/engagement",
-        title: "Lattice: People Management & Engagement Platform",
-        brand: "lattice",
-      },
-      {
-        id: "p8-s4",
-        domain: "bonus.ly",
-        url: "https://bonus.ly",
-        title: "Bonusly: Peer-to-Peer Recognition and Rewards",
-        brand: "bonusly",
-      },
-    ],
-  },
-  {
-    id: "prompt-9",
-    text: "Best time tracking software for remote workers",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p9-s1",
-        domain: "hubstaff.com",
-        url: "https://hubstaff.com/remote-work-time-tracker",
-        title: "Hubstaff: Remote Team Monitoring & Time Tracking",
-        brand: "hubstaff",
-      },
-      {
-        id: "p9-s2",
-        domain: "timedoctor.com",
-        url: "https://www.timedoctor.com",
-        title: "Time Doctor: Employee Productivity & Work Insights",
-        brand: "timedoctor",
-      },
-      {
-        id: "p9-s3",
-        domain: "toggl.com",
-        url: "https://toggl.com/track/remote",
-        title: "Toggl Track for Distributed & Freelance Teams",
-        brand: "toggl",
-      },
-      {
-        id: "p9-s4",
-        domain: "clockify.me",
-        url: "https://clockify.me/remote-teams",
-        title: "Clockify for Remote Teams & Contractor Billing",
-        brand: "clockify",
-      },
-    ],
-  },
-  {
-    id: "prompt-10",
-    text: "How can I improve resource allocation for my team?",
-    sourcesCount: 4,
-    sources: [
-      {
-        id: "p10-s1",
-        domain: "float.com",
-        url: "https://www.float.com",
-        title: "Float: Resource Management and Capacity Planning",
-        brand: "float",
-      },
-      {
-        id: "p10-s2",
-        domain: "runn.io",
-        url: "https://www.runn.io/resource-planning",
-        title: "Runn.io: Real-Time Resource & Forecasting Platform",
-        brand: "runn",
-      },
-      {
-        id: "p10-s3",
-        domain: "resourceguruapp.com",
-        url: "https://resourceguruapp.com",
-        title: "Resource Guru: Fast Team Scheduling & Booking Calendar",
-        brand: "resourceguru",
-      },
-      {
-        id: "p10-s4",
-        domain: "smartsheet.com",
-        url: "https://www.smartsheet.com/resource-management",
-        title: "Smartsheet Resource Management & Project Allocation",
-        brand: "smartsheet",
-      },
-    ],
-  },
-];
-
-export const AVAILABLE_PROMPTS = PROMPT_ITEMS.map((p) => p.text);
-
-const MULTI_DATE_DATA: Record<string, DateColumnData> = {
-  "Sep-20 2026": {
-    dateKey: "Sep-20 2026",
-    displayDate: "Sep-20 2026",
-    mentions: [
-      { rank: 1, name: "Microsoft Teams" },
-      { rank: 2, name: "Slack" },
-      { rank: 3, name: "Google Workspace" },
-      { rank: 4, name: "Zoho Cliq" },
-      { rank: 5, name: "Asana" },
-      { rank: 6, name: "Miro" },
-      { rank: 7, name: "ClickUp" },
-      { rank: 8, name: "Notion" },
-      { rank: 9, name: "Zoho Workplace" },
-    ],
-    sources: [
-      {
-        id: "s-20-1",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/en-us/microsoft-teams/group-chat-software",
-        title: "Microsoft Teams | Group Chat, Video Calls & Collaboration",
-        brand: "microsoft",
-      },
-      {
-        id: "s-20-2",
-        domain: "www.microsoft.com",
-        url: "https://www.microsoft.com/en-us/microsoft-365/business",
-        title: "Microsoft 365 for Business Suite",
-        brand: "microsoft",
-      },
-      {
-        id: "s-20-3",
-        domain: "appadvisor.in",
-        url: "https://appadvisor.in/best-productivity-tools-2026",
-        title: "Best Team Productivity Tools 2026 - AppAdvisor",
-        brand: "appadvisor",
-      },
-      {
-        id: "s-20-4",
-        domain: "appadvisor.in",
-        url: "https://appadvisor.in/team-collaboration-guide",
-        title: "Complete Team Collaboration Guide - AppAdvisor India",
-        brand: "appadvisor",
-      },
-    ],
-    answerText:
-      "When evaluating the best tools for enhancing team productivity and collaboration in 2026, leading organizations rely on comprehensive digital workplace platforms.\n\n1. Microsoft Teams & Microsoft 365: Central hub for communication, document co-authoring, and enterprise governance.\n2. Slack: Exceptional real-time channel communication with deep workflow automations.\n3. Asana & ClickUp: Robust task planning, milestone tracking, and sprint coordination.\n4. Notion: Flexible knowledge bases, wikis, and team documentation.\n5. Zoho Workplace & Zoho Cliq: Integrated suite with cost-effective suite pricing.\n6. Google Workspace: Cloud-native real-time document editing and video meetings.",
-    cachedSnapshot: JSON.stringify(
-      {
-        engine: "ChatGPT (GPT-4o)",
-        region: "India (en-IN)",
-        crawledAt: "2026-09-20T08:30:00Z",
-        prompt: "What are the best tools for enhancing team productivity and collaboration?",
-        mentionsCount: 9,
-        sourcesCount: 4,
-      },
-      null,
-      2
-    ),
-  },
-  "Sep-21 2026": {
-    dateKey: "Sep-21 2026",
-    displayDate: "Sep-21 2026",
-    mentions: [
-      { rank: 1, name: "Microsoft Teams" },
-    ],
-    sources: [], // Empty state
-    answerText:
-      "The top productivity ecosystem remains Microsoft 365, combining Teams for instant conferencing, Outlook for enterprise messaging, Word, Excel, and PowerPoint for content authoring, and OneDrive for secure cloud synchronization.",
-    cachedSnapshot: JSON.stringify(
-      {
-        engine: "ChatGPT (GPT-4o)",
-        region: "India (en-IN)",
-        crawledAt: "2026-09-21T08:30:00Z",
-        prompt: "What are the best tools for enhancing team productivity and collaboration?",
-        mentionsCount: 1,
-        sourcesCount: 0,
-      },
-      null,
-      2
-    ),
-  },
-  "Sep-22 2026": {
-    dateKey: "Sep-22 2026",
-    displayDate: "Sep-22 2026",
-    mentions: [
-      { rank: 1, name: "Microsoft Teams" },
-      { rank: 2, name: "Slack" },
-      { rank: 3, name: "Google Workspace" },
-      { rank: 4, name: "Asana" },
-      { rank: 5, name: "ClickUp" },
-      { rank: 6, name: "Zoom" },
-      { rank: 7, name: "Trello" },
-      { rank: 8, name: "Jira" },
-      { rank: 9, name: "Confluence" },
-      { rank: 10, name: "Zoho Projects" },
-    ],
-    sources: [
-      {
-        id: "s-22-1",
-        domain: "www.zoho.com",
-        url: "https://www.zoho.com/workplace",
-        title: "Zoho Workplace Collaboration Suite",
-        brand: "zoho",
-      },
-      {
-        id: "s-22-2",
-        domain: "www.appadvisor.in",
-        url: "https://appadvisor.in/collaboration-tools-2026",
-        title: "AppAdvisor: Top Team Collaboration Tools 2026",
-        brand: "appadvisor",
-      },
-      {
-        id: "s-22-3",
-        domain: "www.taskwith.ai",
-        url: "https://www.taskwith.ai",
-        title: "TaskWith.ai: AI Smart Task Coordination",
-        brand: "taskwith",
-      },
-      {
-        id: "s-22-4",
-        domain: "www.pib.gov.in",
-        url: "https://pib.gov.in/PressReleasePage.aspx?PRID=2026",
-        title: "Press Information Bureau: Digital Workplaces in India",
-        brand: "pib",
-      },
-      {
-        id: "s-22-5",
-        domain: "www.pib.gov.in",
-        url: "https://pib.gov.in/digital-workplaces",
-        title: "PIB Portal: Digital Governance & Engineering Collaboration",
-        brand: "pib",
-      },
-      {
-        id: "s-22-6",
-        domain: "www.appadvisor.in",
-        url: "https://appadvisor.in/guide",
-        title: "AppAdvisor Guide: Choosing Modern Software",
-        brand: "appadvisor",
-      },
-    ],
-    answerText:
-      "Top tools for workplace productivity and collaboration include Microsoft Teams and Microsoft 365 for end-to-end enterprise synergy, Google Workspace for rapid web collaboration, Slack for agile messaging, Asana, Notion, and Trello for team workflows, ClickUp for all-in-one workspaces, and Atlassian Jira and Confluence for technical teams.",
-    cachedSnapshot: JSON.stringify(
-      {
-        engine: "ChatGPT (GPT-4o)",
-        region: "India (en-IN)",
-        crawledAt: "2026-09-22T08:30:00Z",
-        prompt: "What are the best tools for enhancing team productivity and collaboration?",
-        mentionsCount: 12,
-        sourcesCount: 2,
-      },
-      null,
-      2
-    ),
-  },
-};
-
 export const AI_GUEST_MODULE_DEFINITIONS = [
   { key: "projectOverview", label: "Project Overview", icon: "📊", description: "Summary metrics and project visibility" },
   { key: "rankings", label: "Rankings", icon: "📈", description: "Detailed keyword positions and search engine ranks" },
@@ -662,7 +116,7 @@ export const AI_GUEST_MODULE_DEFINITIONS = [
 
 export function AiCompetitorsView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "",
 }: AiCompetitorsViewProps) {
   const router = useRouter();
   const baseHref = `/projects/${projectId}`;
@@ -728,8 +182,17 @@ export function AiCompetitorsView({
   // Toolbar Prompts filter state
   const [isToolbarPromptFilterOpen, setIsToolbarPromptFilterOpen] = useState(false);
   const [toolbarPromptSearchQuery, setToolbarPromptSearchQuery] = useState("");
-  const [toolbarSelectedPrompts, setToolbarSelectedPrompts] = useState<string[]>(ALL_AVAILABLE_PROMPTS);
-  const [toolbarStagedSelectedPrompts, setToolbarStagedSelectedPrompts] = useState<string[]>(ALL_AVAILABLE_PROMPTS);
+  // Prompts that have stored answers for this project
+  const { insights: aiInsights } = useAiTrackerData(projectId);
+  const PROMPT_ITEMS: PromptItem[] = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const a of aiInsights.answers) if (!seen.has(a.prompt)) seen.set(a.prompt, a.sourcesCount ?? 0);
+    return [...seen.entries()].map(([text, sourcesCount], idx) => ({ id: `prompt-${idx + 1}`, text, sourcesCount }));
+  }, [aiInsights.answers]);
+  const ALL_AVAILABLE_PROMPTS = useMemo(() => PROMPT_ITEMS.map((p) => p.text), [PROMPT_ITEMS]);
+
+  const [toolbarSelectedPrompts, setToolbarSelectedPrompts] = useState<string[]>([]);
+  const [toolbarStagedSelectedPrompts, setToolbarStagedSelectedPrompts] = useState<string[]>([]);
   const toolbarPromptFilterRef = useRef<HTMLDivElement>(null);
 
   // Analyzed Prompt strip state
@@ -740,14 +203,50 @@ export function AiCompetitorsView({
   const promptSearchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedPrompt = useMemo(() => {
-    return PROMPT_ITEMS.find((p) => p.id === selectedPromptId)?.text || PROMPT_ITEMS[0].text;
-  }, [selectedPromptId]);
+    return PROMPT_ITEMS.find((p) => p.id === selectedPromptId)?.text || PROMPT_ITEMS[0]?.text || "";
+  }, [selectedPromptId, PROMPT_ITEMS]);
+
+  // Up to three latest answer days for the selected prompt; brands ranked by first link in the answer
+  const MULTI_DATE_DATA: Record<string, DateColumnData> = useMemo(() => {
+    const own = (projectDomain || aiInsights.domain).replace(/^https?:\/\//, "").replace(/^www\./, "").toLowerCase();
+    const latestPerDay = new Map<string, (typeof aiInsights.answers)[number]>();
+    for (const a of [...aiInsights.answers].filter((x) => x.prompt === selectedPrompt).reverse()) {
+      latestPerDay.set(isoDay(new Date(a.answeredAt)), a);
+    }
+    const days = [...latestPerDay.keys()].sort().slice(-3);
+    const out: Record<string, DateColumnData> = {};
+    for (const day of days) {
+      const a = latestPerDay.get(day)!;
+      const sources = a.sources || [];
+      const order: string[] = [];
+      for (const src of sources) if (!order.includes(src.domain)) order.push(src.domain);
+      for (const d of a.competitors || []) if (!order.includes(d)) order.push(d);
+      if (a.mention && own && !order.some((d) => d === own || d.endsWith(`.${own}`))) order.push(own);
+      const key = columnLabel(day);
+      out[key] = {
+        dateKey: key,
+        displayDate: key,
+        mentions: order.map((name, i) => ({ rank: i + 1, name })),
+        sources: sources.map((src, i) => ({
+          id: `${day}-${i}`,
+          domain: src.domain,
+          url: src.url,
+          title: src.domain,
+          brand: "other" as const,
+        })),
+        answerText: a.answer || "",
+        cachedSnapshot: a.answer || "",
+      };
+    }
+    return out;
+  }, [aiInsights, selectedPrompt, projectDomain]);
+  const columnKeys = useMemo(() => Object.keys(MULTI_DATE_DATA), [MULTI_DATE_DATA]);
 
   const filteredPromptItems = useMemo(() => {
     const q = promptFilterQuery.trim().toLowerCase();
     if (!q) return PROMPT_ITEMS;
     return PROMPT_ITEMS.filter((p) => p.text.toLowerCase().includes(q));
-  }, [promptFilterQuery]);
+  }, [promptFilterQuery, PROMPT_ITEMS]);
 
   useEffect(() => {
     if (isPromptDropdownOpen) {
@@ -1092,7 +591,7 @@ export function AiCompetitorsView({
     });
 
     return result;
-  }, [searchQuery]);
+  }, [searchQuery, MULTI_DATE_DATA]);
 
   const handleCopyGuestLink = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -1862,7 +1361,7 @@ export function AiCompetitorsView({
                     title="View sources for selected prompt"
                     onClick={() => {
                       const cur =
-                        PROMPT_ITEMS.find((p) => p.id === selectedPromptId) || PROMPT_ITEMS[0];
+                        PROMPT_ITEMS.find((p) => p.id === selectedPromptId) || PROMPT_ITEMS[0] || { id: "", text: "No prompts checked yet", sourcesCount: 0 };
                       setViewingPromptSources(cur);
                     }}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-blue-600 transition cursor-pointer"
@@ -2037,7 +1536,7 @@ export function AiCompetitorsView({
 
       {/* 6. Multi-Date Column Grid (Sep-20 2026, Sep-21 2026, Sep-22 2026) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {["Sep-20 2026", "Sep-21 2026", "Sep-22 2026"].map((dateKey) => {
+        {columnKeys.map((dateKey, colIdx) => {
           const colData = MULTI_DATE_DATA[dateKey];
           const filtered = filteredColumns[dateKey] || { mentions: [], sources: [] };
 
@@ -2081,12 +1580,7 @@ export function AiCompetitorsView({
                         highlightedMention?.trim().toLowerCase() === m.name.trim().toLowerCase();
 
                       // Find next column connection
-                      const nextDateKey =
-                        dateKey === "Sep-20 2026"
-                          ? "Sep-21 2026"
-                          : dateKey === "Sep-21 2026"
-                          ? "Sep-22 2026"
-                          : null;
+                      const nextDateKey = columnKeys[colIdx + 1] ?? null;
                       const nextColMentions = nextDateKey
                         ? filteredColumns[nextDateKey]?.mentions || MULTI_DATE_DATA[nextDateKey]?.mentions
                         : null;
@@ -2215,7 +1709,7 @@ export function AiCompetitorsView({
                   )}
 
                   {/* Fill subtle diagonal stripes for Sep-21 2026 remaining space */}
-                  {dateKey === "Sep-21 2026" && (
+                  {colIdx === 1 && (
                     <div
                       aria-hidden="true"
                       className="mx-3.5 my-2 flex-1 min-h-[220px] rounded-lg border border-dashed border-slate-200 dark:border-slate-700/80 bg-[repeating-linear-gradient(45deg,#f8fafc,#f8fafc_8px,#f1f5f9_8px,#f1f5f9_16px)] dark:bg-[repeating-linear-gradient(45deg,#0f172a,#0f172a_8px,#1e293b_8px,#1e293b_16px)]"
@@ -2429,7 +1923,7 @@ export function AiCompetitorsView({
                       })}
 
                       {/* Diagonal stripes pattern below Sep-22 2026 rows */}
-                      {dateKey === "Sep-22 2026" && (
+                      {colIdx === 2 && (
                         <div
                           aria-hidden="true"
                           className="mt-2 h-14 rounded-lg border border-dashed border-slate-200 dark:border-slate-700/80 bg-[repeating-linear-gradient(45deg,#f8fafc,#f8fafc_8px,#f1f5f9_8px,#f1f5f9_16px)] dark:bg-[repeating-linear-gradient(45deg,#0f172a,#0f172a_8px,#1e293b_8px,#1e293b_16px)]"

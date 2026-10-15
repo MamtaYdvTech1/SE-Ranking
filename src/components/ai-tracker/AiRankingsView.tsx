@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Gauge, ChevronDown, ChevronUp, RotateCw, Sparkles } from "lucide-react";
 import { CalendarYearDropdown } from "../competitors/CalendarYearDropdown";
+import { columnLabel, isoDay, latestByQueryAndDay, latestCheckDays, useAiTrackerData } from "./aiTrackerData";
 
 const CAL_FULL_MONTHS = [
   "January",
@@ -73,45 +74,6 @@ export interface IntervalChartData {
   sources: { general: number[]; top3: number[] };
 }
 
-export const PRESENCE_INTERVAL_DATA: Record<TimelineInterval, IntervalChartData> = {
-  CURRENT: {
-    labels: ["19 Sep", "20 Sep", "21 Sep"],
-    mention: { general: [0, 0, 0], top3: [0, 0, 0] },
-    link: { general: [0, 0, 0], top3: [0, 0, 0] },
-    sources: { general: [100, 60, 20], top3: [100, 60, 20] },
-  },
-  "7D": {
-    labels: ["15 Sep", "16 Sep", "17 Sep", "18 Sep", "19 Sep", "20 Sep", "21 Sep"],
-    mention: { general: [0, 0, 0, 0, 0, 0, 0], top3: [0, 0, 0, 0, 0, 0, 0] },
-    link: { general: [0, 0, 0, 0, 0, 0, 0], top3: [0, 0, 0, 0, 0, 0, 0] },
-    sources: { general: [100, 95, 90, 80, 60, 40, 20], top3: [100, 95, 90, 80, 60, 40, 20] },
-  },
-  "1M": {
-    labels: ["23 Aug", "30 Aug", "6 Sep", "13 Sep", "21 Sep"],
-    mention: { general: [15, 12, 8, 5, 0], top3: [10, 8, 5, 0, 0] },
-    link: { general: [10, 8, 5, 2, 0], top3: [5, 4, 0, 0, 0] },
-    sources: { general: [95, 90, 80, 60, 25], top3: [90, 85, 70, 50, 20] },
-  },
-  "3M": {
-    labels: ["Jul", "Aug", "Sep"],
-    mention: { general: [22, 15, 5], top3: [15, 10, 0] },
-    link: { general: [15, 10, 2], top3: [10, 5, 0] },
-    sources: { general: [90, 70, 25], top3: [85, 60, 20] },
-  },
-  "6M": {
-    labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"],
-    mention: { general: [28, 24, 20, 15, 8, 0], top3: [20, 18, 15, 10, 5, 0] },
-    link: { general: [18, 15, 12, 8, 4, 0], top3: [12, 10, 8, 5, 0, 0] },
-    sources: { general: [100, 95, 90, 80, 60, 25], top3: [95, 90, 85, 75, 50, 20] },
-  },
-  "12M": {
-    labels: ["Oct", "Dec", "Feb", "Apr", "Jun", "Sep"],
-    mention: { general: [35, 30, 25, 18, 10, 0], top3: [25, 20, 18, 12, 5, 0] },
-    link: { general: [22, 18, 15, 10, 5, 0], top3: [15, 12, 10, 5, 2, 0] },
-    sources: { general: [95, 100, 95, 85, 60, 25], top3: [90, 95, 90, 80, 50, 20] },
-  },
-};
-
 export interface PromptDateResult {
   mentionText: string;
   isMentionListed: boolean;
@@ -126,133 +88,122 @@ export interface AiPromptItem {
   targetUrl: string;
   hasUserIcon?: boolean;
   group: string;
-  results: {
-    "Sep-19 2026": PromptDateResult;
-    "Sep-20 2026": PromptDateResult;
-    "Sep-21 2026": PromptDateResult;
-  };
+  /** Keyed by column label, e.g. "Sep-21 2026" */
+  results: Record<string, PromptDateResult>;
 }
 
-export const INITIAL_RANKINGS_PROMPTS: AiPromptItem[] = [
-  {
-    id: "p-1",
-    promptText: "What are the best tools for enhancing team productivity and collaboration?",
-    targetUrl: "workcomposer.com/features/productivity",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-2",
-    promptText: "What are some reliable work management tools to help my team stay organized?",
-    targetUrl: "workcomposer.com/features/work-management",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-3",
-    promptText: "What are the best tools for improving team communication and collaboration?",
-    targetUrl: "workcomposer.com/solutions/communication",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-4",
-    promptText: "What features should I look for in a project management software for my remote team?",
-    targetUrl: "workcomposer.com/features/remote-teams",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-5",
-    promptText: "I'm looking for a way to automate our team's workflows; can you recommend a solution?",
-    targetUrl: "workcomposer.com/features/workflow-automation",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-6",
-    promptText: "Can you recommend a reliable time tracking software for my remote team?",
-    targetUrl: "workcomposer.com/features/time-tracking",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-7",
-    promptText: "What are the best remote work tools that help with team collaboration?",
-    targetUrl: "workcomposer.com/solutions/remote-work",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-8",
-    promptText: "What are the best tools for improving employee engagement in our company?",
-    targetUrl: "workcomposer.com/solutions/employee-engagement",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-9",
-    promptText: "How can I improve resource allocation for my team?",
-    targetUrl: "workcomposer.com/features/resource-planning",
-    hasUserIcon: true,
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-  {
-    id: "p-10",
-    promptText: "What are the best tools for streamlining my team's workflow?",
-    targetUrl: "workcomposer.com/features/productivity",
-    group: "General",
-    results: {
-      "Sep-19 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-20 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-      "Sep-21 2026": { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 5 },
-    },
-  },
-];
 
 export function AiRankingsView({
   projectId,
-  projectDomain = "workcomposer.com",
+  projectDomain = "",
 }: AiRankingsViewProps) {
   const baseHref = `/projects/${projectId}`;
   const router = useRouter();
+
+  // Stored AI checks for this project: rows per prompt, three latest check days as columns
+  const { records: aiRecords, insights: aiInsights } = useAiTrackerData(projectId);
+  const checkDays = useMemo(() => latestCheckDays(aiRecords), [aiRecords]);
+  const dateKeys = useMemo(() => checkDays.map(columnLabel), [checkDays]);
+
+  const rankingPrompts: AiPromptItem[] = useMemo(() => {
+    const byQuery = latestByQueryAndDay(aiRecords);
+    const sourcesFor = (query: string, day: string) => {
+      const answer = aiInsights.answers.find((a) => a.prompt === query && isoDay(new Date(a.answeredAt)) === day);
+      return answer?.sourcesCount ?? 0;
+    };
+    return [...byQuery.entries()].map(([query, perDay], idx) => {
+      const results: Record<string, PromptDateResult> = {};
+      checkDays.forEach((day, i) => {
+        const r = perDay.get(day);
+        results[dateKeys[i]] = r
+          ? {
+              mentionText: r.mentioned ? (r.citationPosition ? String(r.citationPosition) : "Yes") : "—",
+              isMentionListed: r.mentioned,
+              linkText: r.citedUrl ? String(r.citationPosition ?? 1) : "—",
+              isLinkListed: Boolean(r.citedUrl),
+              sourcesCount: sourcesFor(query, day),
+            }
+          : { mentionText: "—", isMentionListed: false, linkText: "—", isLinkListed: false, sourcesCount: 0 };
+      });
+      const latestWithUrl = [...perDay.values()].reverse().find((r) => r.citedUrl);
+      return {
+        id: `prompt-${idx + 1}`,
+        promptText: query,
+        targetUrl: latestWithUrl?.citedUrl?.replace(/^https?:\/\//, "") || "—",
+        group: "General",
+        results,
+      };
+    });
+  }, [aiRecords, aiInsights.answers, checkDays, dateKeys]);
+
+  // Presence over time: share of prompts mentioned / linked, and of answers that cited sources
+  const presenceData: Record<TimelineInterval, IntervalChartData> = useMemo(() => {
+    const bucketsFor = (interval: TimelineInterval): Array<{ label: string; from: Date; to: Date }> => {
+      const now = new Date();
+      const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      if (interval === "CURRENT") {
+        return checkDays.map((day) => {
+          const from = new Date(`${day}T00:00:00`);
+          return { label: fmt(from), from, to: new Date(from.getTime() + 86400000) };
+        });
+      }
+      if (interval === "7D") {
+        return Array.from({ length: 7 }, (_, i) => {
+          const from = startOfDay(new Date(now.getTime() - (6 - i) * 86400000));
+          return { label: fmt(from), from, to: new Date(from.getTime() + 86400000) };
+        });
+      }
+      if (interval === "1M") {
+        return Array.from({ length: 5 }, (_, i) => {
+          const from = startOfDay(new Date(now.getTime() - (34 - i * 7) * 86400000));
+          return { label: fmt(from), from, to: new Date(from.getTime() + 7 * 86400000) };
+        });
+      }
+      const months = interval === "3M" ? 3 : interval === "6M" ? 6 : 12;
+      return Array.from({ length: months }, (_, i) => {
+        const from = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+        return {
+          label: from.toLocaleDateString("en-GB", { month: "short" }),
+          from,
+          to: new Date(from.getFullYear(), from.getMonth() + 1, 1),
+        };
+      });
+    };
+    const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
+    const build = (interval: TimelineInterval): IntervalChartData => {
+      const buckets = bucketsFor(interval);
+      const inBucket = <T,>(items: T[], at: (x: T) => string, b: { from: Date; to: Date }) =>
+        items.filter((x) => {
+          const t = new Date(at(x)).getTime();
+          return t >= b.from.getTime() && t < b.to.getTime();
+        });
+      const series = (pick: (rs: typeof aiRecords) => number) => buckets.map((b) => pick(inBucket(aiRecords, (r) => r.checkedAt, b)));
+      return {
+        labels: buckets.map((b) => b.label),
+        mention: {
+          general: series((rs) => pct(rs.filter((r) => r.mentioned).length, rs.length)),
+          top3: series((rs) => pct(rs.filter((r) => r.mentioned && (r.citationPosition ?? 99) <= 3).length, rs.length)),
+        },
+        link: {
+          general: series((rs) => pct(rs.filter((r) => r.citedUrl).length, rs.length)),
+          top3: series((rs) => pct(rs.filter((r) => r.citedUrl && (r.citationPosition ?? 99) <= 3).length, rs.length)),
+        },
+        sources: {
+          general: buckets.map((b) => {
+            const ans = inBucket(aiInsights.answers, (a) => a.answeredAt, b);
+            return pct(ans.filter((a) => (a.sourcesCount ?? 0) > 0).length, ans.length);
+          }),
+          top3: buckets.map((b) => {
+            const ans = inBucket(aiInsights.answers, (a) => a.answeredAt, b);
+            return pct(ans.filter((a) => (a.sourcesCount ?? 0) > 0 && a.link).length, ans.length);
+          }),
+        },
+      };
+    };
+    const intervals: TimelineInterval[] = ["CURRENT", "7D", "1M", "3M", "6M", "12M"];
+    return Object.fromEntries(intervals.map((i) => [i, build(i)])) as Record<TimelineInterval, IntervalChartData>;
+  }, [aiRecords, aiInsights.answers, checkDays]);
 
   // 1. Top Notice Alert Banner
   const [isNoticeVisible, setIsNoticeVisible] = useState(true);
@@ -564,21 +515,16 @@ export function AiRankingsView({
         "Prompt",
         "URL",
         "Group",
-        "Sep-19 Mention",
-        "Sep-19 Link",
-        "Sep-20 Mention",
-        "Sep-20 Link",
-        "Sep-21 Mention",
-        "Sep-21 Link",
+        ...dateKeys.flatMap((d) => [`${d} Mention`, `${d} Link`]),
       ];
       if (includeRankingChanges) {
         headers.push("Mention Change", "Link Change");
       }
 
       const rows = filteredPrompts.map((p) => {
-        const r19 = p.results["Sep-19 2026"];
-        const r20 = p.results["Sep-20 2026"];
-        const r21 = p.results["Sep-21 2026"];
+        const r19 = p.results[dateKeys[0]];
+        const r20 = p.results[dateKeys[1]];
+        const r21 = p.results[dateKeys[2]];
         const row = [
           `"${p.promptText.replace(/"/g, '""')}"`,
           `"${p.targetUrl}"`,
@@ -762,7 +708,7 @@ export function AiRankingsView({
 
   // Filtered prompts
   const filteredPrompts = useMemo(() => {
-    return INITIAL_RANKINGS_PROMPTS.filter((p) => {
+    return rankingPrompts.filter((p) => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesQuery = p.promptText.toLowerCase().includes(q) || p.targetUrl.toLowerCase().includes(q);
@@ -774,7 +720,7 @@ export function AiRankingsView({
       }
 
       // Check latest date result
-      const latestResult = p.results["Sep-21 2026"];
+      const latestResult = p.results[dateKeys[2]];
 
       // Mention position filtering
       const hasMentionFilter = mentionFrom || mentionTo || mentionNoMentions || mentionNotPresentInLlm;
@@ -2035,7 +1981,7 @@ export function AiRankingsView({
 
       {/* 7. Chart Views & Timeline Filter */}
       {(() => {
-        const activeChartData = PRESENCE_INTERVAL_DATA[timelineRange] || PRESENCE_INTERVAL_DATA.CURRENT;
+        const activeChartData = presenceData[timelineRange] || presenceData.CURRENT;
         const scopeKey = chartScope === "TOP 3" ? "top3" : "general";
         const mentionValues = activeChartData.mention[scopeKey];
         const linkValues = activeChartData.link[scopeKey];
@@ -2513,13 +2459,13 @@ export function AiRankingsView({
                 <th className="px-3 py-2 min-w-[280px]" rowSpan={2}>Prompt</th>
                 <th className="px-3 py-2 min-w-[140px]" rowSpan={2}>URL</th>
                 <th className="px-3 py-1 text-center border-l border-slate-200 dark:border-slate-800" colSpan={2}>
-                  Sep-19 2026
+                  {dateKeys[0]}
                 </th>
                 <th className="px-3 py-1 text-center border-l border-slate-200 dark:border-slate-800" colSpan={2}>
-                  Sep-20 2026
+                  {dateKeys[1]}
                 </th>
                 <th className="px-3 py-1 text-center border-l border-slate-200 dark:border-slate-800" colSpan={2}>
-                  Sep-21 2026
+                  {dateKeys[2]}
                 </th>
               </tr>
               <tr className="border-t border-slate-200/60 dark:border-slate-800/60 text-[10px]">
@@ -2616,7 +2562,7 @@ export function AiRankingsView({
 
                       {/* Sep-19 */}
                       <td className="px-2 py-2 text-center border-l border-slate-200 dark:border-slate-800 text-slate-400">
-                        {p.results["Sep-19 2026"].mentionText}
+                        {p.results[dateKeys[0]].mentionText}
                       </td>
                       <td
                         data-testid="link-result-cell"
@@ -2624,17 +2570,17 @@ export function AiRankingsView({
                         onMouseLeave={() => setHoveredCellId(null)}
                         className="px-2 py-2 text-center text-slate-400 relative cursor-help"
                       >
-                        {p.results["Sep-19 2026"].linkText}
+                        {p.results[dateKeys[0]].linkText}
                         {hoveredCellId === `${p.id}-sep19-link` && (
                           <div className="absolute right-0 top-full mt-1 bg-[#20252b] text-white text-xs p-2.5 rounded-md shadow-2xl z-50 animate-in fade-in duration-100 w-56 text-left whitespace-normal leading-normal">
-                            Website isn’t listed among 5 sources. Click to view details.
+                            Website isn’t listed among this answer’s sources. Click to view details.
                           </div>
                         )}
                       </td>
 
                       {/* Sep-20 */}
                       <td className="px-2 py-2 text-center border-l border-slate-200 dark:border-slate-800 text-slate-400">
-                        {p.results["Sep-20 2026"].mentionText}
+                        {p.results[dateKeys[1]].mentionText}
                       </td>
                       <td
                         data-testid="link-result-cell"
@@ -2642,17 +2588,17 @@ export function AiRankingsView({
                         onMouseLeave={() => setHoveredCellId(null)}
                         className="px-2 py-2 text-center text-slate-400 relative cursor-help"
                       >
-                        {p.results["Sep-20 2026"].linkText}
+                        {p.results[dateKeys[1]].linkText}
                         {hoveredCellId === `${p.id}-sep20-link` && (
                           <div className="absolute right-0 top-full mt-1 bg-[#20252b] text-white text-xs p-2.5 rounded-md shadow-2xl z-50 animate-in fade-in duration-100 w-56 text-left whitespace-normal leading-normal">
-                            Website isn’t listed among 5 sources. Click to view details.
+                            Website isn’t listed among this answer’s sources. Click to view details.
                           </div>
                         )}
                       </td>
 
                       {/* Sep-21 */}
                       <td className="px-2 py-2 text-center border-l border-slate-200 dark:border-slate-800 text-slate-400">
-                        {p.results["Sep-21 2026"].mentionText}
+                        {p.results[dateKeys[2]].mentionText}
                       </td>
                       <td
                         data-testid="link-result-cell"
@@ -2660,10 +2606,10 @@ export function AiRankingsView({
                         onMouseLeave={() => setHoveredCellId(null)}
                         className="px-2 py-2 text-center text-slate-400 relative cursor-help"
                       >
-                        {p.results["Sep-21 2026"].linkText}
+                        {p.results[dateKeys[2]].linkText}
                         {hoveredCellId === `${p.id}-sep21-link` && (
                           <div className="absolute right-0 top-full mt-1 bg-[#20252b] text-white text-xs p-2.5 rounded-md shadow-2xl z-50 animate-in fade-in duration-100 w-56 text-left whitespace-normal leading-normal">
-                            Website isn’t listed among 5 sources. Click to view details.
+                            Website isn’t listed among this answer’s sources. Click to view details.
                           </div>
                         )}
                       </td>

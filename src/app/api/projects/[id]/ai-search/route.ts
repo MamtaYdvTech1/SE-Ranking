@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { verifyProjectAccess } from '@/lib/server/projectAuth';
-import { getRankingProvider } from '@/lib/rankings';
+import { extractSources, hostOf, recordTrackerAnswer, type AnswerSource } from '@/services/seo/ai-tracker.service';
 
 const CheckAiSearchSchema = z.object({
   query: z.string().min(2).max(500),
@@ -119,6 +119,9 @@ export async function POST(
       let snippet: string | null = null;
       let mentionStatus = 'Not Mentioned';
 
+      let answerText = '';
+      let sources: AnswerSource[] = [];
+
       if (serperKey) {
         const resp = await fetch('https://google.serper.dev/search', {
           method: 'POST',
@@ -133,34 +136,38 @@ export async function POST(
           }),
         });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const answerBox = data.answerBox || {};
-          const answerSnippet = answerBox.snippet || answerBox.answer || '';
-          const organic = data.organic || [];
-
-          snippet = answerSnippet || organic[0]?.snippet || null;
-
-          if (answerSnippet && answerSnippet.toLowerCase().includes(cleanDomain)) {
-            mentioned = true;
-            citedUrl = answerBox.link || null;
-            citationPosition = 1;
-          }
-
-          for (let i = 0; i < organic.length; i++) {
-            const orgLink = (organic[i].link || '').toLowerCase();
-            if (orgLink.includes(cleanDomain)) {
-              if (!citedUrl) {
-                citedUrl = organic[i].link;
-                citationPosition = i + 1;
-              }
-              mentioned = true;
-              break;
-            }
-          }
-
-          mentionStatus = citedUrl ? 'Cited' : mentioned ? 'Mentioned' : 'Not Mentioned';
+        if (!resp.ok) {
+          return NextResponse.json(
+            { success: false, error: { code: 'API_ERROR', message: `Serper returned status ${resp.status}`, engine } },
+            { status: 502 }
+          );
         }
+
+        const data = await resp.json();
+        const answerBox = data.answerBox || {};
+        const aiOverview = data.aiOverview || data.ai_overview || null;
+        const aiText: string =
+          (aiOverview && (aiOverview.text || aiOverview.snippet)) || answerBox.snippet || answerBox.answer || '';
+        answerText = aiText;
+        snippet = aiText || null;
+
+        const refs: Array<{ link?: string; url?: string }> = [
+          ...((aiOverview?.references || aiOverview?.sources || []) as Array<{ link?: string; url?: string }>),
+          ...(answerBox.link ? [{ link: answerBox.link }] : []),
+        ];
+        sources = refs
+          .map((r) => r.link || r.url || '')
+          .filter(Boolean)
+          .map((url) => ({ url, domain: hostOf(url) }))
+          .filter((src) => src.domain);
+
+        const ownIdx = sources.findIndex((src) => src.domain === cleanDomain || src.domain.endsWith(`.${cleanDomain}`));
+        if (ownIdx >= 0) {
+          citedUrl = sources[ownIdx].url;
+          citationPosition = ownIdx + 1;
+        }
+        mentioned = Boolean(citedUrl) || aiText.toLowerCase().includes(cleanDomain);
+        mentionStatus = citedUrl ? 'Cited' : mentioned ? 'Mentioned' : 'Not Mentioned';
       } else if (serpApiKey) {
         // Query SerpApi with generative AI overview extraction
         const resp = await fetch(
@@ -182,6 +189,12 @@ export async function POST(
           mentioned = fullText.includes(cleanDomain);
 
           const references = aiOverview.references || aiOverview.citations || [];
+          answerText = aiOverview.text || aiOverview.snippet || '';
+          sources = references
+            .map((r: { link?: string; url?: string }) => r.link || r.url || '')
+            .filter(Boolean)
+            .map((url: string) => ({ url, domain: hostOf(url) }))
+            .filter((src: AnswerSource) => src.domain);
           for (let i = 0; i < references.length; i++) {
             const refLink = (references[i].link || references[i].url || '').toLowerCase();
             if (refLink.includes(cleanDomain)) {
@@ -212,10 +225,21 @@ export async function POST(
           checkedAt: new Date(),
         },
       });
+      await recordTrackerAnswer({
+        projectId: project.id,
+        projectDomain: cleanDomain,
+        query,
+        engine,
+        answer: answerText,
+        sources,
+        mentioned,
+        linked: Boolean(citedUrl),
+      });
 
       return NextResponse.json({
         success: true,
         record,
+        aiAnswerFound: Boolean(answerText),
       });
     }
 
@@ -254,14 +278,23 @@ export async function POST(
         }),
       });
 
-      let content = '';
-      if (response.ok) {
-        const data = await response.json();
-        content = data.choices?.[0]?.message?.content || '';
-      } else {
-        // Fallback citation scan when OpenAI billing credits are 0 ($0 balance on new keys)
-        content = `Top recommendations for "${query}" include [${project.name || cleanDomain}](https://${cleanDomain}) with professional services and active local portfolio listings.`;
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'API_ERROR',
+              message: errBody?.error?.message || `OpenAI returned status ${response.status}`,
+              engine,
+            },
+          },
+          { status: 502 }
+        );
       }
+      const data = await response.json();
+      const content: string = data.choices?.[0]?.message?.content || '';
+      const sources = extractSources(content);
 
       const lower = content.toLowerCase();
       const mentioned = lower.includes(cleanDomain);
@@ -284,6 +317,16 @@ export async function POST(
           snippet: content.slice(0, 300),
           checkedAt: new Date(),
         },
+      });
+      await recordTrackerAnswer({
+        projectId: project.id,
+        projectDomain: cleanDomain,
+        query,
+        engine,
+        answer: content,
+        sources,
+        mentioned,
+        linked: Boolean(citedUrl),
       });
 
       return NextResponse.json({ success: true, record });
@@ -330,15 +373,20 @@ export async function POST(
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const grounding = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
+      // Grounding URIs are redirect links; the source domain is in web.title
+      const sources: AnswerSource[] = (grounding as Array<{ web?: { uri?: string; title?: string } }>)
+        .map((g) => ({
+          url: g.web?.uri || '',
+          domain: (g.web?.title || hostOf(g.web?.uri || '')).replace(/^www\./i, '').toLowerCase(),
+        }))
+        .filter((src) => src.url && src.domain);
+
       let citedUrl: string | null = null;
       let citationPosition: number | null = null;
-      for (let i = 0; i < grounding.length; i++) {
-        const uri = (grounding[i].web?.uri || '').toLowerCase();
-        if (uri.includes(cleanDomain)) {
-          citedUrl = grounding[i].web.uri;
-          citationPosition = i + 1;
-          break;
-        }
+      const ownIdx = sources.findIndex((src) => src.domain === cleanDomain || src.domain.endsWith(`.${cleanDomain}`));
+      if (ownIdx >= 0) {
+        citedUrl = sources[ownIdx].url;
+        citationPosition = ownIdx + 1;
       }
 
       const mentioned = text.toLowerCase().includes(cleanDomain) || Boolean(citedUrl);
@@ -357,6 +405,16 @@ export async function POST(
           snippet: text.slice(0, 300),
           checkedAt: new Date(),
         },
+      });
+      await recordTrackerAnswer({
+        projectId: project.id,
+        projectDomain: cleanDomain,
+        query,
+        engine,
+        answer: text,
+        sources,
+        mentioned,
+        linked: Boolean(citedUrl),
       });
 
       return NextResponse.json({ success: true, record });

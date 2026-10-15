@@ -48,49 +48,6 @@ interface LlmPromptItem {
   sentiment: 'Positive' | 'Neutral' | 'Negative';
 }
 
-const DEFAULT_DEMO_PROMPTS: LlmPromptItem[] = [
-  {
-    id: 'llm-1',
-    prompt: 'best employee monitoring software for remote teams',
-    engine: 'ChatGPT (GPT-4o)',
-    position: 1,
-    mentionStatus: 'Mentioned #1',
-    snippet: 'WorkComposer is highlighted as a leading lightweight employee monitoring platform offering real-time screenshots, activity tracking, and privacy-first compliance...',
-    sourceUrl: 'https://www.workcomposer.com/features',
-    sentiment: 'Positive',
-  },
-  {
-    id: 'llm-2',
-    prompt: 'top automatic time tracking tools for software agencies',
-    engine: 'Google AI Overview',
-    position: 2,
-    mentionStatus: 'Mentioned #2',
-    snippet: 'Among the top recommended tools are Hubstaff and WorkComposer for automatic timesheets, payroll calculations, and developer activity scoring...',
-    sourceUrl: 'https://www.workcomposer.com/solutions/agencies',
-    sentiment: 'Positive',
-  },
-  {
-    id: 'llm-3',
-    prompt: 'workcomposer pricing and user reviews',
-    engine: 'Perplexity AI',
-    position: 1,
-    mentionStatus: 'Source Cited',
-    snippet: 'According to G2 and user benchmark reviews, WorkComposer offers transparent tiers starting at $4.99/user/month with complete stealth monitoring options...',
-    sourceUrl: 'https://www.workcomposer.com/pricing',
-    sentiment: 'Positive',
-  },
-  {
-    id: 'llm-4',
-    prompt: 'how to improve developer productivity without invasive tracking',
-    engine: 'ChatGPT (GPT-4o)',
-    position: null,
-    mentionStatus: 'Not mentioned',
-    snippet: 'Best practices recommend objective output metrics, clear sprint objectives, and voluntary tracking tools like WorkComposer or RescueTime...',
-    sourceUrl: 'https://www.workcomposer.com/blog',
-    sentiment: 'Neutral',
-  },
-];
-
 function AiResultsTrackerContent() {
   const { activeProject, projects } = useApp();
   const domain = activeProject?.domain || (projects && projects[0]?.domain) || '';
@@ -226,6 +183,8 @@ function AiResultsTrackerContent() {
     'Google AI Overview',
   ]);
   const [selectedPromptSnippet, setSelectedPromptSnippet] = useState<LlmPromptItem | null>(null);
+  const [recordsVersion, setRecordsVersion] = useState(0);
+  const [isRunningChecks, setIsRunningChecks] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch real AI search records from backend API
@@ -248,12 +207,13 @@ function AiResultsTrackerContent() {
                   ? 'Google AI Overview'
                   : r.engine === 'chatgpt'
                   ? 'ChatGPT (GPT-4o)'
-                  : 'Perplexity AI',
-              position: r.citationPosition || (r.mentioned ? 1 : null),
+                  : 'Google AI Mode',
+              position: r.citationPosition ?? null,
               mentionStatus: r.citedUrl ? 'Source Cited' : r.mentioned ? 'Mentioned #1' : 'Not mentioned',
-              snippet: r.snippet || `AI Search analysis for "${r.query}" indicates high relevance with citation attribution for ${cleanDomain}`,
-              sourceUrl: r.citedUrl || (cleanDomain ? `https://${cleanDomain}` : '#'),
-              sentiment: 'Positive',
+              snippet: r.snippet || '',
+              sourceUrl: r.citedUrl || '',
+              // No sentiment analysis is run on answers
+              sentiment: 'Neutral',
             }));
             setPromptsList(mapped);
             return;
@@ -266,40 +226,67 @@ function AiResultsTrackerContent() {
     }
 
     loadAiRecords();
-  }, [activeProject?.id, cleanDomain]);
+  }, [activeProject?.id, cleanDomain, recordsVersion]);
 
   const showToast = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleAddCustomPrompts = (e: React.FormEvent) => {
+  const ENGINE_API_IDS: Record<string, string> = {
+    'ChatGPT (GPT-4o)': 'chatgpt',
+    'Google AI Overview': 'google-ai-overview',
+    'Google AI Mode': 'google-ai-mode',
+  };
+
+  // Runs a real check for each prompt on each selected engine, then reloads stored results
+  const handleAddCustomPrompts = async (e: React.FormEvent) => {
     e.preventDefault();
     const lines = promptInputText
       .split('\n')
       .map((l) => l.trim())
-      .filter((l) => l.length > 0);
+      .filter((l) => l.length > 0)
+      .slice(0, 20);
 
-    if (lines.length === 0) {
+    if (lines.length === 0 || !activeProject?.id) {
       setIsAddPromptOpen(false);
       return;
     }
 
-    const newItems: LlmPromptItem[] = lines.map((line, idx) => ({
-      id: `llm-custom-${Date.now()}-${idx}`,
-      prompt: line,
-      engine: selectedEngines[0] || 'ChatGPT (GPT-4o)',
-      position: idx === 0 ? 1 : idx === 1 ? 2 : null,
-      mentionStatus: idx === 0 ? 'Mentioned #1' : idx === 1 ? 'Mentioned #2' : 'Source Cited',
-      snippet: `LLM analysis for "${line}" indicates high relevance for ${domain} with positive brand context and link attribution in citations...`,
-      sourceUrl: `${domain}/features`,
-      sentiment: 'Positive',
-    }));
+    const engines = selectedEngines.map((name) => ENGINE_API_IDS[name]).filter(Boolean);
+    if (engines.length === 0) {
+      showToast('Select at least one supported AI engine.');
+      return;
+    }
 
-    setPromptsList((prev) => [...prev, ...newItems]);
-    setPromptInputText('');
     setIsAddPromptOpen(false);
-    showToast(`Added ${newItems.length} tracking prompts!`);
+    setIsRunningChecks(true);
+    let ok = 0;
+    const failures: string[] = [];
+    for (const query of lines) {
+      for (const engine of engines) {
+        try {
+          const res = await fetch(`/api/projects/${encodeURIComponent(activeProject.id)}/ai-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, engine }),
+          });
+          const json = await res.json().catch(() => null);
+          if (res.ok && json?.success) ok++;
+          else failures.push(`${engine}: ${json?.error?.message || json?.error || `HTTP ${res.status}`}`);
+        } catch {
+          failures.push(`${engine}: network error`);
+        }
+      }
+    }
+    setIsRunningChecks(false);
+    setPromptInputText('');
+    setRecordsVersion((v) => v + 1);
+    showToast(
+      failures.length === 0
+        ? `Checked ${ok} prompt/engine pairs.`
+        : `Checked ${ok}; ${failures.length} failed (${Array.from(new Set(failures))[0]})`
+    );
   };
 
   const hasPrompts = promptsList.length > 0;
@@ -319,6 +306,11 @@ function AiResultsTrackerContent() {
   return (
     <div className="flex-1 bg-[#F5F7FB] min-h-screen text-gray-800 relative pb-12 select-none overflow-x-hidden font-sans flex flex-col justify-between">
       {/* Toast Notification */}
+      {isRunningChecks && (
+        <div className="fixed bottom-6 left-6 z-50 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold">
+          Running AI engine checks…
+        </div>
+      )}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1E293B] text-white px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
