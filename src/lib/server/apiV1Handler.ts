@@ -141,27 +141,56 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
           ...(isSuperAdmin ? {} : { userId: currentUser.id }),
         },
         include: {
+          integrations: {
+            where: { provider: "gsc", status: "connected" },
+            select: { id: true, status: true },
+          },
+          auditPages: {
+            take: 1,
+            select: { id: true },
+          },
+          auditIssues: {
+            select: { severity: true },
+          },
           _count: { select: { keywords: true, tasks: true } },
         },
       });
 
-      const globalProjects = dbProjects.map((p) => ({
-        projectId: p.id,
-        name: p.name,
-        primaryDomain: p.domain,
-        healthScore: 0,
-        trackedKeywords: p._count.keywords,
-        openTasks: p._count.tasks,
-        overdueTasks: 0,
-        lastCrawledAt: p.lastRankingCheckAt ? p.lastRankingCheckAt.toISOString() : null,
-        lastSyncedAt: p.updatedAt.toISOString(),
-        gscSyncStatus: "Not Connected",
-      }));
+      const globalProjects = dbProjects.map((p) => {
+        const hasAudit = p.auditPages.length > 0;
+        let healthScore: number | null = null;
+        if (hasAudit) {
+          const errors = p.auditIssues.filter((i) => i.severity === "Error").length;
+          const warnings = p.auditIssues.filter((i) => i.severity === "Warning").length;
+          healthScore = Math.max(0, 100 - (errors * 5 + warnings * 2));
+        }
+
+        const gscSyncStatus = p.integrations.length > 0 ? "Connected" : "Not Connected";
+
+        return {
+          projectId: p.id,
+          name: p.name,
+          primaryDomain: p.domain,
+          healthScore,
+          trackedKeywords: p._count.keywords,
+          openTasks: p._count.tasks,
+          overdueTasks: 0,
+          lastCrawledAt: p.lastRankingCheckAt ? p.lastRankingCheckAt.toISOString() : null,
+          lastSyncedAt: p.updatedAt.toISOString(),
+          gscSyncStatus,
+        };
+      });
+
+      const auditedProjects = globalProjects.filter((p) => p.healthScore !== null);
+      const averageHealthScore =
+        auditedProjects.length > 0
+          ? Math.round(auditedProjects.reduce((acc, p) => acc + (p.healthScore as number), 0) / auditedProjects.length)
+          : null;
 
       return successResponse({
         totalProjects: globalProjects.length,
         totalTrackedKeywords: globalProjects.reduce((acc, p) => acc + p.trackedKeywords, 0),
-        averageHealthScore: 0,
+        averageHealthScore,
         totalOpenTasks: globalProjects.reduce((acc, p) => acc + p.openTasks, 0),
         totalOverdueTasks: 0,
         projects: globalProjects,
@@ -336,10 +365,15 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
       const auditIssues = await prisma.auditIssue.findMany({ where: { projectId: project.id } });
       const errorsCount = auditIssues.filter((i) => i.severity === "Error").length;
       const warningsCount = auditIssues.filter((i) => i.severity === "Warning").length;
-      const healthScore = auditPages.length > 0 ? Math.max(0, 100 - (errorsCount * 5 + warningsCount * 2)) : 0;
+      const healthScore = auditPages.length > 0 ? Math.max(0, 100 - (errorsCount * 5 + warningsCount * 2)) : null;
 
       const openTasks = await prisma.task.count({ where: { projectId: project.id, status: { not: "Done" } } });
       const closedTasks = await prisma.task.count({ where: { projectId: project.id, status: "Done" } });
+
+      const gscIntegration = await prisma.projectIntegration.findFirst({
+        where: { projectId: project.id, provider: "gsc", status: "connected" },
+      });
+      const gscSyncStatus = gscIntegration ? "Connected" : "Not Connected";
 
       return successResponse({
         projectId: project.id,
@@ -349,8 +383,8 @@ export async function handleApiV1(request: NextRequest, slug: string[]) {
           isRankingsStale: false,
           lastRankCheckAt: project.lastRankingCheckAt ? project.lastRankingCheckAt.toISOString() : null,
           lastAuditCrawlAt: auditPages.length > 0 ? auditPages[0].crawledAt.toISOString() : null,
-          lastGscSyncAt: null,
-          gscSyncStatus: "Not Connected",
+          lastGscSyncAt: gscIntegration?.lastSyncedAt ? gscIntegration.lastSyncedAt.toISOString() : null,
+          gscSyncStatus,
         },
         health: {
           healthScore,

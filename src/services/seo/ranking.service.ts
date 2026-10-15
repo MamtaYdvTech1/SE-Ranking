@@ -723,7 +723,7 @@ export async function getRankingSummary(
   };
 
   // Real Competitors from DB
-  let dbCompetitors = await prisma.projectCompetitor.findMany({
+  const dbCompetitors = await prisma.projectCompetitor.findMany({
     where: {
       projectId: project.id,
       deletedAt: null,
@@ -736,59 +736,6 @@ export async function getRankingSummary(
     },
     orderBy: { createdAt: 'desc' },
   });
-
-  if (dbCompetitors.length === 0 && yepApiClient.isConfigured()) {
-    try {
-      const cleanDomain = (project.domain || '')
-        .replace(/^https?:\/\//i, '')
-        .replace(/^www\./i, '')
-        .split('/')[0]
-        .toLowerCase();
-      const compRes = await yepApiClient.getCompetitorDomains({ domain: cleanDomain, limit: 10 });
-      if (compRes.ok && compRes.data?.competitors && compRes.data.competitors.length > 0) {
-        const validComps = compRes.data.competitors
-          .filter((c) => c.domain && c.domain.toLowerCase() !== cleanDomain)
-          .slice(0, 5);
-
-        for (const item of validComps) {
-          try {
-            const baseName = item.domain.replace(/^www\./i, '').split('.')[0];
-            const displayName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
-            await prisma.projectCompetitor.create({
-              data: {
-                projectId: project.id,
-                domain: item.domain,
-                name: displayName,
-                avgPosition: item.avgPosition ? Number(item.avgPosition.toFixed(1)) : 25.0,
-                visibilityScore: item.intersections ? Math.min(100, Math.round(item.intersections * 2.5)) : 45.0,
-                commonKeywordsCount: item.intersections || 0,
-                totalKeywords: item.organicCount || 0,
-                organicTraffic: item.organicEtv ? `${Math.round(item.organicEtv).toLocaleString()}/mo` : '—',
-              },
-            });
-          } catch {
-            // Ignore duplicate
-          }
-        }
-
-        dbCompetitors = await prisma.projectCompetitor.findMany({
-          where: {
-            projectId: project.id,
-            deletedAt: null,
-          },
-          include: {
-            competitorRankings: {
-              take: 50,
-              orderBy: { checkedAt: 'desc' },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-      }
-    } catch (e) {
-      console.error('Failed to auto-discover competitors in ranking service:', e);
-    }
-  }
 
   const competitors = dbCompetitors.map((comp) => {
     const rankedPositions = comp.competitorRankings
