@@ -488,7 +488,7 @@ function ProjectsDashboardPageContent() {
 
   const projectList = projects && projects.length > 0 ? projects : [];
 
-  const currentDomain = activeProject?.domain || (projects[0]?.domain ?? '');
+  const currentDomain = activeProject?.domain ?? '';
   const currentDomainFormatted = currentDomain
     ? (currentDomain.startsWith('http') ? currentDomain : `https://${currentDomain}/`)
     : '';

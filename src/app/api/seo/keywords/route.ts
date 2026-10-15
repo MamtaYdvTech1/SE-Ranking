@@ -69,11 +69,14 @@ export async function POST(req: NextRequest) {
 
     if (!kwRes.ok || !kwRes.data) {
       const statusCode = kwRes.error?.statusCode || 502;
+      const isCredits = kwRes.error?.code === 'NO_CREDITS' || statusCode === 402;
       return NextResponse.json(
         {
           success: false,
-          error: kwRes.error?.message || 'YepAPI keyword metrics request failed',
-          code: kwRes.error?.code,
+          error: isCredits
+            ? 'YepAPI search volume provider quota exhausted (HTTP 402). Please top up YepAPI credits to retrieve search volume metrics.'
+            : (kwRes.error?.message || 'YepAPI keyword metrics request failed'),
+          code: kwRes.error?.code || (isCredits ? 'NO_CREDITS' : 'UPSTREAM_ERROR'),
         },
         { status: statusCode }
       );

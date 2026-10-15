@@ -203,8 +203,8 @@ const INITIAL_NOTES: NoteItem[] = [
 ];
 
 export default function NotesPage() {
-  const { activeProject, projects } = useApp();
-  const currentDomain = activeProject?.domain || (projects && projects[0]?.domain) || '';
+  const { activeProject } = useApp();
+  const currentDomain = activeProject?.domain || '';
   const cleanDomain = currentDomain.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '');
   const [notes, setNotes] = useState<NoteItem[]>(INITIAL_NOTES);
   const [filterTab, setFilterTab] = useState<'ALL' | 'DISPLAYED' | 'HIDDEN'>('ALL');

@@ -50,7 +50,7 @@ interface LlmPromptItem {
 
 function AiResultsTrackerContent() {
   const { activeProject, projects } = useApp();
-  const domain = activeProject?.domain || (projects && projects[0]?.domain) || '';
+  const domain = activeProject?.domain || '';
   const cleanDomain = domain
     .replace(/^https?:\/\//i, '')
     .replace(/^www\./i, '')
@@ -299,6 +299,24 @@ function AiResultsTrackerContent() {
           projectId={activeProject?.id || ''}
           projectDomain={cleanDomain || ''}
         />
+      </div>
+    );
+  }
+
+  if (!activeProject) {
+    return (
+      <div className="flex-1 bg-[#F5F7FB] min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
+          <Globe className="w-12 h-12 text-[#0B69FF] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-gray-900 mb-1">
+            {projects && projects.length > 0 ? 'No Project Selected' : 'No Projects Found'}
+          </h2>
+          <p className="text-xs text-gray-500 mb-6">
+            {projects && projects.length > 0
+              ? 'Please select a project to view AI search tracking and rankings.'
+              : 'Create your first website project to begin tracking SEO rankings, audits, and traffic analytics.'}
+          </p>
+        </div>
       </div>
     );
   }

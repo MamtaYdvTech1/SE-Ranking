@@ -132,8 +132,8 @@ const INITIAL_TASKS: TaskItem[] = [
 ];
 
 export default function MarketingPlanPage() {
-  const { activeProject, projects } = useApp();
-  const displayDomain = (activeProject?.domain || (projects && projects[0]?.domain) || '')
+  const { activeProject } = useApp();
+  const displayDomain = (activeProject?.domain || '')
     .replace(/^https?:\/\//i, '')
     .replace(/^www\./i, '')
     .replace(/\/$/, '');

@@ -940,7 +940,7 @@ function RankingsPageContent() {
   const { activeProject, projects, setIsAddWebsiteModalOpen } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentProject = activeProject || projects[0] || null;
+  const currentProject = activeProject || null;
   const domain = currentProject?.domain || '';
   const cleanDomain = useMemo(() => {
     return (domain || '')
@@ -1897,7 +1897,7 @@ function RankingsPageContent() {
 
   const handlePerformExport = () => {
     setIsExportModalOpen(false);
-    const domainName = activeProject?.domain || (projects && projects[0]?.domain) || 'project';
+    const domainName = activeProject?.domain || 'project';
     const dateStr = '2026-10-12';
 
     if (selectedExportFormat === 'csv') {
@@ -2026,18 +2026,17 @@ function RankingsPageContent() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         showToast(data.message || `${type === 'rankings' ? 'Rankings' : 'Search volume'} updated successfully!`);
         await fetchRankingsData();
       } else {
-        showToast(`${type === 'rankings' ? 'Rankings' : 'Search volume'} updated successfully!`);
-        await fetchRankingsData();
+        const errorMsg = data.error || data.message || `Failed to update ${type === 'rankings' ? 'rankings' : 'search volume'}.`;
+        showToast(errorMsg);
       }
     } catch (err) {
       console.error('Error rechecking rankings:', err);
-      showToast('Rankings updated successfully! All positions fresh.');
-      await fetchRankingsData();
+      showToast('Network error while rechecking rankings.');
     } finally {
       setIsRechecking(false);
     }
@@ -2209,9 +2208,9 @@ function RankingsPageContent() {
       .map((k) => k.trim())
       .filter((k) => k.length > 0);
 
-    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    const projectId = activeProject?.id;
     if (!projectId) {
-      showToast('Please select or wait for a project to load.');
+      showToast('Please select a project first.');
       return;
     }
     try {
@@ -2238,9 +2237,10 @@ function RankingsPageContent() {
   const handleRecheckRankings = async (selectedIds?: string[]) => {
     setIsRechecking(true);
     setIsRecheckOpen(false);
-    const projectId = activeProject?.id || (projects && projects[0]?.id);
+    const projectId = activeProject?.id;
     if (!projectId) {
       setIsRechecking(false);
+      showToast('Please select a project first.');
       return;
     }
 
@@ -2250,32 +2250,36 @@ function RankingsPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywordIds: selectedIds }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
-        showToast(data.message || `Rankings updated via YepAPI for ${data.checkedCount} keywords!`);
+        showToast(data.message || `Rankings updated for ${data.checkedCount} keywords!`);
         fetchRankingsData();
       } else {
-        showToast(data.message || data.error || 'Provider failed to update rankings.');
-        fetchRankingsData();
+        showToast(data.error || data.message || 'Provider failed to update rankings.');
       }
     } catch {
       showToast('Network error while requesting ranking check.');
-      fetchRankingsData();
     } finally {
       setIsRechecking(false);
     }
   };
 
   const handleExportCsv = () => {
-    const projectId = activeProject?.id || (projects && projects[0]?.id);
-    if (!projectId) return;
+    const projectId = activeProject?.id;
+    if (!projectId) {
+      showToast('Please select a project first.');
+      return;
+    }
     window.location.href = `/api/projects/${encodeURIComponent(projectId)}/keywords/export`;
     showToast('Exporting rankings CSV...');
   };
 
   const addSelectedHighPotential = async () => {
-    const projectId = activeProject?.id || (projects && projects[0]?.id);
-    if (!projectId) return;
+    const projectId = activeProject?.id;
+    if (!projectId) {
+      showToast('Please select a project first.');
+      return;
+    }
     try {
       const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
         method: 'POST',
@@ -2320,6 +2324,30 @@ function RankingsPageContent() {
     if (selectedRange === 'over100') return k.rank === null || k.rank > 100;
     return true;
   });
+
+  if (!currentProject) {
+    return (
+      <div className="flex-1 bg-[#F5F7FB] min-h-screen text-gray-800 p-8 flex items-center justify-center font-sans">
+        <div className="max-w-md w-full bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mx-auto mb-3">
+            <Search className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-gray-900 mb-1">No Project Selected</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Select an existing website project or add a new domain to monitor search rankings and keyword positions.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsAddWebsiteModalOpen(true)}
+            className="px-4 py-2 bg-[#0B69FF] hover:bg-[#0055db] text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>CREATE PROJECT</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#F5F7FB] min-h-screen text-gray-800 relative pb-16 select-none overflow-x-hidden font-sans">
@@ -2458,6 +2486,23 @@ function RankingsPageContent() {
       </div>
 
       <div className="p-6 max-w-7xl mx-auto space-y-4">
+        {/* Error Alert if any */}
+        {rankingsError && (
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-800">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{rankingsError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => fetchRankingsData()}
+              className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded font-semibold cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Top Controls Row: Search Engine, Date Range Picker, Data Studio, Export, and RANKING SETTINGS ICON */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">

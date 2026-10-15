@@ -1375,7 +1375,7 @@ function SecondarySidebarInner() {
                     className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
                   />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
-                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
+                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'Select Project'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
@@ -1435,7 +1435,7 @@ function SecondarySidebarInner() {
                     className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
                   />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
-                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
+                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'Select Project'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
@@ -1492,7 +1492,7 @@ function SecondarySidebarInner() {
                     className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
                   />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
-                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
+                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'Select Project'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
@@ -1549,7 +1549,7 @@ function SecondarySidebarInner() {
                     className="w-4 h-4 rounded-xs shrink-0 object-contain shadow-2xs"
                   />
                   <span className="text-[13px] font-semibold text-gray-900 truncate">
-                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'teams.com'}
+                    {activeProject?.domain ? activeProject.domain.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'Select Project'}
                   </span>
                 </div>
                 <ChevronsUpDown className="w-4 h-4 text-gray-500 shrink-0 ml-1" />
@@ -3419,19 +3419,19 @@ function SecondarySidebarInner() {
                     {expandedSections.ai_tracker !== false && (
                       <div className="space-y-0.5 mt-0.5 py-0.5 text-[13px] animate-in fade-in duration-150">
                         <SubItem
-                          href="/projects/teams.com/ai-results-tracker/rankings"
+                          href={activeProject?.domain ? `/projects/${encodeURIComponent(activeProject.domain)}/ai-results-tracker/rankings` : '/ai-results-tracker?tab=rankings'}
                           label="Rankings"
                           isActive={pathname.includes('/rankings')}
                           badge={<ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />}
                         />
                         <SubItem
-                          href="/projects/teams.com/ai-results-tracker/competitors"
+                          href={activeProject?.domain ? `/projects/${encodeURIComponent(activeProject.domain)}/ai-results-tracker/competitors` : '/ai-results-tracker?tab=competitors'}
                           label="Competitors"
                           isActive={pathname.includes('/competitors')}
                           badge={<ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />}
                         />
                         <SubItem
-                          href="/projects/teams.com/ai-results-tracker/sources"
+                          href={activeProject?.domain ? `/projects/${encodeURIComponent(activeProject.domain)}/ai-results-tracker/sources` : '/ai-results-tracker?tab=sources'}
                           label="Sources"
                           isActive={pathname.includes('/sources')}
                           badge={<ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />}

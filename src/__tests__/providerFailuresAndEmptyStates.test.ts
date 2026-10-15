@@ -122,12 +122,16 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
         error: { code: 'NO_CREDITS', statusCode: 402, message: 'Account out of credits' },
       });
 
+      const originalSerperKey = process.env.SERPER_API_KEY;
+      delete process.env.SERPER_API_KEY;
+
       try {
         const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
         expect(res.success).toBe(false);
         expect(res.error?.code).toBe('CREDITS_EXHAUSTED');
         expect(res.error?.statusCode).toBe(402);
       } finally {
+        if (originalSerperKey) process.env.SERPER_API_KEY = originalSerperKey;
         provider.isConfigured = originalIsConfigured;
         yepApiClient.getGoogleSerp = originalGetGoogleSerp;
       }

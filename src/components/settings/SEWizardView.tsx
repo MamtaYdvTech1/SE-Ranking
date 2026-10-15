@@ -67,16 +67,16 @@ export function SEWizardView() {
 
   const urlId = (params?.id as string) || searchParams.get('site_id');
 
-  // Match route param ID, active project from context, or first loaded project
+  // Match route param ID, or active project from context
   const currentProject =
     (urlId ? projects.find((p) => String(p.id) === String(urlId)) : null) ||
-    activeProject ||
-    projects[0] || {
+    activeProject || {
       id: '',
       name: '',
       domain: '',
       url: '',
       country: 'India',
+      countryCode: 'in',
     };
 
   // Tab State: supports both query param and hash (#engines, #keywords, etc.)

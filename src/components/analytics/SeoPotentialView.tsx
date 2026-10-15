@@ -20,8 +20,8 @@ interface EngineCalculation {
 }
 
 export function SeoPotentialView() {
-  const { activeProject, projects } = useApp();
-  const currentProject = activeProject || projects[0];
+  const { activeProject } = useApp();
+  const currentProject = activeProject || null;
   const projectId = currentProject?.id;
 
   // Conversion into sales (e.g. 1:100)
@@ -48,22 +48,7 @@ export function SeoPotentialView() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Engine calculations list
-  const [engines, setEngines] = useState<EngineCalculation[]>([
-    {
-      id: 'se-1',
-      engine: 'google',
-      country: currentProject?.country || 'India',
-      countryCode: currentProject?.countryCode || 'in',
-      currentTrafficForecast: 26,
-      currentTrafficCost: 0,
-      currentNumberOfClients: 0,
-      currentEstimatedIncome: 0,
-      estimatedTrafficForecast: 58,
-      estimatedTrafficCost: 0,
-      estimatedNumberOfClients: 1,
-      estimatedIncome: 50,
-    },
-  ]);
+  const [engines, setEngines] = useState<EngineCalculation[]>([]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -83,11 +68,14 @@ export function SeoPotentialView() {
 
   // 1. Fetch real SEO potential data from backend
   const fetchData = async () => {
+    if (!projectId) {
+      setEngines([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const url = projectId
-        ? `/api/analytics/seo-potential?projectId=${projectId}`
-        : `/api/analytics/seo-potential`;
+      const url = `/api/analytics/seo-potential?projectId=${encodeURIComponent(projectId)}`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -104,12 +92,13 @@ export function SeoPotentialView() {
           setEstimatedTop(data.estimatedTop);
           setTempTop(String(data.estimatedTop));
         }
-        if (Array.isArray(data.engines) && data.engines.length > 0) {
-          setEngines(data.engines);
-        }
+        setEngines(Array.isArray(data.engines) ? data.engines : []);
+      } else {
+        setEngines([]);
       }
     } catch (err: any) {
       console.warn('Error fetching SEO potential backend:', err);
+      setEngines([]);
     } finally {
       setIsLoading(false);
     }
@@ -244,6 +233,15 @@ export function SeoPotentialView() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (!currentProject) {
+    return (
+      <div className="p-8 text-center bg-white rounded-xl border border-gray-200">
+        <p className="text-sm font-semibold text-gray-700">No project selected</p>
+        <p className="text-xs text-gray-500 mt-1">Please select an active project to view SEO potential forecasts.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="section-panel traffic-opportunity bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6 font-sans select-none">
