@@ -3240,14 +3240,17 @@ function SecondarySidebarInner() {
               <div className="space-y-4">
                 {/* User Info Card */}
                 <div className="p-3 bg-[#1C2534] border border-[#2B3545] rounded-xl flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md">
+                  <div 
+                    className="w-10 h-10 rounded-lg bg-[#7C3AED] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md"
+                    suppressHydrationWarning
+                  >
                     {effectiveInitials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-bold text-white truncate leading-tight">
+                    <div className="text-[13px] font-bold text-white truncate leading-tight" suppressHydrationWarning>
                       {effectiveName}
                     </div>
-                    <div className="text-[11px] text-[#8C98A9] truncate leading-tight mt-0.5" title={effectiveEmail}>
+                    <div className="text-[11px] text-[#8C98A9] truncate leading-tight mt-0.5" title={effectiveEmail} suppressHydrationWarning>
                       {effectiveEmail}
                     </div>
                   </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CompetitorOverviewDto } from "@/lib/types";
+import { authFetch } from "@/lib/clientAuth";
 
 export type TrendMetric =
   | "AVERAGE POSITION"
@@ -29,7 +30,7 @@ export function CompetitorTrendChart({ projectId, metric, days = 30, refreshKey 
   useEffect(() => {
     if (!projectId) return;
     let active = true;
-    fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=${days}`)
+    authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=${days}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (active && json?.success) setOverview(json.data as CompetitorOverviewDto);

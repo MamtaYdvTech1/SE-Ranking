@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CompetitorDto, CompetitorKeywordRankingDto } from "@/lib/types";
+import { authFetch } from "@/lib/clientAuth";
 import { GuestLinkModal } from "./GuestLinkModal";
 import { CalendarYearDropdown } from "./CalendarYearDropdown";
 import { CompetitorTrendChart } from "./CompetitorTrendChart";
@@ -186,7 +187,7 @@ export function AddedCompetitorsView({
   useEffect(() => {
     if (!projectId) return;
     let active = true;
-    fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/keywords?pageSize=200`)
+    authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/keywords?pageSize=200`)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (active && json?.success) setKeywordMatrix(json.data.items as CompetitorKeywordRankingDto[]);

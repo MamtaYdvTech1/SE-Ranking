@@ -517,7 +517,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen bg-white text-gray-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900"
+      className="min-h-screen bg-white dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100 font-sans antialiased selection:bg-blue-100 selection:text-blue-900 transition-colors duration-150"
       onClick={() => setActiveMenu(null)}
     >
       {/* 1. Dynamic HelloBar at Top (Green for EN, Orange with MCP for other languages) */}

@@ -199,11 +199,15 @@ export function CompetitorGapTab({ projectId, competitors = [] }: CompetitorGapT
               No Keyword Gaps Detected
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Keyword gap opportunities appear when tracked competitors rank in the Top 20 for
-              keywords where your domain is unranked or outside the Top 20.
+              Keyword gap analysis discovers high-value keywords where your tracked competitors rank in the Top 20 but your domain is outside the Top 20 or unranked.
             </p>
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg text-xs text-slate-600 dark:text-slate-300 text-left space-y-1 border border-slate-200 dark:border-slate-800">
+              <span className="font-bold block text-slate-800 dark:text-slate-200">How to populate Keyword Gap:</span>
+              <p>1. Add at least one competitor domain in the <strong>Competitors</strong> tab.</p>
+              <p>2. Execute a <strong>Rankings Check</strong> so SERP positions are recorded for competitor domains.</p>
+            </div>
             {debouncedSearch && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 pt-1">
                 Try clearing your search query to view all gap opportunities.
               </p>
             )}

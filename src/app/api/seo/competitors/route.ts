@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/server/auth';
-import { yepApiClient } from '@/lib/yepapi';
+import { yepApiClient, mapCountryToLocationCode } from '@/lib/yepapi';
 
 const CompetitorRequestSchema = z.object({
   domain: z.string().min(2).max(255).optional(),
@@ -10,6 +10,8 @@ const CompetitorRequestSchema = z.object({
   mode: z.enum(['overview', 'domains', 'gap']).optional().default('domains'),
   intersections: z.boolean().optional().default(true),
   location_code: z.number().int().optional(),
+  country: z.string().optional(),
+  country_code: z.string().optional(),
   language: z.string().max(10).optional().default('en'),
   limit: z.number().int().min(5).max(200).optional().default(50),
 });
@@ -48,7 +50,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { domain, domain1, domain2, mode, intersections, location_code, language, limit } = parseResult.data;
+    const { domain, domain1, domain2, mode, intersections, location_code, country, country_code, language, limit } = parseResult.data;
+    const resolvedLocationCode =
+      location_code ??
+      (country || country_code ? mapCountryToLocationCode(country || country_code) : undefined);
 
     // 3. Check YepAPI configuration
     if (!yepApiClient.isConfigured()) {
@@ -73,7 +78,7 @@ export async function POST(req: NextRequest) {
 
       const overviewRes = await yepApiClient.getDomainOverview({
         domain: targetDomain,
-        location_code,
+        location_code: resolvedLocationCode,
         language,
       });
 
@@ -111,7 +116,7 @@ export async function POST(req: NextRequest) {
         domain1,
         domain2,
         intersections,
-        location_code,
+        location_code: resolvedLocationCode,
         language,
         limit,
       });
@@ -149,7 +154,7 @@ export async function POST(req: NextRequest) {
 
     const compRes = await yepApiClient.getCompetitorDomains({
       domain: targetDomain,
-      location_code,
+      location_code: resolvedLocationCode,
       language,
       limit,
     });

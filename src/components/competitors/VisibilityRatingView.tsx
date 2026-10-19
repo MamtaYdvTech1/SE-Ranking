@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import type { CompetitorDto, CompetitorOverviewDto } from "@/lib/types";
+import { authFetch } from "@/lib/clientAuth";
 import { CalendarYearDropdown } from "./CalendarYearDropdown";
 
 export const CAL_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -212,7 +213,7 @@ export function VisibilityRatingView({
   useEffect(() => {
     if (!projectId) return;
     let active = true;
-    fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=30`)
+    authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=30`)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (active && json?.success) setOverview(json.data as CompetitorOverviewDto);

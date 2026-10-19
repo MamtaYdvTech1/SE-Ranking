@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Download,
@@ -72,35 +73,53 @@ export function KeywordResearchDashboard({
   const [ideas, setIdeas] = useState<RealIdeaItem[]>([]);
   const [serpItems, setSerpItems] = useState<RealSerpItem[]>([]);
   const [activeProviderName, setActiveProviderName] = useState<string>('SEO Provider');
+  const [isAuthError, setIsAuthError] = useState(false);
 
   const cleanKeyword = keyword.trim().toLowerCase();
+
+  const getAuthHeaders = (): HeadersInit => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    return headers;
+  };
 
   const fetchRealData = async () => {
     if (!cleanKeyword) return;
     setIsLoading(true);
     setErrorMessage(null);
+    setIsAuthError(false);
 
     try {
+      const fetchJson = async (url: string, body: any) => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => null);
+        return {
+          httpStatus: res.status,
+          ok: res.ok,
+          ...(data || {}),
+        };
+      };
+
       // 1. Fetch real keyword overview metrics via YepAPI
-      const kwPromise = fetch('/api/seo/keywords', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: [cleanKeyword] }),
-      }).then((r) => r.json());
+      const kwPromise = fetchJson('/api/seo/keywords', { keywords: [cleanKeyword] });
 
       // 2. Fetch real keyword ideas via YepAPI
-      const ideasPromise = fetch('/api/seo/keyword-ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: cleanKeyword, limit: 30 }),
-      }).then((r) => r.json());
+      const ideasPromise = fetchJson('/api/seo/keyword-ideas', { keyword: cleanKeyword, limit: 30 });
 
       // 3. Fetch real Google SERP top 10 via YepAPI / Serper
-      const serpPromise = fetch('/api/seo/serp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: cleanKeyword, depth: 10 }),
-      }).then((r) => r.json());
+      const serpPromise = fetchJson('/api/seo/serp', { query: cleanKeyword, depth: 10 });
 
       const [kwResult, ideasResult, serpResult] = await Promise.allSettled([
         kwPromise,
@@ -110,72 +129,90 @@ export function KeywordResearchDashboard({
 
       let hasAnySuccess = false;
       let collectedError: string | null = null;
+      let has401 = false;
 
       // Handle Keywords
-      if (kwResult.status === 'fulfilled' && kwResult.value.success && kwResult.value.data?.keywords?.[0]) {
-        const item = kwResult.value.data.keywords[0];
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const mappedTrend = Array.isArray(item.trend)
-          ? item.trend.map((t: any) => ({
-              month: monthNames[(t.month || 1) - 1] || `${t.month}`,
-              volume: t.volume || 0,
-            }))
-          : [];
+      if (kwResult.status === 'fulfilled') {
+        const val = kwResult.value;
+        if (val.httpStatus === 401) {
+          has401 = true;
+        } else if (val.success && val.data?.keywords?.[0]) {
+          const item = val.data.keywords[0];
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const mappedTrend = Array.isArray(item.trend)
+            ? item.trend.map((t: any) => ({
+                month: monthNames[(t.month || 1) - 1] || `${t.month}`,
+                volume: t.volume || 0,
+              }))
+            : [];
 
-        setMetricData({
-          keyword: item.keyword,
-          volume: item.volume ?? 0,
-          difficulty: item.difficulty ?? 0,
-          cpc: item.cpc ?? 0,
-          competition: item.competition ?? 0,
-          competitionLevel: item.competitionLevel ?? 'LOW',
-          intent: item.intent ?? 'Informational',
-          trend: mappedTrend.length > 0 ? mappedTrend : [{ month: 'Current', volume: item.volume ?? 0 }],
-        });
-        hasAnySuccess = true;
-      } else if (kwResult.status === 'fulfilled' && !kwResult.value.success) {
-        if (kwResult.value.error) {
-          collectedError = kwResult.value.error;
+          setMetricData({
+            keyword: item.keyword,
+            volume: item.volume ?? 0,
+            difficulty: item.difficulty ?? 0,
+            cpc: item.cpc ?? 0,
+            competition: item.competition ?? 0,
+            competitionLevel: item.competitionLevel ?? 'LOW',
+            intent: item.intent ?? 'Informational',
+            trend: mappedTrend.length > 0 ? mappedTrend : [{ month: 'Current', volume: item.volume ?? 0 }],
+          });
+          hasAnySuccess = true;
+        } else if (!val.success && val.error) {
+          collectedError = val.error;
         }
       }
 
       // Handle Ideas
-      if (ideasResult.status === 'fulfilled' && ideasResult.value.success && Array.isArray(ideasResult.value.data?.keywords)) {
-        const mappedIdeas: RealIdeaItem[] = ideasResult.value.data.keywords.map((k: any) => ({
-          keyword: k.keyword,
-          volume: k.volume ?? 0,
-          kd: k.difficulty ?? 0,
-          cpc: k.cpc ?? 0,
-          intent: k.intent ?? 'Commercial',
-        }));
-        setIdeas(mappedIdeas);
-        hasAnySuccess = true;
+      if (ideasResult.status === 'fulfilled') {
+        const val = ideasResult.value;
+        if (val.httpStatus === 401) {
+          has401 = true;
+        } else if (val.success && Array.isArray(val.data?.keywords)) {
+          const mappedIdeas: RealIdeaItem[] = val.data.keywords.map((k: any) => ({
+            keyword: k.keyword,
+            volume: k.volume ?? 0,
+            kd: k.difficulty ?? 0,
+            cpc: k.cpc ?? 0,
+            intent: k.intent ?? 'Commercial',
+          }));
+          setIdeas(mappedIdeas);
+          hasAnySuccess = true;
+        } else if (!val.success && val.error && !collectedError) {
+          collectedError = val.error;
+        }
       }
 
       // Handle SERP
-      if (serpResult.status === 'fulfilled' && serpResult.value.success && Array.isArray(serpResult.value.data?.results)) {
-        const mappedSerp: RealSerpItem[] = serpResult.value.data.results
-          .filter((r: any) => r.type === 'organic' || !r.type)
-          .map((r: any, idx: number) => ({
-            pos: r.position || idx + 1,
-            title: r.title || 'Untitled Result',
-            url: r.url || '',
-            domain: r.domain || '',
-            snippet: r.description || '',
-          }));
-        setSerpItems(mappedSerp);
-        if (serpResult.value.provider) {
-          setActiveProviderName(serpResult.value.provider);
+      if (serpResult.status === 'fulfilled') {
+        const val = serpResult.value;
+        if (val.httpStatus === 401) {
+          has401 = true;
+        } else if (val.success && Array.isArray(val.data?.results)) {
+          const mappedSerp: RealSerpItem[] = val.data.results
+            .filter((r: any) => r.type === 'organic' || !r.type)
+            .map((r: any, idx: number) => ({
+              pos: r.position || idx + 1,
+              title: r.title || 'Untitled Result',
+              url: r.url || '',
+              domain: r.domain || '',
+              snippet: r.description || '',
+            }));
+          setSerpItems(mappedSerp);
+          if (val.provider) {
+            setActiveProviderName(val.provider);
+          }
+          hasAnySuccess = true;
+        } else if (!val.success && val.error && !collectedError) {
+          collectedError = val.error;
         }
-        hasAnySuccess = true;
-      } else if (serpResult.status === 'fulfilled' && !serpResult.value.success && !collectedError) {
-        collectedError = serpResult.value.error;
       }
 
-      if (!hasAnySuccess) {
+      if (has401) {
+        setIsAuthError(true);
+        setErrorMessage('Authentication required. Please sign in to access Keyword Research.');
+      } else if (!hasAnySuccess) {
         setErrorMessage(collectedError || 'No live data could be retrieved for this keyword. Please check API credentials or credit balance.');
       } else if (collectedError) {
-        // Partial success (e.g. SERP succeeded via Serper but keyword volume quota was exhausted on YepAPI)
         setErrorMessage(`Partial data notice: ${collectedError}`);
       }
 
@@ -330,8 +367,27 @@ export function KeywordResearchDashboard({
       </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Error Alert if any */}
-        {errorMessage && (
+        {/* Auth Error Banner */}
+        {isAuthError && (
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between gap-4 text-xs text-rose-900">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-sm block mb-0.5">Authentication Required</span>
+                <p className="text-rose-700">Keyword research requires an active account session. Please sign in to query live keyword metrics.</p>
+              </div>
+            </div>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shrink-0 transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
+
+        {/* Error Alert if any (non-auth) */}
+        {!isAuthError && errorMessage && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-xs text-amber-800">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-1">

@@ -32,7 +32,7 @@ export async function verifyProjectAccess(
 ): Promise<ProjectAuthResult> {
   try {
     // 1. Authenticate user from session cookie or header
-    let auth: any = await getAuthSession(req);
+    let auth = await getAuthSession(req);
     if (!auth) {
       auth = await getSessionFromCookie();
     }
@@ -53,9 +53,27 @@ export async function verifyProjectAccess(
       };
     }
 
-    const user: any = auth.user;
+    const user = auth.user;
 
-    // 2. Lookup project by ID or domain
+    // 2. Check user approval status
+    const userStatus = (user.status || '').toLowerCase();
+    if (userStatus !== 'active' && userStatus !== 'approved') {
+      return {
+        success: false,
+        error: NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'ACCOUNT_NOT_APPROVED',
+              message: `Account ${userStatus}: Your account is not approved to access projects.`,
+            },
+          },
+          { status: 403 }
+        ),
+      };
+    }
+
+    // 3. Lookup project by ID or domain
     const cleanId = decodeURIComponent(projectIdOrDomain || '').trim();
     if (!cleanId) {
       return {
@@ -73,7 +91,7 @@ export async function verifyProjectAccess(
       };
     }
 
-    const project: any = await prisma.project.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
         OR: [{ id: cleanId }, { domain: cleanId }],
         deletedAt: null,
@@ -99,38 +117,36 @@ export async function verifyProjectAccess(
       };
     }
 
-    // 3. Check ownership / IDOR authorization
-    // Users can only access projects they own, unless global SUPERADMIN
-    if (project.userId && project.userId !== user.id && user.role !== 'SUPERADMIN') {
-      return {
-        success: false,
-        error: NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'FORBIDDEN',
-              message: 'Forbidden: You do not have permission to access this project.',
-            },
-          },
-          { status: 403 }
-        ),
-      };
-    }
+    // 4. Check ownership / IDOR authorization
+    const role = (user.role || '').toUpperCase();
+    const isGlobalAdmin = role === 'SUPERADMIN' || role === 'ADMIN';
 
-    if (!project.userId && user.role !== 'SUPERADMIN') {
-      return {
-        success: false,
-        error: NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'FORBIDDEN',
-              message: 'Forbidden: You do not have permission to access this project.',
-            },
+    if (!isGlobalAdmin) {
+      const isDirectOwner = project.userId === user.id;
+      const isMember = await prisma.projectMember.findUnique({
+        where: {
+          projectId_userId: {
+            projectId: project.id,
+            userId: user.id,
           },
-          { status: 403 }
-        ),
-      };
+        },
+      });
+
+      if (!isDirectOwner && !isMember) {
+        return {
+          success: false,
+          error: NextResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'FORBIDDEN',
+                message: 'Forbidden: You do not have permission to access this project.',
+              },
+            },
+            { status: 403 }
+          ),
+        };
+      }
     }
 
     return {

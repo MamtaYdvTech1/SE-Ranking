@@ -126,7 +126,7 @@ export interface ApiUsageStats {
   status: 'active' | 'exhausted' | 'unconfigured';
 }
 
-export type SystemRole = "SuperAdmin" | "SEOExecutive" | "Viewer";
+export type SystemRole = "SuperAdmin" | "SEOExecutive" | "Viewer" | "Owner" | "Admin" | "Client" | "SUPERADMIN" | "ADMIN" | "OWNER" | "SEO_USER" | "CLIENT" | string;
 
 export type ProjectStatus = "Active" | "Paused" | "Archived" | "active" | "paused" | "archived" | string | number;
 export type ProjectAccessLevel = "Owner" | "Member" | "ReadOnly" | number;
@@ -139,6 +139,11 @@ export interface UserDto {
   fullName: string;
   role: SystemRole;
   isActive: boolean;
+  status?: 'active' | 'pending' | 'approved' | 'rejected' | 'suspended' | 'deactivated' | string;
+  planTier?: string;
+  toolPermissions?: Record<string, boolean> | null;
+  usageLimits?: Record<string, number> | null;
+  usageCurrent?: Record<string, number> | null;
   lastLoginAt?: string;
   assignedProjectIds: string[];
 }

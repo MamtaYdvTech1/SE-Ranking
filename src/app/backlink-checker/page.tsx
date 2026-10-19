@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { authFetch } from '@/lib/clientAuth';
 import {
   Sparkles,
   ArrowRight,
@@ -93,6 +94,25 @@ export default function BacklinkCheckerPage() {
   const [crawlScope, setCrawlScope] = useState<'domain' | 'exact'>('domain');
   const [activeCheckedDomain, setActiveCheckedDomain] = useState('seranking.com');
 
+  // Real provider states
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAuthRequired, setIsAuthRequired] = useState(false);
+  const [backlinkSummary, setBacklinkSummary] = useState<{
+    totalBacklinks: number | null;
+    referringDomains: number | null;
+    dofollowPercent: number | null;
+    nofollowPercent: number | null;
+    domainTrust: number | null;
+  } | null>(null);
+  const [backlinkList, setBacklinkList] = useState<Array<{
+    sourceUrl: string;
+    targetUrl: string;
+    anchorText: string;
+    domainTrust: number | null;
+    isDoFollow: boolean;
+  }>>([]);
+
   // Sub tab switcher
   const [activeTab, setActiveTab] = useState<'overview' | 'domains' | 'anchors' | 'gap'>('overview');
 
@@ -102,10 +122,88 @@ export default function BacklinkCheckerPage() {
   // Product tour modal
   const [isProductTourOpen, setIsProductTourOpen] = useState(false);
 
+  const performCheck = async (urlOrDomain: string) => {
+    const clean = urlOrDomain.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
+    if (!clean) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+    setIsAuthRequired(false);
+    setActiveCheckedDomain(clean);
+
+    try {
+      const [summaryRes, listRes] = await Promise.allSettled([
+        authFetch('/api/seo/backlinks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: clean, mode: 'summary' }),
+        }),
+        authFetch('/api/seo/backlinks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: clean, mode: 'list', limit: 20 }),
+        }),
+      ]);
+
+      let authNeeded = false;
+
+      if (summaryRes.status === 'fulfilled') {
+        const res = summaryRes.value;
+        if (res.status === 401) {
+          authNeeded = true;
+        } else {
+          const json = await res.json().catch(() => null);
+          if (res.ok && json?.success && json?.data) {
+            const d = json.data;
+            const total = typeof d.backlinks === 'number' ? d.backlinks : typeof d.totalBacklinks === 'number' ? d.totalBacklinks : null;
+            const dofollow = d.dofollow ?? 0;
+            const dofollowRatio = total && total > 0 ? Math.round((dofollow / total) * 100) : null;
+            const nofollowRatio = dofollowRatio != null ? 100 - dofollowRatio : null;
+            setBacklinkSummary({
+              totalBacklinks: total,
+              referringDomains: typeof d.referringDomains === 'number' ? d.referringDomains : typeof d.totalReferringDomains === 'number' ? d.totalReferringDomains : null,
+              dofollowPercent: dofollowRatio,
+              nofollowPercent: nofollowRatio,
+              domainTrust: typeof d.domainRank === 'number' ? Math.min(100, Math.round(d.domainRank / 2)) : null,
+            });
+          } else if (!res.ok) {
+            setErrorMessage(json?.error || `Backlink provider returned HTTP ${res.status}`);
+          }
+        }
+      }
+
+      if (listRes.status === 'fulfilled') {
+        const res = listRes.value;
+        if (res.status === 401) {
+          authNeeded = true;
+        } else {
+          const json = await res.json().catch(() => null);
+          if (res.ok && json?.success && Array.isArray(json?.data?.items || json?.data?.backlinks)) {
+            const rawItems = json.data.items || json.data.backlinks || [];
+            setBacklinkList(rawItems.map((item: any) => ({
+              sourceUrl: item.source_url || item.sourceUrl || '',
+              targetUrl: item.target_url || item.targetUrl || '',
+              anchorText: item.anchor || item.anchorText || 'No anchor text',
+              domainTrust: typeof item.domain_rank === 'number' ? Math.min(100, Math.round(item.domain_rank / 2)) : typeof item.domainTrust === 'number' ? item.domainTrust : null,
+              isDoFollow: Boolean(item.dofollow ?? item.isDoFollow ?? true),
+            })));
+          }
+        }
+      }
+
+      if (authNeeded) {
+        setIsAuthRequired(true);
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Network error checking backlinks.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUrl.trim()) return;
-    setActiveCheckedDomain(targetUrl);
+    performCheck(targetUrl);
   };
 
   const faqs = [
@@ -434,9 +532,11 @@ export default function BacklinkCheckerPage() {
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <span>{activeCheckedDomain}</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-bold">
-                      Domain Trust: 78
-                    </span>
+                    {backlinkSummary?.domainTrust != null && (
+                      <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-bold">
+                        Domain Trust: {backlinkSummary.domainTrust}
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xs text-gray-500">Crawled scope: {crawlScope === 'domain' ? 'Root domain' : 'Exact URL'}</p>
                 </div>
@@ -465,94 +565,138 @@ export default function BacklinkCheckerPage() {
               </div>
             </div>
 
-            {/* 3 Highlight Purple/Blue Stat Cards matching screenshot */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
-                <div className="text-xs font-semibold text-purple-100 uppercase tracking-wider">Total Backlinks</div>
-                <div className="text-3xl font-black mt-1">4,820,000</div>
-                <div className="text-xs text-purple-200 mt-2 flex items-center gap-2">
-                  <span className="bg-white/20 px-2 py-0.5 rounded font-bold">82% Dofollow</span>
-                  <span>18% Nofollow</span>
+            {/* Authentication Required Banner */}
+            {isAuthRequired && (
+              <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-sm">Authentication Required</h4>
+                  <p className="text-xs text-amber-700 mt-0.5">Please sign in to your SE Ranking account to query live backlink profiles.</p>
+                </div>
+                <Link href="/login" className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all shrink-0">
+                  Sign in
+                </Link>
+              </div>
+            )}
+
+            {/* Genuine Provider Error Message */}
+            {errorMessage && (
+              <div className="mt-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Loading Indicator */}
+            {isLoading && (
+              <div className="py-12 text-center text-sm font-semibold text-gray-500 animate-pulse flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <span>Querying live backlink index for {activeCheckedDomain}...</span>
+              </div>
+            )}
+
+            {/* Real Provider Stat Cards */}
+            {!isLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
+                  <div className="text-xs font-semibold text-purple-100 uppercase tracking-wider">Total Backlinks</div>
+                  <div className="text-3xl font-black mt-1">
+                    {backlinkSummary?.totalBacklinks != null ? backlinkSummary.totalBacklinks.toLocaleString() : '—'}
+                  </div>
+                  <div className="text-xs text-purple-200 mt-2 flex items-center gap-2">
+                    {backlinkSummary?.dofollowPercent != null ? (
+                      <>
+                        <span className="bg-white/20 px-2 py-0.5 rounded font-bold">{backlinkSummary.dofollowPercent}% Dofollow</span>
+                        <span>{backlinkSummary.nofollowPercent}% Nofollow</span>
+                      </>
+                    ) : (
+                      <span>Enter a target domain above to inspect links</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#0f172a] text-white shadow-md">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Referring Domains</div>
+                  <div className="text-3xl font-black mt-1">
+                    {backlinkSummary?.referringDomains != null ? backlinkSummary.referringDomains.toLocaleString() : '—'}
+                  </div>
+                  <div className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>Live measured referring domains</span>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#0B69FF] text-white shadow-md">
+                  <div className="text-xs font-semibold text-blue-100 uppercase tracking-wider">Domain Trust (DT)</div>
+                  <div className="text-3xl font-black mt-1">
+                    {backlinkSummary?.domainTrust != null ? `${backlinkSummary.domainTrust} / 100` : '—'}
+                  </div>
+                  <div className="text-xs text-blue-100 mt-2">
+                    {backlinkSummary?.domainTrust != null ? 'Calculated from live backlink authority' : 'Query target domain to evaluate'}
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="p-5 rounded-2xl bg-[#0f172a] text-white shadow-md">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Referring Domains</div>
-                <div className="text-3xl font-black mt-1">32,400</div>
-                <div className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>+1,240 new domains this month</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[#0B69FF] text-white shadow-md">
-                <div className="text-xs font-semibold text-blue-100 uppercase tracking-wider">Domain Trust (DT)</div>
-                <div className="text-3xl font-black mt-1">78 / 100</div>
-                <div className="text-xs text-blue-100 mt-2">
-                  Top 5% authority in business & tech niche
-                </div>
-              </div>
-            </div>
-
-            {/* Backlink Growth Line Chart */}
+            {/* Backlink Growth Notice - Non-fabricated */}
             <div className="mt-8 pt-6 border-t border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-gray-900">
                   New vs Lost Backlinks Acquisition Trend
                 </h4>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5 font-bold text-[#0B69FF]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0B69FF]" />
-                    New Backlinks
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold text-rose-500">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                    Lost Backlinks
-                  </span>
-                </div>
               </div>
-
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockBacklinkGrowth}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#9CA3AF" />
-                    <Tooltip />
-                    <Bar dataKey="newLinks" fill="#0B69FF" radius={[4, 4, 0, 0]} name="New Backlinks" />
-                    <Bar dataKey="lostLinks" fill="#F43F5E" radius={[4, 4, 0, 0]} name="Lost Backlinks" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="py-6 px-4 rounded-2xl bg-gray-50 border border-gray-100 text-center">
+                <p className="text-sm font-semibold text-gray-600">
+                  Historical backlink trend data unavailable from provider.
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Historical velocity charts require continuous monitoring snapshots. Never fabricated.
+                </p>
               </div>
             </div>
 
-            {/* Top Anchor Texts Breakdown */}
+            {/* Live Backlink Sample Rows */}
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
-                Top Anchor Texts Distribution
+              <h4 className="text-sm font-bold text-gray-900 mb-3">
+                Live Backlink Results {backlinkList.length > 0 ? `(${backlinkList.length})` : ''}
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <div className="text-xs font-bold text-gray-900 truncate">&ldquo;se ranking&rdquo;</div>
-                  <div className="text-lg font-black text-gray-900 mt-1">45%</div>
-                  <div className="text-[11px] text-gray-500">Brand anchor (Safe)</div>
+              {backlinkList.length > 0 ? (
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200">
+                      <tr>
+                        <th className="p-3">Source URL</th>
+                        <th className="p-3">Target URL</th>
+                        <th className="p-3">Anchor Text</th>
+                        <th className="p-3">Attribute</th>
+                        <th className="p-3">Domain Trust</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 font-medium">
+                      {backlinkList.map((link, idx) => (
+                        <tr key={idx} className="hover:bg-blue-50/40">
+                          <td className="p-3 max-w-xs truncate text-[#0B69FF]">
+                            <a href={link.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {link.sourceUrl}
+                            </a>
+                          </td>
+                          <td className="p-3 max-w-xs truncate text-gray-600">{link.targetUrl}</td>
+                          <td className="p-3 max-w-xs truncate text-gray-800">{link.anchorText}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${link.isDoFollow ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                              {link.isDoFollow ? 'Dofollow' : 'Nofollow'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-gray-700">{link.domainTrust != null ? `${link.domainTrust}/100` : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <div className="text-xs font-bold text-gray-900 truncate">&ldquo;seranking.com&rdquo;</div>
-                  <div className="text-lg font-black text-gray-900 mt-1">28%</div>
-                  <div className="text-[11px] text-gray-500">Naked URL (Safe)</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <div className="text-xs font-bold text-gray-900 truncate">&ldquo;seo platform&rdquo;</div>
-                  <div className="text-lg font-black text-gray-900 mt-1">14%</div>
-                  <div className="text-[11px] text-gray-500">Exact match query</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  <div className="text-xs font-bold text-gray-900 truncate">&ldquo;learn more / visit&rdquo;</div>
-                  <div className="text-lg font-black text-gray-900 mt-1">13%</div>
-                  <div className="text-[11px] text-gray-500">Generic anchors</div>
-                </div>
-              </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic">
+                  {isLoading ? 'Loading backlinks...' : 'No backlink rows to display. Enter a target domain and click "Check backlinks".'}
+                </p>
+              )}
             </div>
           </div>
         </div>

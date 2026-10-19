@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { crawlAndAuditUrl, isSafeUrl } from '@/services/seo/audit.service';
+import { requireToolAccess } from '@/lib/server/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,16 +11,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid website domain or URL is required.' }, { status: 400 });
     }
 
+    const maxPages = Math.min(30, Math.max(3, Number(body.maxPages) || 12));
+
+    // 1. Enforce per-user SEO tool permissions & quota
+    const toolAuth = await requireToolAccess(req, 'audits', { checkQuota: true, quotaAmount: maxPages });
+    if (toolAuth.error) {
+      return NextResponse.json({ error: toolAuth.error }, { status: toolAuth.status });
+    }
+
     const formatted = rawUrl.trim().startsWith('http') ? rawUrl.trim() : `https://${rawUrl.trim()}`;
 
     if (!isSafeUrl(formatted)) {
       return NextResponse.json(
-        { error: 'Crawl target URL is not permitted due to security policies.' },
+        { error: 'Crawl target URL is not permitted due to SSRF security policies.' },
         { status: 400 }
       );
     }
-
-    const maxPages = Math.min(30, Math.max(3, Number(body.maxPages) || 12));
 
     const auditResult = await crawlAndAuditUrl(formatted, {
       maxPages,

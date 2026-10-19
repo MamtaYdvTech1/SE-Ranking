@@ -57,7 +57,10 @@ describe("BacklinkReferringDomains Integration Suite", () => {
     expect(
       await screen.findByRole("heading", { name: /45\s+referring domains/i })
     ).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledWith(`/api/projects/${projectId}/backlinks/explorer`);
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/projects/${projectId}/backlinks/explorer`,
+      expect.anything()
+    );
   });
 
   it("renders dual-month calendar picker popover and history controls", () => {

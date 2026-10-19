@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuthSession } from '@/lib/server/auth';
+import { getAuthSession, requireToolAccess } from '@/lib/server/auth';
 import { yepApiClient } from '@/lib/yepapi';
 
 const KeywordDifficultySchema = z.object({
@@ -11,12 +11,12 @@ const KeywordDifficultySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
-    const session = await getAuthSession(req);
-    if (!session?.user) {
+    // 1. Authenticate user & check Keywords tool permission
+    const toolAuth = await requireToolAccess(req, 'keywords', { checkQuota: false });
+    if (toolAuth.error) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required. Please sign in.' },
-        { status: 401 }
+        { success: false, error: toolAuth.error },
+        { status: toolAuth.status }
       );
     }
 

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['@node-rs/argon2'],
   devIndicators: false,
   async rewrites() {
     return [
@@ -27,6 +28,46 @@ const nextConfig: NextConfig = {
       {
         source: '/admin.site.positions.html',
         destination: '/rankings',
+      },
+      {
+        source: '/solutions',
+        destination: '/for-agencies',
+      },
+      {
+        source: '/tools',
+        destination: '/keyword-rank-tracker',
+      },
+      {
+        source: '/resources',
+        destination: '/help',
+      },
+      {
+        source: '/competitor-analysis',
+        destination: '/competitor-analysis-tool',
+      },
+      {
+        source: '/website-audit/page-changes',
+        destination: '/page-changes',
+      },
+      {
+        source: '/research/ai-visibility',
+        destination: '/research/ai-search',
+      },
+      {
+        source: '/admin/audit-logs',
+        destination: '/admin/activity-logs',
+      },
+      {
+        source: '/admin/usage',
+        destination: '/admin/api-usage',
+      },
+      {
+        source: '/admin/settings',
+        destination: '/settings',
+      },
+      {
+        source: '/admin/integrations',
+        destination: '/integrations',
       },
     ];
   },

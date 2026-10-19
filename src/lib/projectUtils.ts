@@ -30,3 +30,11 @@ export function getProjectFallbackLetter(nameOrDomain: string): string {
   const clean = getCleanDomain(nameOrDomain) || nameOrDomain || 'P';
   return clean[0].toUpperCase();
 }
+
+/**
+ * Normalizes domain: strips protocol, www prefix, trailing slashes, path, query, and converts to lowercase.
+ */
+export function normalizeDomain(rawDomain: string): string {
+  if (!rawDomain) return '';
+  return getCleanDomain(rawDomain);
+}

@@ -9,29 +9,49 @@ datasource db {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  email           String         @unique
-  name            String?
-  firstName       String?
-  lastName        String?
-  passwordHash    String?
-  avatarUrl       String?
-  role            String         @default("OWNER") // OWNER, ADMIN, MEMBER, CLIENT
-  status          String         @default("active") // active, suspended, pending
-  googleSubjectId String?
-  locale          String?
-  emailVerified   Boolean?       @default(false)
-  emailVerifiedAt DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  lastLoginAt     DateTime?
+  id                     String                  @id @default(cuid())
+  email                  String                  @unique
+  name                   String?
+  firstName              String?
+  lastName               String?
+  passwordHash           String?
+  avatarUrl              String?
+  role                   String                  @default("SEO_USER") // ADMIN, SEO_USER, OWNER, CLIENT, MEMBER, SUPERADMIN
+  status                 String                  @default("active") // active, pending, approved, rejected, suspended, deactivated
+  rejectionReason        String?
+  approvedAt             DateTime?
+  approvedBy             String?
+  rejectedAt             DateTime?
+  suspendedAt            DateTime?
+  suspendedReason        String?
+  toolPermissions        String?                 // JSON: { audits: boolean, rankings: boolean, keywords: boolean, backlinks: boolean, ai_visibility: boolean, competitor_research: boolean, reports: boolean }
+  planTier               String                  @default("FREE_TRIAL") // FREE_TRIAL, STARTER, PRO, AGENCY, ENTERPRISE
+  usageLimits            String?                 // JSON: { maxProjects: number, monthlyKeywords: number, monthlyAuditPages: number, monthlyBacklinkQueries: number, monthlyAiQueries: number }
+  usageCurrent           String?                 // JSON: { keywordsUsed: number, auditPagesUsed: number, backlinkQueriesUsed: number, aiQueriesUsed: number, periodStart: string }
+  version                Int                     @default(1)
+  canCreateProject       Boolean                 @default(true)
+  canCreateClient        Boolean                 @default(true)
+  deletedAt              DateTime?
+  deletedBy              String?
+  googleSubjectId        String?
+  locale                 String?
+  emailVerified          Boolean?                @default(false)
+  emailVerifiedAt        DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  lastLoginAt            DateTime?
 
-  projects        Project[]
-  sessions        Session[]
-  tasks           Task[]
-  notifications   Notification[]
-  locations       Location[]
-  activityLogs    ActivityLog[]
+  projects               Project[]
+  sessions               Session[]
+  tasks                  Task[]
+  notifications          Notification[]
+  locations              Location[]
+  activityLogs           ActivityLog[]
+  userRoles              UserRole[]
+  projectMemberships     ProjectMember[]
+  invitationsCreated     Invitation[]            @relation("UserInvitedBy")
+  auditLogs              AuditLog[]              @relation("UserAuditLogs")
+  notificationPreference NotificationPreference?
 }
 
 model Session {
@@ -64,6 +84,8 @@ model Project {
   domainType          String               @default("exact_domain")
   groupId             String?
   group               ProjectGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  clientId            String?
+  client              Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
   projectColor        String?
   accessLevel         String               @default("OWNER")
   status              String               @default("Active") // Active, Paused, Archived
@@ -81,6 +103,7 @@ model Project {
   defaultDevice       String               @default("desktop")
   rankingFrequency    String               @default("Daily") // Daily, Weekly, Manual
   lastRankingCheckAt  DateTime?
+  version             Int                  @default(1)
   isArchived          Boolean              @default(false)
   deletedAt           DateTime?
   deletedBy           String?
@@ -90,6 +113,8 @@ model Project {
   userId              String?
   user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  domains             ProjectDomain[]
+  members             ProjectMember[]
   searchEngines       SearchEngineConfig[]
   keywords            Keyword[]
   projectCompetitors  ProjectCompetitor[]
@@ -690,3 +715,145 @@ model ContentBrief {
   @@index([targetKeyword])
   @@index([projectId])
 }
+
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique // "ADMIN", "SEO_USER", "CLIENT", "MEMBER"
+  description String?
+  permissions String?    // JSON string representation of allowed capability flags
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userRoles   UserRole[]
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  status    String    @default("active") // "active", "archived", "deactivated"
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+
+  @@index([status])
+}
+
+model ProjectDomain {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  domain    String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([domain])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // "OWNER", "ADMIN", "SEO_USER", "VIEWER"
+  canEdit   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model Invitation {
+  id               String    @id @default(cuid())
+  email            String
+  role             String    @default("SEO_USER") // "ADMIN", "SEO_USER", "CLIENT"
+  token            String    @unique
+  invitedById      String?
+  invitedBy        User?     @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  projectIds       String?   // JSON array of project IDs assigned
+  canCreateProject Boolean   @default(true)
+  status           String    @default("pending") // "pending", "accepted", "expired", "revoked"
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  actor      User?    @relation("UserAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "USER_INVITE", "ROLE_CHANGE", "USER_DEACTIVATE", "FORCE_LOGOUT", "PROJECT_ASSIGN", "PROJECT_CREATE", "CLIENT_CREATE"
+  entity     String   // "User", "Project", "Client", "Role", "Invitation", "Setting"
+  entityId   String
+  beforeJson String?  // JSON string
+  afterJson  String?  // JSON string
+  ipAddress  String   @default("127.0.0.1")
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model NotificationPreference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailAlerts    Boolean  @default(true)
+  auditReports   Boolean  @default(true)
+  rankingChanges Boolean  @default(true)
+  securityAlerts Boolean  @default(true)
+  weeklyDigest   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   // JSON string
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
+model ProviderConfig {
+  id              String    @id @default(cuid())
+  provider        String    @unique // "serper", "yepapi", "pagespeed", "gsc", "google_ads", "gemini", "openai", "resend", "s3"
+  name            String
+  category        String    // "serp", "audit", "ai", "email", "storage"
+  enabled         Boolean   @default(true)
+  quotaLimit      Int?
+  quotaUsed       Int       @default(0)
+  status          String    @default("active") // "active", "quota_exhausted", "error", "unconfigured"
+  lastHealthCheck DateTime?
+  errorReason     String?
+  metadata        String?   // JSON string
+  updatedAt       DateTime  @updatedAt
+}
+

@@ -39,6 +39,13 @@ const PUBLIC_PATHS = [
   '/security-check',
   '/cdn-cgi',
   '/api-docs',
+  '/solutions',
+  '/tools',
+  '/resources',
+  '/page-changes',
+  '/admin/login',
+  '/admin/signup',
+  '/admin/invite',
 ];
 
 // Public API endpoints that do not require an active session
@@ -51,6 +58,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/auth/google',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
+  '/api/admin/auth',
 ];
 
 export async function proxy(request: NextRequest) {
@@ -127,7 +135,8 @@ export async function proxy(request: NextRequest) {
   // 7. If unauthenticated and attempting to access any protected frontend route:
   // Strictly redirect to login page with preserved destination (redirect parameter)
   if (!isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
+    const loginTarget = pathname.startsWith('/admin') ? '/admin/login' : '/login';
+    const loginUrl = new URL(loginTarget, request.url);
     const destination = pathname + (request.nextUrl.search || '');
     loginUrl.searchParams.set('redirect', destination);
     return NextResponse.redirect(loginUrl);

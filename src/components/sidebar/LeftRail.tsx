@@ -16,24 +16,24 @@ import {
   Boxes,
   ThumbsUp,
   Settings,
-  HelpCircle,
 } from 'lucide-react';
 import { useApp, RailSection } from '../providers/AppProviders';
 import { useAuth } from '@/context/AuthContext';
 import { getSectionFromPathname } from '@/lib/navigation';
 
+const emptySubscribe = () => () => {};
+
 export function LeftRail() {
   const pathname = usePathname();
-  const { activeRail, setActiveRail, hasCreatedProject, setIsAddWebsiteModalOpen, projects } = useApp();
+  const { setActiveRail, setIsAddWebsiteModalOpen } = useApp();
   const { user } = useAuth();
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   const currentSection = getSectionFromPathname(pathname);
-  const isNoProjectsState = !hasCreatedProject || projects.length === 0;
 
   const allRailItems: Array<{
     id: RailSection;
@@ -231,7 +231,9 @@ export function LeftRail() {
           pathname.startsWith('/settings') ||
           pathname.startsWith('/users');
 
-        const userInitials = user?.fullName
+        const userInitials = !isMounted
+          ? 'BY'
+          : user?.fullName
           ? user.fullName
               .split(' ')
               .filter(Boolean)
@@ -253,7 +255,10 @@ export function LeftRail() {
               }`}
             >
               <div className="relative">
-                <div className="w-8 h-8 rounded-md bg-[#2A3B53] text-[#E2E8F0] flex items-center justify-center text-xs font-bold border border-white/10 group-hover:border-white/30 transition-all">
+                <div 
+                  className="w-8 h-8 rounded-md bg-[#2A3B53] text-[#E2E8F0] flex items-center justify-center text-xs font-bold border border-white/10 group-hover:border-white/30 transition-all"
+                  suppressHydrationWarning
+                >
                   {userInitials}
                 </div>
                 <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#1e293b] border border-white/20 flex items-center justify-center text-gray-300 group-hover:text-white transition-colors">

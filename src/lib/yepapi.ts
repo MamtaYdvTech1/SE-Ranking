@@ -261,6 +261,35 @@ export interface CompetitorKeywordsData {
   keywords: Array<KeywordMetricItem & { domain1Position?: number; domain2Position?: number }>;
 }
 
+/**
+ * Maps common country codes (ISO alpha-2/alpha-3) to YepAPI / Google location_code integers.
+ * Default is 2840 (United States).
+ */
+export function mapCountryToLocationCode(countryCode?: string): number {
+  if (!countryCode) return 2840;
+  const code = countryCode.toLowerCase().trim();
+  const map: Record<string, number> = {
+    us: 2840,
+    usa: 2840,
+    in: 2356,
+    ind: 2356,
+    uk: 2826,
+    gb: 2826,
+    ca: 2124,
+    au: 2036,
+    de: 2276,
+    fr: 2250,
+    es: 2724,
+    it: 2380,
+    nl: 2528,
+    jp: 2392,
+    br: 2076,
+    ae: 2784,
+    sg: 2702,
+  };
+  return map[code] || 2840;
+}
+
 // ---------------------------------------------------------------------------
 // Main YepApiClient Class
 // ---------------------------------------------------------------------------

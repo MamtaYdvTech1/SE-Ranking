@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/server/auth';
-import { yepApiClient } from '@/lib/yepapi';
+import { yepApiClient, mapCountryToLocationCode } from '@/lib/yepapi';
 
 const KeywordIdeasSchema = z.object({
   keyword: z.string().min(1, 'Seed keyword is required').max(80),
   limit: z.number().int().min(5).max(250).optional().default(50),
   location_code: z.number().int().optional(),
+  country: z.string().optional(),
+  country_code: z.string().optional(),
   language: z.string().max(10).optional().default('en'),
   filters: z.array(z.any()).max(8).optional(),
   sort: z.array(z.string()).max(3).optional(),
@@ -47,6 +49,11 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parseResult.data;
+    const resolvedLocationCode =
+      data.location_code ??
+      (data.country || data.country_code
+        ? mapCountryToLocationCode(data.country || data.country_code)
+        : undefined);
 
     // 3. Check YepAPI configuration
     if (!yepApiClient.isConfigured()) {
@@ -63,7 +70,7 @@ export async function POST(req: NextRequest) {
     const ideasRes = await yepApiClient.getKeywordIdeas({
       keyword: data.keyword,
       limit: data.limit,
-      location_code: data.location_code,
+      location_code: resolvedLocationCode,
       language: data.language,
       filters: data.filters,
       sort: data.sort,

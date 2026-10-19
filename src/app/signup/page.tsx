@@ -118,9 +118,15 @@ export default function SignUpPage() {
         confirmPassword,
       });
 
+      if (data?.requiresApproval || data?.status === 'pending') {
+        setSuccessMessage('Registration received! Your account is currently pending manual administrator review and approval. Once approved, you will be able to log in to access your assigned SEO tools.');
+        setIsLoading(false);
+        return;
+      }
+
       setSuccessMessage('Account created successfully! Welcome to your dashboard...');
       setTimeout(() => {
-        window.location.href = data.redirectTo || '/projects';
+        window.location.href = data?.redirectTo || '/projects';
       }, 400);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -398,14 +404,24 @@ export default function SignUpPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-700">
-                <span>Already have an account?</span>
-                <Link
-                  href="/login"
-                  className="text-[#7C3AED] hover:text-[#6D28D9] font-semibold hover:underline"
-                >
-                  Log in
-                </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
+                <div className="flex items-center gap-1.5 text-gray-700">
+                  <span>Already have an account?</span>
+                  <Link
+                    href="/login"
+                    className="text-[#7C3AED] hover:text-[#6D28D9] font-semibold hover:underline"
+                  >
+                    Log in
+                  </Link>
+                </div>
+                <div>
+                  <Link
+                    href="/admin/signup"
+                    className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+                  >
+                    Have an Admin Invite? &rarr;
+                  </Link>
+                </div>
               </div>
             </div>
           </form>

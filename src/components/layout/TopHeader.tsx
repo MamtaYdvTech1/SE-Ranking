@@ -25,9 +25,12 @@ import {
   LogOut,
   Lightbulb,
   ChevronDown,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useApp } from '../providers/AppProviders';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { appWrapData } from '@/lib/appWrapData';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { ReportBugModal } from '@/components/modals/ReportBugModal';
@@ -71,6 +74,7 @@ export function TopHeader() {
   const router = useRouter();
   const { isMobileDrawerOpen, setIsMobileDrawerOpen } = useApp();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [localEmail, setLocalEmail] = useState('');
   const [localName, setLocalName] = useState('');
@@ -208,7 +212,7 @@ export function TopHeader() {
   }, []);
 
   return (
-    <header className="h-[44px] bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#8B5CF6] text-white flex items-center justify-between px-3 z-40 select-none shrink-0 relative shadow-xs">
+    <header className="h-[44px] bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#8B5CF6] dark:from-[#0d121f] dark:via-[#16172e] dark:to-[#0f172a] text-white flex items-center justify-between px-3 z-40 select-none shrink-0 relative shadow-xs dark:border-b dark:border-slate-800/80 transition-colors duration-150">
       {/* ==================== LEFT SECTION: Mobile Toggle, Apps Menu, Logo, Favorite Tabs ==================== */}
       <div className="flex items-center gap-2 h-full min-w-0">
         {/* Mobile menu button */}
@@ -283,8 +287,8 @@ export function TopHeader() {
                   href={tab.href}
                   className={`relative flex items-center h-full px-2.5 py-1 text-[13px] font-medium transition-all cursor-pointer rounded-[4px] whitespace-nowrap ${
                     isActive
-                      ? 'bg-white/15 text-white font-semibold shadow-xs'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      ? 'bg-white/15 dark:bg-purple-600/30 text-white font-semibold shadow-xs'
+                      : 'text-white/80 dark:text-slate-300 hover:text-white hover:bg-white/10 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <span className="pr-3.5">{tab.label}</span>
@@ -346,6 +350,26 @@ export function TopHeader() {
           </div>
         </div>
 
+        {/* Theme Toggle Button */}
+        <div className="relative group/theme flex items-center">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-white/90 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-300" />
+            ) : (
+              <Moon className="w-4 h-4 text-white" />
+            )}
+          </button>
+          <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#2D3748] text-white text-[11px] font-medium py-1 px-2.5 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none hidden group-hover/theme:flex flex-col items-center animate-in fade-in duration-100">
+            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[4px] border-b-[#2D3748] absolute -top-1" />
+            <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+          </div>
+        </div>
+
         {/* Help Center Button: only ? icon matching SE Ranking */}
         <div ref={helpRef} className="relative h-full flex items-center">
           <button
@@ -367,8 +391,8 @@ export function TopHeader() {
           </button>
 
           {isHelpOpen && (
-            <div className="absolute right-0 top-[calc(100%+3px)] w-60 bg-white rounded-xl shadow-2xl border border-gray-200 text-gray-800 z-50 p-1.5 text-xs animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
-              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-1">
+            <div className="absolute right-0 top-[calc(100%+3px)] w-60 bg-white dark:bg-[#111827] rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700/80 text-gray-800 dark:text-slate-200 z-50 p-1.5 text-xs animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider border-b border-gray-100 dark:border-slate-800 mb-1">
                 Help &amp; Guidance
               </div>
 
@@ -378,18 +402,18 @@ export function TopHeader() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsHelpOpen(false)}
-                className="flex items-center justify-between p-2.5 bg-[#F5F3FF] hover:bg-[#EDE9FE] text-[#7C3AED] font-semibold rounded-lg transition-colors cursor-pointer group mb-1 border border-[#DDD6FE]"
+                className="flex items-center justify-between p-2.5 bg-[#F5F3FF] dark:bg-purple-950/40 hover:bg-[#EDE9FE] dark:hover:bg-purple-900/50 text-[#7C3AED] dark:text-purple-300 font-semibold rounded-lg transition-colors cursor-pointer group mb-1 border border-[#DDD6FE] dark:border-purple-800/60"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-[#7C3AED] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <BookOpen className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-gray-900 group-hover:text-[#7C3AED] leading-tight">Help Center</div>
-                    <div className="text-[10px] text-gray-500 font-normal">Knowledge Base, Guides &amp; FAQ</div>
+                    <div className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-[#7C3AED] dark:group-hover:text-purple-300 leading-tight">Help Center</div>
+                    <div className="text-[10px] text-gray-500 dark:text-slate-400 font-normal">Knowledge Base, Guides &amp; FAQ</div>
                   </div>
                 </div>
-                <ExternalLink className="w-3.5 h-3.5 text-[#7C3AED] shrink-0" />
+                <ExternalLink className="w-3.5 h-3.5 text-[#7C3AED] dark:text-purple-300 shrink-0" />
               </Link>
 
               <button
@@ -397,7 +421,7 @@ export function TopHeader() {
                   setIsHelpOpen(false);
                   setIsGuideModalOpen(true);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#7C3AED] font-medium transition-colors text-left cursor-pointer rounded-lg"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 font-medium transition-colors text-left cursor-pointer rounded-lg"
               >
                 <Compass className="w-4 h-4 text-emerald-500" />
                 <span>Quick-start guide</span>
@@ -408,7 +432,7 @@ export function TopHeader() {
                   setIsHelpOpen(false);
                   setIsBugModalOpen(true);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-red-50/70 hover:text-red-600 font-medium transition-colors text-left cursor-pointer rounded-lg"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-700 dark:text-slate-300 hover:bg-red-50/70 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors text-left cursor-pointer rounded-lg"
               >
                 <Bug className="w-4 h-4 text-red-500" />
                 <span>Report a bug</span>
@@ -419,13 +443,13 @@ export function TopHeader() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsHelpOpen(false)}
-                className="flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#7C3AED] font-medium transition-colors cursor-pointer border-t border-gray-100 mt-1 pt-1.5 group rounded-lg"
+                className="flex items-center justify-between px-3 py-2 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 font-medium transition-colors cursor-pointer border-t border-gray-100 dark:border-slate-800 mt-1 pt-1.5 group rounded-lg"
               >
                 <div className="flex items-center gap-2.5">
-                  <Gift className="w-4 h-4 text-amber-500 group-hover:text-[#7C3AED]" />
+                  <Gift className="w-4 h-4 text-amber-500 group-hover:text-[#7C3AED] dark:group-hover:text-purple-300" />
                   <span>What&apos;s new</span>
                 </div>
-                <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#7C3AED]" />
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400 group-hover:text-[#7C3AED] dark:group-hover:text-purple-300" />
               </Link>
             </div>
           )}
@@ -451,19 +475,19 @@ export function TopHeader() {
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-[calc(100%+3px)] w-80 bg-white rounded-lg shadow-xl border border-gray-200 text-gray-800 z-50 p-4 text-xs animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
-              <div className="font-semibold text-gray-900 border-b pb-2 mb-2.5 flex items-center justify-between">
+            <div className="absolute right-0 top-[calc(100%+3px)] w-80 bg-white dark:bg-[#111827] rounded-lg shadow-xl border border-gray-200 dark:border-slate-700/80 text-gray-800 dark:text-slate-200 z-50 p-4 text-xs animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+              <div className="font-semibold text-gray-900 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-2 mb-2.5 flex items-center justify-between">
                 <span>Notifications</span>
-                <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                <span className="bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 px-2 py-0.5 rounded text-[10px] font-bold">
                   {appWrapData.notifications.unread_total} New
                 </span>
               </div>
-              <div className="p-3 bg-[#F5F3FF] rounded-lg border border-[#DDD6FE] space-y-1">
-                <div className="flex items-center gap-1.5 text-purple-900 font-bold">
+              <div className="p-3 bg-[#F5F3FF] dark:bg-purple-950/40 rounded-lg border border-[#DDD6FE] dark:border-purple-800/60 space-y-1">
+                <div className="flex items-center gap-1.5 text-purple-900 dark:text-purple-200 font-bold">
                   <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
                   <span>System Status</span>
                 </div>
-                <p className="text-gray-700 text-[11px] leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 text-[11px] leading-relaxed">
                   All SEO tracking modules and keyword research databases are operational and up-to-date.
                 </p>
               </div>
@@ -490,13 +514,13 @@ export function TopHeader() {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 top-[calc(100%+4px)] w-56 bg-white rounded-lg shadow-xl border border-gray-100 text-[#2C3E50] z-50 py-1.5 text-sm animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
-              <div className="px-4 py-2 border-b border-gray-100 mb-1">
-                <div className="text-[13px] font-semibold text-[#1E293B] truncate">
+            <div className="absolute right-0 top-[calc(100%+4px)] w-56 bg-white dark:bg-[#111827] rounded-lg shadow-2xl border border-gray-100 dark:border-slate-700/80 text-[#2C3E50] dark:text-slate-200 z-50 py-1.5 text-sm animate-in fade-in duration-100 before:content-[''] before:absolute before:-top-2 before:left-0 before:right-0 before:h-2">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-800 mb-1">
+                <div className="text-[13px] font-semibold text-[#1E293B] dark:text-white truncate">
                   {userProfile.name}
                 </div>
                 {userProfile.email && (
-                  <div className="text-[11px] text-gray-500 font-normal truncate">
+                  <div className="text-[11px] text-gray-500 dark:text-slate-400 font-normal truncate">
                     {userProfile.email}
                   </div>
                 )}
@@ -506,57 +530,74 @@ export function TopHeader() {
                 <Link
                   href="/admin.user.settings.html"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <Settings className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <Settings className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Settings</span>
                 </Link>
                 <Link
                   href="/users"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <Users className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <Users className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Users</span>
                 </Link>
                 <Link
                   href="/agency-pack?tab=interface-customization"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <BookOpen className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <BookOpen className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>White Label</span>
                 </Link>
                 <Link
                   href="/pricing"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <CreditCard className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <CreditCard className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Billing</span>
                 </Link>
                 <Link
                   href="/bonus-offers"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <Gift className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <Gift className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Bonus Offers</span>
                 </Link>
                 <Link
                   href="/affiliate"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors"
                 >
-                  <DollarSign className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <DollarSign className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Affiliate Program</span>
                 </Link>
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-[#2C3E50] hover:bg-gray-50 hover:text-[#7C3AED] text-[13px] font-normal transition-colors cursor-pointer text-left"
+                  onClick={toggleTheme}
+                  className="w-full flex items-center justify-between px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors cursor-pointer text-left"
                 >
-                  <LogOut className="w-4 h-4 text-[#2C3E50] shrink-0" strokeWidth={1.75} />
+                  <div className="flex items-center gap-3">
+                    {theme === 'dark' ? (
+                      <Sun className="w-4 h-4 text-amber-500" strokeWidth={1.75} />
+                    ) : (
+                      <Moon className="w-4 h-4 text-[#2C3E50] dark:text-slate-400" strokeWidth={1.75} />
+                    )}
+                    <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/50">
+                    {theme}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-[#2C3E50] dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-[#7C3AED] dark:hover:text-purple-300 text-[13px] font-normal transition-colors cursor-pointer text-left"
+                >
+                  <LogOut className="w-4 h-4 text-[#2C3E50] dark:text-slate-400 shrink-0" strokeWidth={1.75} />
                   <span>Log Out</span>
                 </button>
               </div>

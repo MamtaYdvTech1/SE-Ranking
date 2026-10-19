@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { authFetch } from "@/lib/clientAuth";
 
 export interface SerpResult {
   position: number;
@@ -77,7 +78,7 @@ export function useSerpLandscape(projectId?: string, days = 90) {
   useEffect(() => {
     if (!projectId) return;
     let active = true;
-    fetch(`/api/projects/${encodeURIComponent(projectId)}/competitors/serp?days=${days}`)
+    authFetch(`/api/projects/${encodeURIComponent(projectId)}/competitors/serp?days=${days}`)
       .then(async (res) => {
         const json = await res.json().catch(() => null);
         if (!res.ok || !json?.success) throw new Error(json?.error?.message || json?.error || "Failed to load SERP data");

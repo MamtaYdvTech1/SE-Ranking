@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/server/auth';
-import { yepApiClient } from '@/lib/yepapi';
+import { yepApiClient, mapCountryToLocationCode } from '@/lib/yepapi';
 
 const KeywordsSchema = z.object({
   keywords: z.array(z.string().min(1).max(80)).min(1, 'At least one keyword is required').max(100),
   location_code: z.number().int().optional(),
+  country: z.string().optional(),
+  country_code: z.string().optional(),
   language: z.string().max(10).optional().default('en'),
   filters: z.array(z.any()).max(8).optional(),
   sort: z.array(z.string()).max(3).optional(),
@@ -46,6 +48,11 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parseResult.data;
+    const resolvedLocationCode =
+      data.location_code ??
+      (data.country || data.country_code
+        ? mapCountryToLocationCode(data.country || data.country_code)
+        : undefined);
 
     // 3. Check YepAPI configuration
     if (!yepApiClient.isConfigured()) {
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
     // 4. Call YepAPI Keyword Research
     const kwRes = await yepApiClient.getKeywords({
       keywords: data.keywords,
-      location_code: data.location_code,
+      location_code: resolvedLocationCode,
       language: data.language,
       filters: data.filters,
       sort: data.sort,

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { SerperProvider } from '../lib/rankings/serper';
 import { YepApiRankingProvider } from '../lib/rankings/yepapi';
+import type { KeywordCheckRequest } from '../lib/rankings/types';
 import { calculateDateBoundaries } from '../services/seo/ranking.service';
 import { calculateSeoHealthScore } from '../services/seo/audit.service';
 import { GET as analyticsGet } from '../app/api/projects/[id]/analytics/route';
@@ -44,13 +45,21 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
   });
 
   describe('2. Provider Error Handling & Status Code Mapping', () => {
+    const testRequest: KeywordCheckRequest = {
+      keywordId: 'kw-test',
+      keyword: 'test',
+      targetDomain: 'example.com',
+      searchEngine: 'google',
+      countryCode: 'us',
+    };
+
     it('SerperProvider handles unconfigured state gracefully without throwing', async () => {
       const provider = new SerperProvider();
       // Temporarily override apiKey to simulate unconfigured
       (provider as unknown as { apiKey?: string }).apiKey = undefined;
       expect(provider.isConfigured()).toBe(false);
 
-      const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
+      const res = await provider.checkRankings([testRequest]);
       expect(res.success).toBe(false);
       expect(res.error?.code).toBe('PROVIDER_UNCONFIGURED');
       expect(res.error?.statusCode).toBe(400);
@@ -68,7 +77,7 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
       } as unknown as Response);
 
       try {
-        const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
+        const res = await provider.checkRankings([testRequest]);
         expect(res.success).toBe(false);
         expect(res.error?.code).toBe('INVALID_API_KEY');
         expect(res.error?.statusCode).toBe(401);
@@ -88,7 +97,7 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
       } as unknown as Response);
 
       try {
-        const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
+        const res = await provider.checkRankings([testRequest]);
         expect(res.success).toBe(false);
         expect(res.error?.code).toBe('RATE_LIMITED');
         expect(res.error?.statusCode).toBe(429);
@@ -102,7 +111,7 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
       const originalIsConfigured = provider.isConfigured;
       provider.isConfigured = () => false;
 
-      const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
+      const res = await provider.checkRankings([testRequest]);
       expect(res.success).toBe(false);
       expect(res.error?.code).toBe('PROVIDER_UNCONFIGURED');
       expect(res.error?.statusCode).toBe(503);
@@ -126,7 +135,7 @@ describe('Provider Failures, Empty States & Authorization Suite', () => {
       delete process.env.SERPER_API_KEY;
 
       try {
-        const res = await provider.checkRankings([{ keyword: 'test', targetDomain: 'example.com' }]);
+        const res = await provider.checkRankings([testRequest]);
         expect(res.success).toBe(false);
         expect(res.error?.code).toBe('CREDITS_EXHAUSTED');
         expect(res.error?.statusCode).toBe(402);

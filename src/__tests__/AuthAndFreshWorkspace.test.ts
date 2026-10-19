@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
-import { POST as loginPost } from '@/app/api/auth/login/route';
-import { POST as signupPost } from '@/app/api/auth/signup/route';
-import { POST as logoutPost } from '@/app/api/auth/logout/route';
-import { POST as googlePost } from '@/app/api/auth/google/route';
-import { GET as getProjects, POST as createProject } from '@/app/api/projects/route';
-import { prisma } from '@/lib/db/prisma';
-import { hashPassword, verifyPassword, createSession, SESSION_COOKIE_NAME } from '@/lib/server/auth';
+import { POST as loginPost } from '../app/api/auth/login/route';
+import { POST as signupPost } from '../app/api/auth/signup/route';
+import { POST as logoutPost } from '../app/api/auth/logout/route';
+import { POST as googlePost } from '../app/api/auth/google/route';
+import { GET as getProjects, POST as createProject } from '../app/api/projects/route';
+import { prisma } from '../lib/db/prisma';
+import { hashPassword, verifyPassword, createSession, SESSION_COOKIE_NAME } from '../lib/server/auth';
 import { NextRequest } from 'next/server';
 
 const TEST_EMAILS = [
@@ -28,7 +28,7 @@ const cleanupTestRecords = async () => {
       where: { email: { in: TEST_EMAILS } },
       select: { id: true },
     });
-    const userIds = testUsers.map((u) => u.id);
+    const userIds = testUsers.map((u: { id: string }) => u.id);
     if (userIds.length > 0) {
       await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.keyword.deleteMany({ where: { project: { userId: { in: userIds } } } });
@@ -183,79 +183,102 @@ describe('Real Authentication and Fresh Workspace Isolation', () => {
   });
 
   it('isolates projects between different user accounts', async () => {
-    // User 1
-    const user1 = await prisma.user.create({
-      data: { email: 'user1@example.com', name: 'User 1', role: 'OWNER', status: 'active' },
-    });
-    const s1 = await createSession(user1.id);
+    let user1Id: string | null = null;
+    let user2Id: string | null = null;
+    let project1Id: string | null = null;
 
-    // User 2
-    const user2 = await prisma.user.create({
-      data: { email: 'user2@example.com', name: 'User 2', role: 'OWNER', status: 'active' },
-    });
-    const s2 = await createSession(user2.id);
+    try {
+      // User 1
+      const user1 = await prisma.user.create({
+        data: { email: `user1.${Date.now()}@example.com`, name: 'User 1', role: 'OWNER', status: 'active' },
+      });
+      user1Id = user1.id;
+      const s1 = await createSession(user1.id);
 
-    // Create a project under User 1
-    const createReq = new NextRequest('http://localhost:3000/api/projects', {
-      method: 'POST',
-      body: JSON.stringify({
-        websiteUrl: 'https://workcomposer.com',
-        name: 'WorkComposer',
-        searchEngines: [{ engine: 'google', country: 'India', countryCode: 'in', language: 'English' }],
-        keywords: ['time tracking', 'employee monitoring'],
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        cookie: `seranking_session=${s1.sessionToken}`,
-        authorization: `Bearer ${s1.sessionToken}`,
-      },
-    });
+      // User 2
+      const user2 = await prisma.user.create({
+        data: { email: `user2.${Date.now()}@example.com`, name: 'User 2', role: 'OWNER', status: 'active' },
+      });
+      user2Id = user2.id;
+      const s2 = await createSession(user2.id);
 
-    const createRes = await createProject(createReq);
-    expect(createRes.status).toBe(200);
-    const createdData = await createRes.json();
-    expect(createdData.project.domain).toBe('workcomposer.com');
+      // Create a project under User 1
+      const createReq = new NextRequest('http://localhost:3000/api/projects', {
+        method: 'POST',
+        body: JSON.stringify({
+          websiteUrl: 'https://workcomposer.com',
+          name: 'WorkComposer',
+          searchEngines: [{ engine: 'google', country: 'India', countryCode: 'in', language: 'English' }],
+          keywords: ['time tracking', 'employee monitoring'],
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          cookie: `seranking_session=${s1.sessionToken}`,
+          authorization: `Bearer ${s1.sessionToken}`,
+        },
+      });
 
-    // User 1 GET -> sees 1 project
-    const u1Req = new NextRequest('http://localhost:3000/api/projects', {
-      method: 'GET',
-      headers: {
-        cookie: `seranking_session=${s1.sessionToken}`,
-        authorization: `Bearer ${s1.sessionToken}`,
-      },
-    });
-    const u1Res = await getProjects(u1Req);
-    const u1Data = await u1Res.json();
-    expect(u1Data.projects.length).toBe(1);
-    expect(u1Data.projects[0].domain).toBe('workcomposer.com');
+      const createRes = await createProject(createReq);
+      expect(createRes.status).toBe(200);
+      const createdData = await createRes.json();
+      expect(createdData.project.domain).toBe('workcomposer.com');
+      project1Id = createdData.project.id;
 
-    // User 2 GET -> sees 0 projects (completely fresh and isolated!)
-    const u2Req = new NextRequest('http://localhost:3000/api/projects', {
-      method: 'GET',
-      headers: {
-        cookie: `seranking_session=${s2.sessionToken}`,
-        authorization: `Bearer ${s2.sessionToken}`,
-      },
-    });
-    const u2Res = await getProjects(u2Req);
-    const u2Data = await u2Res.json();
-    expect(u2Data.projects.length).toBe(0);
+      // User 1 GET -> sees 1 project
+      const u1Req = new NextRequest('http://localhost:3000/api/projects', {
+        method: 'GET',
+        headers: {
+          cookie: `seranking_session=${s1.sessionToken}`,
+          authorization: `Bearer ${s1.sessionToken}`,
+        },
+      });
+      const u1Res = await getProjects(u1Req);
+      const u1Data = await u1Res.json();
+      expect(u1Data.projects.length).toBe(1);
+      expect(u1Data.projects[0].domain).toBe('workcomposer.com');
 
-    const project1Id = createdData.project.id;
+      // User 2 GET -> sees 0 projects (completely fresh and isolated!)
+      const u2Req = new NextRequest('http://localhost:3000/api/projects', {
+        method: 'GET',
+        headers: {
+          cookie: `seranking_session=${s2.sessionToken}`,
+          authorization: `Bearer ${s2.sessionToken}`,
+        },
+      });
+      const u2Res = await getProjects(u2Req);
+      const u2Data = await u2Res.json();
+      expect(u2Data.projects.length).toBe(0);
 
-    // User 2 direct IDOR attempt on User 1's project -> MUST return 403 Forbidden
-    const idorReq = new NextRequest(`http://localhost:3000/api/projects/${project1Id}`, {
-      method: 'GET',
-      headers: {
-        cookie: `seranking_session=${s2.sessionToken}`,
-        authorization: `Bearer ${s2.sessionToken}`,
-      },
-    });
-    const { GET: getProjectById } = await import('@/app/api/projects/[id]/route');
-    const idorRes = await getProjectById(idorReq, { params: Promise.resolve({ id: project1Id }) });
-    expect(idorRes.status).toBe(403);
-    const idorData = await idorRes.json();
-    expect(idorData.error?.code).toBe('FORBIDDEN');
+      // User 2 direct IDOR attempt on User 1's project -> MUST return 403 Forbidden
+      const idorReq = new NextRequest(`http://localhost:3000/api/projects/${project1Id}`, {
+        method: 'GET',
+        headers: {
+          cookie: `seranking_session=${s2.sessionToken}`,
+          authorization: `Bearer ${s2.sessionToken}`,
+        },
+      });
+      const { GET: getProjectById } = await import('../app/api/projects/[id]/route');
+      const idorRes = await getProjectById(idorReq, { params: Promise.resolve({ id: project1Id! }) });
+      expect(idorRes.status).toBe(403);
+      const idorData = await idorRes.json();
+      expect(idorData.error?.code).toBe('FORBIDDEN');
+    } finally {
+      if (project1Id) {
+        await prisma.searchEngineConfig.deleteMany({ where: { projectId: project1Id } }).catch(() => {});
+        await prisma.keyword.deleteMany({ where: { projectId: project1Id } }).catch(() => {});
+        await prisma.project.delete({ where: { id: project1Id } }).catch(() => {});
+      }
+      if (user1Id) {
+        await prisma.activityLog.deleteMany({ where: { userId: user1Id } }).catch(() => {});
+        await prisma.session.deleteMany({ where: { userId: user1Id } }).catch(() => {});
+        await prisma.user.delete({ where: { id: user1Id } }).catch(() => {});
+      }
+      if (user2Id) {
+        await prisma.activityLog.deleteMany({ where: { userId: user2Id } }).catch(() => {});
+        await prisma.session.deleteMany({ where: { userId: user2Id } }).catch(() => {});
+        await prisma.user.delete({ where: { id: user2Id } }).catch(() => {});
+      }
+    }
   }, 75000);
 
   it('rejects invalid email formats during login', async () => {

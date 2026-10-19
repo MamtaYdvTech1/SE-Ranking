@@ -121,8 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role:
                 u.role === "OWNER" || u.role === "ADMIN" || u.role === "SUPERADMIN"
                   ? "SuperAdmin"
-                  : "SEOExecutive",
+                  : (u.role || "SEOExecutive"),
               isActive: u.status === "active",
+              status: u.status,
+              planTier: u.planTier,
+              toolPermissions: u.toolPermissions,
+              usageLimits: u.usageLimits,
+              usageCurrent: u.usageCurrent,
               lastLoginAt: u.lastLoginAt,
               assignedProjectIds: [],
             };
@@ -261,6 +266,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error || "Failed to create account.");
       }
 
+      if (data.requiresApproval || data.status === 'pending') {
+        // Registration is pending manual administrator review - do not log in
+        return data;
+      }
+
       if (data.user) {
         const u = data.user;
         const userDto: UserDto = {
@@ -269,8 +279,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           firstName: u.firstName || u.name?.split(" ")[0] || payload.firstName || "",
           lastName: u.lastName || u.name?.split(" ").slice(1).join(" ") || payload.lastName || "",
           fullName: u.name || payload.name || cleanEmail,
-          role: "SuperAdmin",
-          isActive: true,
+          role: u.role || "SEO_USER",
+          isActive: u.status === 'active',
+          status: u.status,
+          planTier: u.planTier,
+          toolPermissions: u.toolPermissions,
           lastLoginAt: new Date().toISOString(),
           assignedProjectIds: [],
         };

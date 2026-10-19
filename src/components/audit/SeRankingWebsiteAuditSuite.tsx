@@ -165,23 +165,30 @@ export function SeRankingWebsiteAuditSuite() {
   const [auditProgressText, setAuditProgressText] = useState<string | null>(null);
   const [auditSuccessToast, setAuditSuccessToast] = useState<string | null>(null);
 
+  const getAuditCacheKey = (targetDomain: string, projId?: string) => {
+    return projId ? `seranking_audit_${projId}_${targetDomain}` : `seranking_audit_${targetDomain}`;
+  };
+
   // Check local storage or existing database audit for current project/domain
   useEffect(() => {
     // Reset state immediately on project or domain change so previous audit never leaks
     setLiveAuditData(null);
-    if (!cleanDomain || !activeProject?.id) return;
+    if (!cleanDomain) return;
 
-    const storageKey = `seranking_audit_${activeProject.id}_${cleanDomain}`;
+    const storageKey = getAuditCacheKey(cleanDomain, activeProject?.id);
     try {
       const cached = localStorage.getItem(storageKey);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object') {
           setLiveAuditData(parsed);
-          return;
+          // If standalone (no active project), we have successfully restored the cached scan
+          if (!activeProject?.id) return;
         }
       }
     } catch {}
+
+    if (!activeProject?.id) return;
 
     let isCancelled = false;
     fetch(`/api/projects/${activeProject.id}/audit`)
@@ -224,20 +231,31 @@ export function SeRankingWebsiteAuditSuite() {
     setIsReauditing(true);
     setAuditProgressText('Crawling website pages & detecting technical factors...');
     try {
-      const resp = await fetch('/api/website-audit/scan', {
+      const endpoint = activeProject?.id
+        ? `/api/projects/${activeProject.id}/audit/start`
+        : '/api/website-audit/scan';
+      const bodyPayload = activeProject?.id
+        ? { maxPages: 25 }
+        : { url: urlToAudit, maxPages: 25 };
+
+      const resp = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlToAudit, maxPages: 25 }),
+        body: JSON.stringify(bodyPayload),
       });
       if (resp.ok) {
         const data = await resp.json();
         if (data.result) {
           setLiveAuditData(data.result);
+          const storageKey = getAuditCacheKey(clean, activeProject?.id);
           try {
-            localStorage.setItem(`seranking_audit_${clean}`, JSON.stringify(data.result));
+            localStorage.setItem(storageKey, JSON.stringify(data.result));
           } catch {}
+          const persistStatus = activeProject?.id
+            ? 'Audit saved to project database.'
+            : 'Temporary scan (no project context). Select a project to save history.';
           setAuditSuccessToast(
-            `Audit completed: crawled ${data.result.pagesCrawled} pages in ${(data.result.durationMs / 1000).toFixed(1)}s. Health score: ${data.result.healthScore}%`
+            `Audit completed: crawled ${data.result.pagesCrawled} pages in ${(data.result.durationMs / 1000).toFixed(1)}s. Health score: ${data.result.healthScore}%. ${persistStatus}`
           );
           setTimeout(() => setAuditSuccessToast(null), 5000);
           return;

@@ -3,6 +3,7 @@ import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 export const metadata: Metadata = {
   title: 'SE Ranking Research Studio | AI Search & Competitive Research',
@@ -26,12 +27,14 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       </head>
-      <body suppressHydrationWarning className="antialiased bg-[#F4F6F9] text-gray-900 min-h-screen font-sans">
-        <AuthProvider>
-          <AppProviders>
-            <AppShell>{children}</AppShell>
-          </AppProviders>
-        </AuthProvider>
+      <body suppressHydrationWarning className="antialiased bg-[#F4F6F9] dark:bg-slate-950 text-gray-900 dark:text-slate-100 min-h-screen font-sans transition-colors duration-150">
+        <ThemeProvider>
+          <AuthProvider>
+            <AppProviders>
+              <AppShell>{children}</AppShell>
+            </AppProviders>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

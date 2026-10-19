@@ -51,6 +51,9 @@ export default function LoginPage() {
       if (params.get('google') === 'direct') {
         setIsGoogleModalOpen(true);
       }
+      if (params.get('pending') === 'true') {
+        setError('Your account registration was received and is currently pending administrator review and approval. You will be able to sign in once approved.');
+      }
       if (params.get('error') === 'google_not_configured') {
         setError('Google Sign-In is not configured. Please sign in with your email and password.');
       }
@@ -345,6 +348,14 @@ export default function LoginPage() {
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-[#7C3AED] hover:text-[#6D28D9] hover:underline font-semibold">
                 Sign Up
+              </Link>
+            </div>
+
+            {/* Platform Super Admin Portal Link */}
+            <div className="pt-2 text-center text-xs text-gray-500">
+              Platform administrator?{' '}
+              <Link href="/admin/login" className="text-emerald-600 hover:text-emerald-700 hover:underline font-semibold">
+                Super Admin Portal &rarr;
               </Link>
             </div>
           </div>

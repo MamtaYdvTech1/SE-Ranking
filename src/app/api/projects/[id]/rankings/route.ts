@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyProjectAccess } from '@/lib/server/projectAuth';
+import { requireToolAccess } from '@/lib/server/auth';
 import { getRankingSummary } from '@/services/seo/ranking.service';
 
 export async function GET(
@@ -9,7 +10,13 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // 1. Verify project access & ownership
+    // 1. Verify user tool permission for Rankings
+    const toolCheck = await requireToolAccess(req, 'rankings');
+    if (toolCheck.error) {
+      return NextResponse.json({ error: toolCheck.error }, { status: toolCheck.status });
+    }
+
+    // 2. Verify project access & ownership
     const authResult = await verifyProjectAccess(req, id);
     if (!authResult.success) {
       return authResult.error;
