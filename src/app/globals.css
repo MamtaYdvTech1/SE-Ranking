@@ -1,6 +1,64 @@
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+/* Dark mode adjustments for cards and borders */
+.dark .bg-white {
+  background-color: #151d2f;
+}
+.dark .text-gray-900 {
+  color: #f8fafc;
+}
+.dark .text-gray-800 {
+  color: #f1f5f9;
+}
+.dark .text-gray-700 {
+  color: #e2e8f0;
+}
+.dark .text-gray-600 {
+  color: #cbd5e1;
+}
+.dark .text-gray-500 {
+  color: #94a3b8;
+}
+.dark .border-gray-100 {
+  border-color: #1e293b;
+}
+.dark .border-gray-200 {
+  border-color: #334155;
+}
+.dark .border-gray-300 {
+  border-color: #475569;
+}
+.dark .bg-gray-50 {
+  background-color: #1e293b;
+}
+.dark .bg-gray-100 {
+  background-color: #334155;
+}
+.dark .hover\:bg-gray-50:hover {
+  background-color: #1e293b;
+}
+.dark .hover\:bg-gray-100:hover {
+  background-color: #334155;
+}
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b;
+}
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155;
+}
+
 .flag-icon {
   width: 18px;
   height: 13px;

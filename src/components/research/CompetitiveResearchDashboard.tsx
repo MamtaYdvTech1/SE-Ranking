@@ -78,10 +78,20 @@ export function CompetitiveResearchDashboard({
   useEffect(() => {
     if (!cleanDomain) return;
     let active = true;
+    const getAuthHeaders = (): HeadersInit => {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
+    };
+
     const post = (mode: 'overview' | 'domains') =>
       fetch('/api/seo/competitors', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ domain: cleanDomain, mode, limit: 10 }),
       }).then(async (res) => {
         const json = await res.json().catch(() => null);

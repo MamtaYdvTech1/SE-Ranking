@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     // 7. Secure Password Hashing using Argon2id
     const passwordHash = hashPassword(password);
 
-    // 8. Create User in Production Database
+    // 8. Create User in Production Database with Pending Approval Status
     const user = await prisma.user.create({
       data: {
         email: cleanEmail,
@@ -86,25 +86,38 @@ export async function POST(req: NextRequest) {
         firstName: firstName || fullName.split(' ')[0] || '',
         lastName: lastName || fullName.split(' ').slice(1).join(' ') || '',
         passwordHash,
-        role: 'OWNER',
-        status: 'active',
+        role: 'SEO_USER',
+        status: 'pending',
+        planTier: 'FREE_TRIAL',
+        canCreateProject: false,
+        canCreateClient: false,
       },
     });
 
+    // 9. Record Registration Audit Log
+    await prisma.auditLog.create({
+      data: {
+        actorId: user.id,
+        actorEmail: cleanEmail,
+        action: 'USER_REGISTER_PENDING',
+        entity: 'User',
+        entityId: user.id,
+        afterJson: JSON.stringify({ email: cleanEmail, name: fullName, status: 'pending', planTier: 'FREE_TRIAL' }),
+        ipAddress: ip.slice(0, 45),
+        userAgent: (req.headers.get('user-agent') || 'Unknown').slice(0, 255),
+      },
+    }).catch(() => null);
+
     const safeUser = sanitizeUser(user);
 
-    // 9. Create Real Database Session and Attach Secure HTTP-only Cookie
-    const { sessionToken, expiresAt } = await createSession(user.id, req);
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
-      message: 'Account created successfully! Welcome to SE Ranking.',
+      status: 'pending',
+      requiresApproval: true,
+      message: 'Registration received! Your account is pending review and manual approval by an administrator.',
       user: safeUser,
-      token: sessionToken,
-      redirectTo: '/projects',
+      redirectTo: '/login?pending=true',
     });
-
-    return await setSessionCookie(response, sessionToken, expiresAt);
   } catch (error: unknown) {
     console.error('Registration error:', error);
     const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';

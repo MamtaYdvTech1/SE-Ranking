@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuthSession } from '@/lib/server/auth';
+import { getAuthSession, requireToolAccess } from '@/lib/server/auth';
 import { yepApiClient } from '@/lib/yepapi';
 
 const BacklinkRequestSchema = z.object({
@@ -16,12 +16,12 @@ const BacklinkRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
-    const session = await getAuthSession(req);
-    if (!session?.user) {
+    // 1. Authenticate user & verify tool permission & quota
+    const toolAuth = await requireToolAccess(req, 'backlinks', { checkQuota: true, quotaAmount: 1 });
+    if (toolAuth.error) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required. Please sign in.' },
-        { status: 401 }
+        { success: false, error: toolAuth.error },
+        { status: toolAuth.status }
       );
     }
 
@@ -50,152 +50,116 @@ export async function POST(req: NextRequest) {
 
     const { target, mode, limit, offset, status, dofollow: filterDofollow, broken, sort } = parseResult.data;
 
-    // 3. Dispatch based on mode
+    // 3. Verify YepAPI is configured
+    if (!yepApiClient.isConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'YepAPI is not configured. Please set YEPAPI_KEY in server environment variables.',
+          code: 'UNCONFIGURED_API_KEY',
+        },
+        { status: 503 }
+      );
+    }
+
+    // 4. Dispatch based on mode
     if (mode === 'list') {
-      if (yepApiClient.isConfigured()) {
-        try {
-          const listRes = await yepApiClient.getBacklinksList({
-            target,
-            limit,
-            offset,
-            status,
-            dofollow: filterDofollow,
-            broken,
-            sort,
-          });
+      const listRes = await yepApiClient.getBacklinksList({
+        target,
+        limit,
+        offset,
+        status,
+        dofollow: filterDofollow,
+        broken,
+        sort,
+      });
 
-          if (listRes.ok && listRes.data) {
-            return NextResponse.json({
-              success: true,
-              provider: 'YepAPI',
-              mode: 'list',
-              cached: listRes.cached ?? false,
-              retrievedAt: listRes.retrievedAt,
-              costEstimateUsd: listRes.costEstimateUsd,
-              data: listRes.data,
-            });
-          }
-        } catch (e) {
-          console.warn('YepAPI list fetch notice:', e);
-        }
+      if (!listRes.ok || !listRes.data) {
+        const statusCode = listRes.error?.statusCode || 502;
+        const isCredits = listRes.error?.code === 'NO_CREDITS' || statusCode === 402;
+        return NextResponse.json(
+          {
+            success: false,
+            error: isCredits
+              ? 'YepAPI backlinks provider quota exhausted (HTTP 402). Please top up YepAPI credits.'
+              : (listRes.error?.message || 'YepAPI backlinks list request failed'),
+            code: listRes.error?.code || (isCredits ? 'NO_CREDITS' : 'UPSTREAM_ERROR'),
+          },
+          { status: statusCode }
+        );
       }
-
-      // Resilient fallback for backlinks list
-      const cleanTarget = target.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
-      const isAmz = cleanTarget.includes('amazon');
-      const fallbackList = [
-        { from: 'https://ndtv.com/business/online-shopping', to: `https://${cleanTarget}/`, anchor: isAmz ? 'Amazon India' : cleanTarget, domainAuthority: isAmz ? 91 : 88, rank: 82, dofollow: true, status: 'live' },
-        { from: 'https://techcrunch.com/enterprise-cloud', to: `https://${cleanTarget}/features`, anchor: isAmz ? 'Amazon AWS cloud' : `${cleanTarget} features`, domainAuthority: 92, rank: 84, dofollow: true, status: 'live' },
-        { from: 'https://wikipedia.org/wiki/Portal', to: `https://${cleanTarget}/`, anchor: cleanTarget, domainAuthority: 98, rank: 94, dofollow: true, status: 'live' },
-        { from: 'https://forbes.com/innovation-growth', to: `https://${cleanTarget}/`, anchor: 'Verified Platform', domainAuthority: 94, rank: 86, dofollow: true, status: 'live' },
-        { from: 'https://github.com/showcase', to: `https://${cleanTarget}/`, anchor: `${cleanTarget} official`, domainAuthority: 96, rank: 88, dofollow: true, status: 'live' },
-      ];
 
       return NextResponse.json({
         success: true,
         provider: 'YepAPI',
         mode: 'list',
-        cached: true,
-        retrievedAt: new Date().toISOString(),
-        costEstimateUsd: 0,
-        data: { target: cleanTarget, total: isAmz ? 48250000 : 4850, backlinks: fallbackList },
+        cached: listRes.cached ?? false,
+        retrievedAt: listRes.retrievedAt,
+        costEstimateUsd: listRes.costEstimateUsd,
+        data: listRes.data,
       });
     }
 
     if (mode === 'referring-domains') {
-      if (yepApiClient.isConfigured()) {
-        try {
-          const refRes = await yepApiClient.getReferringDomains({
-            target,
-            limit,
-            offset,
-            status,
-            sort,
-          });
+      const refRes = await yepApiClient.getReferringDomains({
+        target,
+        limit,
+        offset,
+        status,
+        sort,
+      });
 
-          if (refRes.ok && refRes.data) {
-            return NextResponse.json({
-              success: true,
-              provider: 'YepAPI',
-              mode: 'referring-domains',
-              cached: refRes.cached ?? false,
-              retrievedAt: refRes.retrievedAt,
-              costEstimateUsd: refRes.costEstimateUsd,
-              data: refRes.data,
-            });
-          }
-        } catch (e) {
-          console.warn('YepAPI ref-domains fetch notice:', e);
-        }
+      if (!refRes.ok || !refRes.data) {
+        const statusCode = refRes.error?.statusCode || 502;
+        const isCredits = refRes.error?.code === 'NO_CREDITS' || statusCode === 402;
+        return NextResponse.json(
+          {
+            success: false,
+            error: isCredits
+              ? 'YepAPI referring domains provider quota exhausted (HTTP 402). Please top up YepAPI credits.'
+              : (refRes.error?.message || 'YepAPI referring domains request failed'),
+            code: refRes.error?.code || (isCredits ? 'NO_CREDITS' : 'UPSTREAM_ERROR'),
+          },
+          { status: statusCode }
+        );
       }
-
-      const cleanTarget = target.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
-      const isAmz = cleanTarget.includes('amazon');
-      const fallbackRef = [
-        { domain: 'wikipedia.org', domainTrust: 98, backlinks: 1420, firstSeen: '2024-01-10' },
-        { domain: 'techcrunch.com', domainTrust: 92, backlinks: 680, firstSeen: '2024-02-15' },
-        { domain: 'github.com', domainTrust: 96, backlinks: 520, firstSeen: '2024-03-01' },
-        { domain: 'forbes.com', domainTrust: 94, backlinks: 340, firstSeen: '2024-04-12' },
-        { domain: 'ndtv.com', domainTrust: 91, backlinks: 290, firstSeen: '2024-05-20' },
-      ];
 
       return NextResponse.json({
         success: true,
         provider: 'YepAPI',
         mode: 'referring-domains',
-        cached: true,
-        retrievedAt: new Date().toISOString(),
-        costEstimateUsd: 0,
-        data: { target: cleanTarget, total: isAmz ? 325400 : 210, domains: fallbackRef },
+        cached: refRes.cached ?? false,
+        retrievedAt: refRes.retrievedAt,
+        costEstimateUsd: refRes.costEstimateUsd,
+        data: refRes.data,
       });
     }
 
     // Default: summary
-    if (yepApiClient.isConfigured()) {
-      try {
-        const summaryRes = await yepApiClient.getBacklinkSummary(target);
-        if (summaryRes.ok && summaryRes.data) {
-          return NextResponse.json({
-            success: true,
-            provider: 'YepAPI',
-            mode: 'summary',
-            cached: summaryRes.cached ?? false,
-            retrievedAt: summaryRes.retrievedAt,
-            costEstimateUsd: summaryRes.costEstimateUsd,
-            data: summaryRes.data,
-          });
-        }
-      } catch (e) {
-        console.warn('YepAPI summary fetch notice:', e);
-      }
+    const summaryRes = await yepApiClient.getBacklinkSummary(target);
+    if (!summaryRes.ok || !summaryRes.data) {
+      const statusCode = summaryRes.error?.statusCode || 502;
+      const isCredits = summaryRes.error?.code === 'NO_CREDITS' || statusCode === 402;
+      return NextResponse.json(
+        {
+          success: false,
+          error: isCredits
+            ? 'YepAPI backlink summary provider quota exhausted (HTTP 402). Please top up YepAPI credits.'
+            : (summaryRes.error?.message || 'YepAPI backlink summary request failed'),
+          code: summaryRes.error?.code || (isCredits ? 'NO_CREDITS' : 'UPSTREAM_ERROR'),
+        },
+        { status: statusCode }
+      );
     }
-
-    // Resilient fallback for summary
-    const cleanTarget = target.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
-    const isAmz = cleanTarget.includes('amazon');
-    const totalBacklinks = isAmz ? 48250000 : 4850;
-    const referringDomains = isAmz ? 325400 : 210;
-    const dofollowCount = Math.round(totalBacklinks * (isAmz ? 0.864 : 0.84));
-    const nofollowCount = totalBacklinks - dofollowCount;
 
     return NextResponse.json({
       success: true,
       provider: 'YepAPI',
       mode: 'summary',
-      cached: true,
-      retrievedAt: new Date().toISOString(),
-      costEstimateUsd: 0,
-      data: {
-        target: cleanTarget,
-        totalBacklinks,
-        referringDomains,
-        referringPages: Math.round(totalBacklinks * 0.72),
-        dofollow: dofollowCount,
-        nofollow: nofollowCount,
-        brokenBacklinks: 0,
-        rank: isAmz ? 92 : 64,
-        domainAuthority: isAmz ? 92 : 64,
-      },
+      cached: summaryRes.cached ?? false,
+      retrievedAt: summaryRes.retrievedAt,
+      costEstimateUsd: summaryRes.costEstimateUsd,
+      data: summaryRes.data,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';

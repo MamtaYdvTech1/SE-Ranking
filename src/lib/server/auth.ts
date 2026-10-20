@@ -131,7 +131,15 @@ export async function validateSession(sessionToken?: string | null) {
     // Check fast-path in-memory cache
     const cached = sessionCache.get(lookupToken);
     if (cached && Date.now() - cached.cachedAt < SESSION_CACHE_TTL_MS) {
-      if (new Date() < cached.session.expiresAt && cached.user.status !== 'suspended') {
+      const isInvalid =
+        new Date() >= cached.session.expiresAt ||
+        cached.user.status === 'suspended' ||
+        cached.user.status === 'deactivated' ||
+        cached.user.status === 'pending' ||
+        cached.user.status === 'rejected' ||
+        Boolean(cached.user.deletedAt);
+
+      if (!isInvalid) {
         return {
           session: cached.session,
           user: cached.user,
@@ -175,7 +183,13 @@ export async function validateSession(sessionToken?: string | null) {
       return null;
     }
 
-    if (session.user.status === 'suspended') {
+    if (
+      session.user.status === 'suspended' ||
+      session.user.status === 'deactivated' ||
+      session.user.status === 'pending' ||
+      session.user.status === 'rejected' ||
+      Boolean(session.user.deletedAt)
+    ) {
       sessionCache.delete(lookupToken);
       return null;
     }
@@ -357,3 +371,300 @@ export function clearSessionCookie(response: NextResponse): NextResponse {
 
   return response;
 }
+
+export type AdminAuthResult =
+  | { error: string; status: number; auth: null }
+  | { error: null; status: 200; auth: { session: Session; user: Omit<User, 'passwordHash'> } };
+
+/**
+ * Enforces admin authorization. Returns 401 if unauthenticated, 403 if user lacks admin role.
+ * Permitted roles: ADMIN, SUPERADMIN
+ */
+export async function requireAdminAuth(req: Request | NextRequest): Promise<AdminAuthResult> {
+  const auth = await getAuthSession(req);
+  if (!auth) {
+    return {
+      error: 'Unauthorized. Authentication required.',
+      status: 401,
+      auth: null,
+    };
+  }
+
+  const role = (auth.user.role || '').toUpperCase();
+  if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
+    return {
+      error: 'Forbidden. Administrative privileges required.',
+      status: 403,
+      auth: null,
+    };
+  }
+
+  return {
+    error: null,
+    status: 200,
+    auth,
+  };
+}
+
+/**
+ * Invalidates all active sessions for a user (called upon deactivation, role change, or force logout).
+ */
+export async function invalidateAllSessionsForUser(userId: string): Promise<number> {
+  try {
+    // Purge in-memory session cache for any session belonging to this user
+    for (const [token, entry] of sessionCache.entries()) {
+      if (entry.user.id === userId) {
+        sessionCache.delete(token);
+      }
+    }
+
+    const res = await prisma.session.deleteMany({
+      where: { userId },
+    });
+    return res.count;
+  } catch (err) {
+    console.error(`Failed to invalidate sessions for user ${userId}:`, err);
+    return 0;
+  }
+}
+
+// In-memory sliding window rate limiter
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+/**
+ * High-performance sliding-window rate limit check.
+ * Returns true if permitted, false if rate limit exceeded.
+ */
+export function checkRateLimit(key: string, maxAttempts = 10, windowMs = 60000): { allowed: boolean; remaining: number; resetInMs: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: maxAttempts - 1, resetInMs: windowMs };
+  }
+
+  if (entry.count >= maxAttempts) {
+    return { allowed: false, remaining: 0, resetInMs: Math.max(0, entry.resetAt - now) };
+  }
+
+  entry.count += 1;
+  return { allowed: true, remaining: maxAttempts - entry.count, resetInMs: Math.max(0, entry.resetAt - now) };
+}
+
+/**
+ * Enforces critical administrator protection rules:
+ * 1. Admin cannot deactivate or demote their own account.
+ * 2. Cannot demote or deactivate the last remaining active administrator.
+ */
+export async function assertAdminCanModifyUser(
+  actorUserId: string,
+  targetUserId: string,
+  options: { newRole?: string; newStatus?: string; isDelete?: boolean }
+): Promise<void> {
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, role: true, status: true, email: true },
+  });
+
+  if (!targetUser) {
+    throw new Error('User not found.');
+  }
+
+  const isSelf = actorUserId === targetUserId;
+
+  // 1. Self-protection
+  if (isSelf) {
+    if (options.newStatus === 'deactivated' || options.newStatus === 'suspended' || options.isDelete) {
+      throw new Error('Security policy violation: Administrators cannot deactivate or delete their own account.');
+    }
+    if (options.newRole && options.newRole.toUpperCase() !== 'ADMIN' && options.newRole.toUpperCase() !== 'SUPERADMIN') {
+      throw new Error('Security policy violation: Administrators cannot demote their own account.');
+    }
+  }
+
+  // 2. Last-admin protection
+  const targetIsAdmin = ['ADMIN', 'SUPERADMIN'].includes((targetUser.role || '').toUpperCase());
+  const willLoseAdmin =
+    options.isDelete ||
+    options.newStatus === 'deactivated' ||
+    options.newStatus === 'suspended' ||
+    (options.newRole && !['ADMIN', 'SUPERADMIN'].includes(options.newRole.toUpperCase()));
+
+  if (targetIsAdmin && willLoseAdmin) {
+    const activeAdminsCount = await prisma.user.count({
+      where: {
+        role: { in: ['ADMIN', 'SUPERADMIN'] },
+        status: 'active',
+        deletedAt: null,
+      },
+    });
+
+    if (activeAdminsCount <= 1) {
+      throw new Error('Security policy violation: Cannot remove or demote the last remaining active administrator.');
+    }
+  }
+}
+
+/**
+ * Server-side guard checking if an authenticated user has authorization for a specific project.
+ * Returns 200 with project if authorized, 403 Forbidden if unauthorized.
+ */
+export async function requireProjectAccess(req: Request | NextRequest, projectId: string) {
+  const auth = await getAuthSession(req);
+  if (!auth) {
+    return { error: 'Unauthorized. Please sign in.', status: 401 as const, user: null, project: null };
+  }
+
+  const user = auth.user;
+  const role = (user.role || '').toUpperCase();
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+    include: {
+      members: { select: { userId: true, role: true, canEdit: true } },
+    },
+  });
+
+  if (!project) {
+    return { error: 'Project not found.', status: 404 as const, user, project: null };
+  }
+
+  // Administrators have global project access
+  if (role === 'ADMIN' || role === 'SUPERADMIN') {
+    return { error: null, status: 200 as const, user, project };
+  }
+
+  // SEO users must be the owner or an assigned member
+  const isDirectOwner = project.userId === user.id;
+  const isAssignedMember = project.members.some((m) => m.userId === user.id);
+
+  if (!isDirectOwner && !isAssignedMember) {
+    return { error: 'Forbidden. You do not have access to this project.', status: 403 as const, user, project: null };
+  }
+
+  return { error: null, status: 200 as const, user, project };
+}
+
+/**
+ * Creates an immutable audit log entry for administrative and security actions.
+ */
+export async function createAuditLog(params: {
+  actorId?: string | null;
+  actorEmail?: string | null;
+  action: string;
+  entity: string;
+  entityId: string;
+  beforeJson?: Record<string, unknown> | null;
+  afterJson?: Record<string, unknown> | null;
+  req?: Request | NextRequest;
+}) {
+  try {
+    let ipAddress = '127.0.0.1';
+    let userAgent = 'Unknown';
+
+    if (params.req) {
+      userAgent = params.req.headers.get('user-agent') || 'Unknown';
+      ipAddress =
+        params.req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+        params.req.headers.get('x-real-ip') ||
+        '127.0.0.1';
+    }
+
+    return await prisma.auditLog.create({
+      data: {
+        actorId: params.actorId || null,
+        actorEmail: params.actorEmail || null,
+        action: params.action,
+        entity: params.entity,
+        entityId: params.entityId,
+        beforeJson: params.beforeJson ? JSON.stringify(params.beforeJson) : null,
+        afterJson: params.afterJson ? JSON.stringify(params.afterJson) : null,
+        ipAddress: ipAddress.slice(0, 45),
+        userAgent: userAgent.slice(0, 255),
+      },
+    });
+  } catch (err) {
+    console.error('Failed to create audit log:', err);
+    return null;
+  }
+}
+
+export { sanitizeCsvValue } from '@/lib/csvUtils';
+
+/**
+ * Enforces per-user SEO tool permission & quota check.
+ * Checks:
+ * 1. Valid authenticated session
+ * 2. User account is active/approved (not pending, rejected, suspended, or deactivated)
+ * 3. Specific tool is enabled in user's permissions
+ * 4. User has not exceeded their monthly usage limit (if checkQuota is true)
+ */
+export async function requireToolAccess(
+  req: Request | NextRequest,
+  toolKey: 'audits' | 'rankings' | 'keywords' | 'backlinks' | 'ai_visibility' | 'competitor_research' | 'reports',
+  options?: { checkQuota?: boolean; quotaAmount?: number }
+) {
+  const auth = await getAuthSession(req);
+  if (!auth) {
+    return { error: 'Unauthorized. Please sign in.', status: 401 as const, user: null };
+  }
+
+  const user = auth.user;
+  const status = (user.status || '').toLowerCase();
+  if (status !== 'active' && status !== 'approved') {
+    return {
+      error: `Account ${status}: Your account is pending admin approval or suspended. Access denied.`,
+      status: 403 as const,
+      user,
+    };
+  }
+
+  // Import permission engine dynamically
+  const { resolveUserToolPermissions, checkAndIncrementQuota } = await import('./permissions');
+  const perms = resolveUserToolPermissions(user);
+
+  if (!perms[toolKey]) {
+    return {
+      error: `Permission Denied: Access to '${toolKey}' is not enabled for your account. Please contact an administrator.`,
+      status: 403 as const,
+      user,
+    };
+  }
+
+  if (options?.checkQuota) {
+    let metric: 'keywords' | 'auditPages' | 'backlinks' | 'ai' = 'keywords';
+    if (toolKey === 'audits') metric = 'auditPages';
+    else if (toolKey === 'backlinks') metric = 'backlinks';
+    else if (toolKey === 'ai_visibility') metric = 'ai';
+
+    const quotaResult = await checkAndIncrementQuota(user.id, metric, options.quotaAmount || 1);
+    if (!quotaResult.allowed) {
+      return {
+        error: quotaResult.error || 'Monthly usage quota exceeded. Upgrade your plan to continue.',
+        status: 402 as const,
+        user,
+      };
+    }
+  }
+
+  return { error: null, status: 200 as const, user };
+}
+
+/**
+ * Sanitizes cell values to prevent CSV formula injection (CSV Injection / CWE-1236).
+ * Escapes leading characters like =, +, -, @, \t, \r by prefixing with a single quote.
+ */
+export function sanitizeForCsv(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  const str = String(val).trim();
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+}
+

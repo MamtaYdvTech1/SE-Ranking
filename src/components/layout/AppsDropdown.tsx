@@ -23,7 +23,7 @@ export function AppsDropdown({
       role="menu"
       aria-modal="true"
       onClick={(e) => e.stopPropagation()}
-      className={`absolute z-[9999] w-[278px] bg-white rounded-2xl shadow-[0_12px_36px_-4px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.06)] p-2 text-left animate-in fade-in zoom-in-95 duration-150 ${className}`}
+      className={`absolute z-[9999] w-[278px] bg-white dark:bg-[#111827] rounded-2xl shadow-[0_12px_36px_-4px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[0_12px_36px_-4px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)] border border-gray-100 dark:border-slate-800 p-2 text-left animate-in fade-in zoom-in-95 duration-150 ${className}`}
     >
       {/* 1. SE Visible · AI Search Suite */}
       <a
@@ -31,7 +31,7 @@ export function AppsDropdown({
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClose}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] transition-colors cursor-pointer group select-none"
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] dark:hover:bg-slate-800/80 transition-colors cursor-pointer group select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -47,8 +47,8 @@ export function AppsDropdown({
             </svg>
           </div>
           <div className="text-[14px] leading-snug truncate">
-            <span className="font-bold text-[#111827]">SE Visible</span>
-            <span className="text-[#8C95A5] font-normal ml-1">·&nbsp;AI Search Suite</span>
+            <span className="font-bold text-[#111827] dark:text-slate-100">SE Visible</span>
+            <span className="text-[#8C95A5] dark:text-slate-400 font-normal ml-1">·&nbsp;AI Search Suite</span>
           </div>
         </div>
         {activeApp === 'visible' && (
@@ -64,7 +64,7 @@ export function AppsDropdown({
       <Link
         href="/projects"
         onClick={onClose}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] transition-colors cursor-pointer group select-none"
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] dark:hover:bg-slate-800/80 transition-colors cursor-pointer group select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -81,8 +81,8 @@ export function AppsDropdown({
             </svg>
           </div>
           <div className="text-[14px] leading-snug truncate">
-            <span className="font-bold text-[#111827]">SE Ranking</span>
-            <span className="text-[#8C95A5] font-normal ml-1">·&nbsp;SEO Suite</span>
+            <span className="font-bold text-[#111827] dark:text-slate-100">SE Ranking</span>
+            <span className="text-[#8C95A5] dark:text-slate-400 font-normal ml-1">·&nbsp;SEO Suite</span>
           </div>
         </div>
         {activeApp === 'ranking' && (
@@ -100,7 +100,7 @@ export function AppsDropdown({
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClose}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] transition-colors cursor-pointer group select-none"
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F3F4F6] dark:hover:bg-slate-800/80 transition-colors cursor-pointer group select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -112,8 +112,8 @@ export function AppsDropdown({
             </svg>
           </div>
           <div className="text-[14px] leading-snug truncate">
-            <span className="font-bold text-[#111827]">Planable</span>
-            <span className="text-[#8C95A5] font-normal ml-1">·&nbsp;SMM Suite</span>
+            <span className="font-bold text-[#111827] dark:text-slate-100">Planable</span>
+            <span className="text-[#8C95A5] dark:text-slate-400 font-normal ml-1">·&nbsp;SMM Suite</span>
           </div>
         </div>
         {activeApp === 'planable' && (

@@ -91,7 +91,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+  const token = typeof window !== "undefined" ? (localStorage.getItem("auth_token") || localStorage.getItem("token")) : null;
   const correlationId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `req-${Date.now()}`;
 
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
@@ -108,6 +108,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const url = `${API_BASE_URL}${endpoint}`;
 
   const response = await fetch(url, {
+    credentials: options.credentials ?? "include",
     ...options,
     headers,
   });

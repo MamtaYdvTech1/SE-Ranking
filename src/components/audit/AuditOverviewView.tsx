@@ -820,20 +820,23 @@ export function AuditOverviewView({
           </div>
 
           <div className="space-y-4">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-xs text-slate-500 mb-2 border border-slate-200 dark:border-slate-800">
+              <span className="font-semibold block text-slate-700 dark:text-slate-300 mb-0.5">Google PageSpeed Insights: Not Configured</span>
+              <span>PAGESPEED_API_KEY environment variable is not configured. Lab Core Web Vitals (LCP, INP, CLS) are not measured.</span>
+            </div>
+
             {/* LCP */}
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                   LCP (Largest Contentful Paint)
                 </span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {cwvDevice === "desktop" ? "1.8s (Good)" : "2.4s (Good)"}
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  Not measured
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full flex overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <div className="bg-emerald-500 h-full" style={{ width: "82%" }} title="Good: 82%" />
-                <div className="bg-amber-400 h-full" style={{ width: "12%" }} title="Needs Improvement: 12%" />
-                <div className="bg-rose-500 h-full" style={{ width: "6%" }} title="Poor: 6%" />
+              <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="bg-slate-300 dark:bg-slate-700 h-full w-full" />
               </div>
             </div>
 
@@ -843,14 +846,12 @@ export function AuditOverviewView({
                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                   INP (Interaction to Next Paint)
                 </span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {cwvDevice === "desktop" ? "85ms (Good)" : "110ms (Good)"}
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  Not measured
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full flex overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <div className="bg-emerald-500 h-full" style={{ width: "91%" }} title="Good: 91%" />
-                <div className="bg-amber-400 h-full" style={{ width: "7%" }} title="Needs Improvement: 7%" />
-                <div className="bg-rose-500 h-full" style={{ width: "2%" }} title="Poor: 2%" />
+              <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="bg-slate-300 dark:bg-slate-700 h-full w-full" />
               </div>
             </div>
 
@@ -860,14 +861,12 @@ export function AuditOverviewView({
                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                   CLS (Cumulative Layout Shift)
                 </span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {cwvDevice === "desktop" ? "0.04 (Good)" : "0.07 (Good)"}
+                <span className="font-medium text-slate-500 dark:text-slate-400">
+                  Not measured
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full flex overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <div className="bg-emerald-500 h-full" style={{ width: "95%" }} title="Good: 95%" />
-                <div className="bg-amber-400 h-full" style={{ width: "4%" }} title="Needs Improvement: 4%" />
-                <div className="bg-rose-500 h-full" style={{ width: "1%" }} title="Poor: 1%" />
+              <div className="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="bg-slate-300 dark:bg-slate-700 h-full w-full" />
               </div>
             </div>
           </div>
@@ -883,50 +882,38 @@ export function AuditOverviewView({
 
           <div className="space-y-3 text-xs">
             <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
-              <span className="text-slate-500">Domain expiration</span>
+              <span className="text-slate-500">Domain</span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
-                Sep 14, 2030 <span className="text-[11px] text-emerald-600 font-normal">(Renew in 4 years)</span>
+                {project?.primaryDomain || (project as any)?.domain || "—"}
               </span>
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
-              <span className="text-slate-500">Domain Trust</span>
-              <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">40 / 100</span>
+              <span className="text-slate-500">Audit Health Score</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">
+                {overview?.healthScore != null ? `${Math.round(overview.healthScore)} / 100` : "—"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
-              <span className="text-slate-500">Backlinks</span>
-              <div className="flex items-center gap-2">
-                <strong className="text-slate-900 dark:text-white">258</strong>
-                <button
-                  type="button"
-                  onClick={() => handleExport("Backlinks Report")}
-                  className="text-[11px] text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-0.5"
-                >
-                  <span>Get full report</span>
-                  <ArrowUpRight className="w-3 h-3" />
-                </button>
-              </div>
+              <span className="text-slate-500">Crawled Pages</span>
+              <strong className="text-slate-900 dark:text-white">
+                {overview?.urlsCrawled ?? "—"}
+              </strong>
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-800">
-              <span className="text-slate-500">Pages in Google</span>
-              <strong className="text-slate-900 dark:text-white">82</strong>
+              <span className="text-slate-500">Detected Issues</span>
+              <strong className="text-slate-900 dark:text-white">
+                {overview ? ((overview.errorsCount || 0) + (overview.warningsCount || 0) + (overview.noticesCount || 0)) : "—"}
+              </strong>
             </div>
 
             <div className="flex items-center justify-between py-1">
-              <span className="text-slate-500">Referring domains</span>
-              <div className="flex items-center gap-2">
-                <strong className="text-slate-900 dark:text-white">180</strong>
-                <button
-                  type="button"
-                  onClick={() => handleExport("Referring Domains Report")}
-                  className="text-[11px] text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-0.5"
-                >
-                  <span>Get full report</span>
-                  <ArrowUpRight className="w-3 h-3" />
-                </button>
-              </div>
+              <span className="text-slate-500">Live Backlink Count</span>
+              <span className="text-slate-400 text-[11px]">
+                Query Backlink Checker module
+              </span>
             </div>
           </div>
         </div>

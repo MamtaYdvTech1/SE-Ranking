@@ -73,10 +73,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Check Account Status
+    // 6. Check Account Approval & Status Safeguards
+    if (user.status === 'pending') {
+      return NextResponse.json(
+        {
+          error: 'Your account is pending review and manual approval by an administrator.',
+          status: 'pending',
+          requiresApproval: true,
+        },
+        { status: 403 }
+      );
+    }
+
+    if (user.status === 'rejected') {
+      return NextResponse.json(
+        {
+          error: user.rejectionReason
+            ? `Your registration was rejected by the administrator: ${user.rejectionReason}`
+            : 'Your account registration was rejected by the administrator.',
+          status: 'rejected',
+        },
+        { status: 403 }
+      );
+    }
+
     if (user.status === 'suspended') {
       return NextResponse.json(
-        { error: 'This account has been suspended. Please contact support.' },
+        {
+          error: user.suspendedReason
+            ? `Account suspended: ${user.suspendedReason}`
+            : 'This account has been suspended by the administrator. Please contact support.',
+          status: 'suspended',
+        },
+        { status: 403 }
+      );
+    }
+
+    if (user.status === 'deactivated') {
+      return NextResponse.json(
+        { error: 'This account has been deactivated.', status: 'deactivated' },
         { status: 403 }
       );
     }

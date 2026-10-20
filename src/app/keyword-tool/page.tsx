@@ -68,29 +68,18 @@ import {
 } from 'recharts';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 
-// Mock keyword volume 12-month trend
-const mockVolumeHistory = [
-  { month: 'Jan', vol: 38 },
-  { month: 'Feb', vol: 42 },
-  { month: 'Mar', vol: 45 },
-  { month: 'Apr', vol: 48 },
-  { month: 'May', vol: 54 },
-  { month: 'Jun', vol: 52 },
-  { month: 'Jul', vol: 49 },
-  { month: 'Aug', vol: 56 },
-  { month: 'Sep', vol: 62 },
-  { month: 'Oct', vol: 65 },
-  { month: 'Nov', vol: 70 },
-  { month: 'Dec', vol: 68 },
-];
+interface KeywordSuggestionItem {
+  keyword: string;
+  vol: string;
+  diff: number;
+  cpc: string;
+  intent: string;
+}
 
-const mockKeywordSuggestions = [
-  { keyword: 'best coffee beans for espresso', vol: '14.2K', diff: 32, cpc: '$2.40', intent: 'Commercial' },
-  { keyword: 'how to grind coffee beans', vol: '28.1K', diff: 18, cpc: '$0.85', intent: 'Informational' },
-  { keyword: 'organic whole bean coffee', vol: '18.9K', diff: 41, cpc: '$3.10', intent: 'Transactional' },
-  { keyword: 'dark roast coffee beans online', vol: '9.4K', diff: 28, cpc: '$2.90', intent: 'Transactional' },
-  { keyword: 'single origin vs blend coffee', vol: '6.8K', diff: 22, cpc: '$1.15', intent: 'Informational' },
-];
+interface TrendPoint {
+  month: string;
+  vol: number;
+}
 
 export default function KeywordToolPage() {
   const [showHelloBar, setShowHelloBar] = useState(true);
@@ -102,6 +91,19 @@ export default function KeywordToolPage() {
   const [countryInput, setCountryInput] = useState('US');
   const [activeKpiKeyword, setActiveKpiKeyword] = useState('coffee beans');
 
+  // Real provider states
+  const [kpiMetrics, setKpiMetrics] = useState<{
+    difficulty: number | null;
+    volume: number | null;
+    cpc: number | null;
+    intent: string | null;
+  }>({ difficulty: null, volume: null, cpc: null, intent: null });
+  const [trendHistory, setTrendHistory] = useState<TrendPoint[] | null>(null);
+  const [keywordSuggestions, setKeywordSuggestions] = useState<KeywordSuggestionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAuthRequired, setIsAuthRequired] = useState(false);
+
   // Section 1 tab switcher
   const [activeTab, setActiveTab] = useState<'similar' | 'related' | 'questions' | 'gaps'>('similar');
 
@@ -111,10 +113,105 @@ export default function KeywordToolPage() {
   // Product tour modal
   const [isProductTourOpen, setIsProductTourOpen] = useState(false);
 
+  const getAuthHeaders = (): HeadersInit => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
+  const performAnalysis = async (query: string, country: string) => {
+    const cleanKw = query.trim().toLowerCase();
+    if (!cleanKw) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+    setIsAuthRequired(false);
+    setActiveKpiKeyword(cleanKw);
+
+    try {
+      const fetchJson = async (url: string, body: any) => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => null);
+        return { httpStatus: res.status, ok: res.ok, ...(data || {}) };
+      };
+
+      const [kwRes, ideasRes] = await Promise.allSettled([
+        fetchJson('/api/seo/keywords', { keywords: [cleanKw] }),
+        fetchJson('/api/seo/keyword-ideas', { keyword: cleanKw, limit: 30 }),
+      ]);
+
+      let hasAuthIssue = false;
+
+      // Handle overview metrics
+      if (kwRes.status === 'fulfilled') {
+        const val = kwRes.value;
+        if (val.httpStatus === 401) {
+          hasAuthIssue = true;
+        } else if (val.success && val.data?.keywords?.[0]) {
+          const item = val.data.keywords[0];
+          setKpiMetrics({
+            difficulty: typeof item.difficulty === 'number' ? item.difficulty : null,
+            volume: typeof item.volume === 'number' ? item.volume : null,
+            cpc: typeof item.cpc === 'number' ? item.cpc : null,
+            intent: item.intent || null,
+          });
+
+          if (Array.isArray(item.trend) && item.trend.length > 0) {
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            setTrendHistory(
+              item.trend.map((t: any) => ({
+                month: monthNames[(t.month || 1) - 1] || `${t.month}`,
+                vol: t.volume || 0,
+              }))
+            );
+          } else {
+            setTrendHistory(null); // Never fabricate graphs if unavailable
+          }
+        } else if (!val.success && val.error) {
+          setErrorMessage(val.error);
+        }
+      }
+
+      // Handle ideas
+      if (ideasRes.status === 'fulfilled') {
+        const val = ideasRes.value;
+        if (val.httpStatus === 401) {
+          hasAuthIssue = true;
+        } else if (val.success && Array.isArray(val.data?.keywords)) {
+          const mapped: KeywordSuggestionItem[] = val.data.keywords.map((k: any) => ({
+            keyword: k.keyword,
+            vol: typeof k.volume === 'number' ? (k.volume >= 1000 ? `${(k.volume / 1000).toFixed(1)}K` : String(k.volume)) : '—',
+            diff: k.difficulty ?? 0,
+            cpc: typeof k.cpc === 'number' ? `$${k.cpc.toFixed(2)}` : '—',
+            intent: k.intent || 'Commercial',
+          }));
+          setKeywordSuggestions(mapped);
+        } else if (!val.success && val.error && !errorMessage) {
+          setErrorMessage(val.error);
+        }
+      }
+
+      if (hasAuthIssue) {
+        setIsAuthRequired(true);
+      }
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to query keyword APIs.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!keywordQuery.trim()) return;
-    setActiveKpiKeyword(keywordQuery);
+    performAnalysis(keywordQuery, countryInput);
   };
 
   const faqs = [
@@ -368,7 +465,30 @@ export default function KeywordToolPage() {
           </form>
         </div>
 
-        {/* 3 Quick KPI Cards matching Screenshot (Purple / Dark Purple / Blue) */}
+        {/* Provider Error / Auth Banner */}
+        {isAuthRequired && (
+          <div className="max-w-3xl mx-auto mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-4 text-xs text-rose-900 text-left">
+            <div>
+              <span className="font-bold text-sm block mb-0.5">Authentication Required</span>
+              <p className="text-rose-700">Please sign in to query live keyword search volumes and suggestions.</p>
+            </div>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-[#0B69FF] hover:bg-[#0052cc] text-white font-bold rounded-xl text-xs shrink-0 transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
+
+        {errorMessage && !isAuthRequired && (
+          <div className="max-w-3xl mx-auto mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 text-left">
+            <span className="font-bold">YepAPI Provider Notice: </span>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* 3 Quick KPI Cards (Real provider data or honest dash) */}
         <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-16">
           {/* Card 1: Difficulty (Purple) */}
           <div className="bg-[#9333EA] text-white rounded-3xl p-6 shadow-xl text-left flex flex-col justify-between min-h-[140px]">
@@ -377,8 +497,14 @@ export default function KeywordToolPage() {
               <span className="bg-white/20 px-2 py-0.5 rounded text-[11px]">KD</span>
             </div>
             <div>
-              <div className="text-3xl font-black">68 / 100</div>
-              <div className="text-xs text-purple-200 mt-0.5">Hard • High backlink requirement</div>
+              <div className="text-3xl font-black">
+                {kpiMetrics.difficulty !== null ? `${kpiMetrics.difficulty} / 100` : (isLoading ? '...' : '—')}
+              </div>
+              <div className="text-xs text-purple-200 mt-0.5">
+                {kpiMetrics.difficulty !== null
+                  ? kpiMetrics.difficulty > 60 ? 'Hard • High competition' : kpiMetrics.difficulty > 30 ? 'Moderate competition' : 'Low competition'
+                  : 'Difficulty metric'}
+              </div>
             </div>
           </div>
 
@@ -386,11 +512,13 @@ export default function KeywordToolPage() {
           <div className="bg-[#1E1B4B] text-white rounded-3xl p-6 shadow-xl text-left flex flex-col justify-between min-h-[140px]">
             <div className="flex items-center justify-between text-xs font-bold text-indigo-300">
               <span>Monthly Search Volume</span>
-              <span className="bg-white/20 px-2 py-0.5 rounded text-[11px]">US</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded text-[11px]">{countryInput}</span>
             </div>
             <div>
-              <div className="text-3xl font-black">49,500</div>
-              <div className="text-xs text-indigo-300 mt-0.5">+14% YoY Search Trend</div>
+              <div className="text-3xl font-black">
+                {kpiMetrics.volume !== null ? kpiMetrics.volume.toLocaleString() : (isLoading ? '...' : '—')}
+              </div>
+              <div className="text-xs text-indigo-300 mt-0.5">Monthly searches via YepAPI</div>
             </div>
           </div>
 
@@ -401,8 +529,10 @@ export default function KeywordToolPage() {
               <span className="bg-white/20 px-2 py-0.5 rounded text-[11px]">Google Ads</span>
             </div>
             <div>
-              <div className="text-3xl font-black">$4.20</div>
-              <div className="text-xs text-blue-200 mt-0.5">Commercial & Transactional</div>
+              <div className="text-3xl font-black">
+                {kpiMetrics.cpc !== null ? `$${kpiMetrics.cpc.toFixed(2)}` : (isLoading ? '...' : '—')}
+              </div>
+              <div className="text-xs text-blue-200 mt-0.5">{kpiMetrics.intent || 'Search Intent'}</div>
             </div>
           </div>
         </div>
@@ -445,63 +575,76 @@ export default function KeywordToolPage() {
                 <div className="flex items-center gap-2">
                   <Key className="w-5 h-5 text-[#0B69FF]" />
                   <span className="text-xs font-bold text-gray-900">
-                    Keyword Ideas for: <strong className="text-blue-600">"{activeKpiKeyword}"</strong>
+                    Keyword Ideas for: <strong className="text-blue-600">&quot;{activeKpiKeyword}&quot;</strong>
                   </span>
                 </div>
-                <span className="text-xs font-bold text-gray-500">1,840 Suggestions</span>
+                <span className="text-xs font-bold text-gray-500">{keywordSuggestions.length} Suggestions</span>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 text-[11px]">
-                    <tr>
-                      <th className="p-3">Keyword Suggestion</th>
-                      <th className="p-3">Volume</th>
-                      <th className="p-3">Difficulty</th>
-                      <th className="p-3">CPC</th>
-                      <th className="p-3">Intent</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {mockKeywordSuggestions.map((row, i) => (
-                      <tr key={i} className="hover:bg-purple-50/40 transition-colors">
-                        <td className="p-3 font-semibold text-gray-900">{row.keyword}</td>
-                        <td className="p-3 font-bold text-gray-800">{row.vol}</td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              row.diff < 25 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {row.diff} KD
-                          </span>
-                        </td>
-                        <td className="p-3 text-gray-600">{row.cpc}</td>
-                        <td className="p-3">
-                          <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
-                            {row.intent}
-                          </span>
-                        </td>
+                {keywordSuggestions.length === 0 ? (
+                  <div className="p-10 text-center text-xs text-gray-500">
+                    {isLoading ? 'Fetching suggestions...' : 'No keyword suggestions returned for this query.'}
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 text-[11px]">
+                      <tr>
+                        <th className="p-3">Keyword Suggestion</th>
+                        <th className="p-3">Volume</th>
+                        <th className="p-3">Difficulty</th>
+                        <th className="p-3">CPC</th>
+                        <th className="p-3">Intent</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {keywordSuggestions.map((row, i) => (
+                        <tr key={i} className="hover:bg-purple-50/40 transition-colors">
+                          <td className="p-3 font-semibold text-gray-900">{row.keyword}</td>
+                          <td className="p-3 font-bold text-gray-800">{row.vol}</td>
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                row.diff < 25 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {row.diff} KD
+                            </span>
+                          </td>
+                          <td className="p-3 text-gray-600">{row.cpc}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
+                              {row.intent}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
 
-              {/* 12-Month Search Volume Bar Chart */}
+              {/* 12-Month Search Volume Bar Chart or Honest Fallback */}
               <div className="mt-6 pt-4 border-t border-gray-100">
                 <div className="text-xs font-bold text-gray-700 mb-2">12-Month Search Volume Trend</div>
-                <div className="h-32 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockVolumeHistory}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} />
-                      <Tooltip />
-                      <Bar dataKey="vol" fill="#0B69FF" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {trendHistory && trendHistory.length > 0 ? (
+                  <div className="h-32 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={trendHistory}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} />
+                        <Tooltip />
+                        <Bar dataKey="vol" fill="#0B69FF" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-32 w-full flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center p-4">
+                    <span className="text-xs font-semibold text-gray-500">Historical data unavailable</span>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Monthly search trend data is not provided by the upstream data provider for this keyword.</p>
+                  </div>
+                )}
               </div>
             </div>
 

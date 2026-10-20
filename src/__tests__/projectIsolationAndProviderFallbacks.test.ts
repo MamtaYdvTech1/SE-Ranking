@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { hashPassword, createSession, SESSION_COOKIE_NAME } from '@/lib/server/auth';
-import { GET as rankingsGet } from '@/app/api/projects/[id]/rankings/route';
-import { GET as seoPotentialGet, POST as seoPotentialPost } from '@/app/api/analytics/seo-potential/route';
-import { POST as backlinksPost } from '@/app/api/projects/[id]/backlinks/route';
-import { POST as auditStartPost } from '@/app/api/projects/[id]/audit/start/route';
-import { POST as keywordsPost } from '@/app/api/seo/keywords/route';
-import { POST as serpPost } from '@/app/api/seo/serp/route';
-import { getRankingProvider } from '@/lib/rankings/provider';
-import { SerperProvider } from '@/lib/rankings/serper';
-import { yepApiClient } from '@/lib/yepapi';
+import { prisma } from '../lib/db/prisma';
+import { hashPassword, createSession, SESSION_COOKIE_NAME } from '../lib/server/auth';
+import { GET as rankingsGet } from '../app/api/projects/[id]/rankings/route';
+import { GET as seoPotentialGet, POST as seoPotentialPost } from '../app/api/analytics/seo-potential/route';
+import { POST as backlinksPost } from '../app/api/projects/[id]/backlinks/route';
+import { POST as auditStartPost } from '../app/api/projects/[id]/audit/start/route';
+import { POST as keywordsPost } from '../app/api/seo/keywords/route';
+import { POST as serpPost } from '../app/api/seo/serp/route';
+import { getRankingProvider } from '../lib/rankings/provider';
+import { SerperProvider } from '../lib/rankings/serper';
+import { yepApiClient } from '../lib/yepapi';
 
 describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regression Suite', () => {
   let userAlpha: any;
@@ -27,11 +27,12 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
     try {
       if (createdUserIds.length > 0) {
         await prisma.session.deleteMany({ where: { userId: { in: createdUserIds } } });
+        await prisma.activityLog.deleteMany({ where: { userId: { in: createdUserIds } } });
         await prisma.rankingHistory.deleteMany({
           where: { keyword: { project: { userId: { in: createdUserIds } } } },
         });
         await prisma.keyword.deleteMany({ where: { project: { userId: { in: createdUserIds } } } });
-        await prisma.searchEngine.deleteMany({ where: { project: { userId: { in: createdUserIds } } } });
+        await prisma.searchEngineConfig.deleteMany({ where: { project: { userId: { in: createdUserIds } } } });
         await prisma.projectIntegration.deleteMany({ where: { project: { userId: { in: createdUserIds } } } });
         await prisma.backlink.deleteMany({ where: { project: { userId: { in: createdUserIds } } } });
         await prisma.project.deleteMany({ where: { userId: { in: createdUserIds } } });
@@ -124,11 +125,12 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
   }, 35000);
 
   // Helper to create authenticated requests
-  const createAuthRequest = (url: string, token: string, options: RequestInit = {}) => {
+  const createAuthRequest = (url: string, token: string, options: any = {}) => {
+    const { headers, ...rest } = options;
     return new NextRequest(url, {
-      ...options,
+      ...rest,
       headers: {
-        ...options.headers,
+        ...(headers || {}),
         cookie: `${SESSION_COOKIE_NAME}=${token}`,
       },
     });
@@ -301,8 +303,8 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
     });
 
     it('/api/seo/keywords returns HTTP 402 with actionable message when YepAPI runs out of credits', async () => {
-      const originalGetKeywords = yepApiClient.getKeywordsData;
-      yepApiClient.getKeywordsData = vi.fn().mockResolvedValue({
+      const originalGetKeywords = yepApiClient.getKeywords;
+      yepApiClient.getKeywords = vi.fn().mockResolvedValue({
         ok: false,
         error: { code: 'NO_CREDITS', statusCode: 402, message: 'Account out of credits' },
       });
@@ -325,7 +327,7 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
         expect(json.code).toBe('NO_CREDITS');
         expect(json.error).toMatch(/credits/i);
       } finally {
-        yepApiClient.getKeywordsData = originalGetKeywords;
+        yepApiClient.getKeywords = originalGetKeywords;
       }
     });
 

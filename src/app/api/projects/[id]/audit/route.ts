@@ -45,10 +45,23 @@ export async function GET(
 
     const healthScore = calculateSeoHealthScore(issues, pagesCount, passedPages);
 
+    const latestJob = await prisma.job.findFirst({
+      where: { projectId: project.id, type: 'SITE_AUDIT' },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        error: true,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       projectId: project.id,
       domain: project.domain,
+      latestJob,
       summary: {
         healthScore,
         pagesCrawled: pagesCount,

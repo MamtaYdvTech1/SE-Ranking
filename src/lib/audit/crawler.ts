@@ -3,6 +3,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { isSafeUrl } from '@/services/seo/audit.service';
 
 export interface CrawlOptions {
   maxPages?: number;
@@ -28,6 +29,9 @@ export async function crawlProjectWebsite(
 
   const startTime = Date.now();
   const cleanStart = startUrl.startsWith('http') ? startUrl : `https://${startUrl}`;
+  if (!isSafeUrl(cleanStart)) {
+    throw new Error('Crawl target URL is not permitted due to SSRF security policies.');
+  }
   const startDomain = new URL(cleanStart).hostname.toLowerCase();
 
   const queue: Array<{ url: string; depth: number }> = [{ url: cleanStart, depth: 0 }];
@@ -281,6 +285,7 @@ export async function crawlProjectWebsite(
 
         try {
           const resolved = new URL(rawHref, current.url);
+          if (!isSafeUrl(resolved.href)) continue;
           if (resolved.hostname.toLowerCase() === startDomain) {
             internalLinksCount++;
             if (current.depth < maxDepth && !visited.has(resolved.href.split('#')[0].replace(/\/$/, ''))) {

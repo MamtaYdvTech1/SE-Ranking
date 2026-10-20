@@ -85,9 +85,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [pathname]);
 
+  const isAdminPanel = pathname === '/admin' || pathname.startsWith('/admin/');
+
+  if (isAdminPanel) {
+    return <>{children}</>;
+  }
+
   if (isAuthOrPublicPage) {
     return (
-      <div className="min-h-screen w-full bg-white text-gray-900 flex flex-col">
+      <div className="min-h-screen w-full bg-white dark:bg-[#0b0f19] text-gray-900 dark:text-slate-100 flex flex-col transition-colors duration-150">
         {children}
       </div>
     );
@@ -122,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const shouldHideTopHeader = isProjectCreationActive;
 
   return (
-    <div className="min-h-screen flex flex-col font-sans relative bg-[#F4F6F9] text-gray-900">
+    <div className="min-h-screen flex flex-col font-sans relative bg-[#F4F6F9] dark:bg-[#0B0F19] text-gray-900 dark:text-slate-100 transition-colors duration-150">
       {/* Main Top Header */}
       {!shouldHideTopHeader && (
         <div className="w-full shrink-0 z-50">
@@ -152,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {!isProjectCreationActive && <MobileDrawer />}
 
         {/* Dynamic Center Work Area */}
-        <div className="flex-1 flex flex-col overflow-y-auto min-w-0 bg-[#F4F6F9] relative">
+        <div className="flex-1 flex flex-col overflow-y-auto min-w-0 bg-[#F4F6F9] dark:bg-[#0B0F19] relative transition-colors duration-150">
           <main className="flex-1 flex flex-col min-w-0">
             {children}
           </main>

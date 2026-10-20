@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { authFetch } from "@/lib/clientAuth";
 import type {
   AnchorData,
   BacklinkRecord,
@@ -46,7 +47,7 @@ const cache = new Map<string, Promise<BacklinkExplorerData>>();
 function load(projectId: string): Promise<BacklinkExplorerData> {
   let pending = cache.get(projectId);
   if (!pending) {
-    pending = fetch(`/api/projects/${encodeURIComponent(projectId)}/backlinks/explorer`)
+    pending = authFetch(`/api/projects/${encodeURIComponent(projectId)}/backlinks/explorer`)
       .then(async (res) => {
         const json = await res.json().catch(() => null);
         if (!res.ok || !json?.success) throw new Error(json?.error?.message || json?.error || "Failed to load backlinks");
@@ -99,7 +100,7 @@ export function useBacklinkExplorer(projectId?: string) {
   const refresh = useCallback(async (): Promise<{ ok: boolean; message: string }> => {
     if (!projectId) return { ok: false, message: "No project selected." };
     try {
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/backlinks`, { method: "POST" });
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/backlinks`, { method: "POST" });
       const json = await res.json().catch(() => null);
       cache.delete(projectId);
       setVersion((v) => v + 1);

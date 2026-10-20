@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { authFetch } from '@/lib/clientAuth';
 import {
   Plus,
   RefreshCw,
@@ -2017,7 +2018,7 @@ function RankingsPageContent() {
         return;
       }
 
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings/check`, {
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/rankings/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2090,7 +2091,7 @@ function RankingsPageContent() {
         params.set('group', selectedGroup);
       }
 
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings?${params.toString()}`);
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/rankings?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setKeywords(Array.isArray(data.keywords) ? data.keywords : []);
@@ -2214,7 +2215,7 @@ function RankingsPageContent() {
       return;
     }
     try {
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywords: lines }),
@@ -2245,7 +2246,7 @@ function RankingsPageContent() {
     }
 
     try {
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/rankings/check`, {
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/rankings/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywordIds: selectedIds }),
@@ -2281,7 +2282,7 @@ function RankingsPageContent() {
       return;
     }
     try {
-      const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
+      const res = await authFetch(`/api/projects/${encodeURIComponent(projectId)}/keywords`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywords: selectedHighPotential }),

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import type { CompetitorOverviewDto } from '@/lib/types';
+import { authFetch } from '@/lib/clientAuth';
 import {
   Calendar,
   Check,
@@ -94,7 +95,7 @@ export function SeRankingVisibilityRating({
   useEffect(() => {
     if (!projectId) return;
     let active = true;
-    fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=30`)
+    authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/competitors/overview?days=30`)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (!active || !json?.success) return;

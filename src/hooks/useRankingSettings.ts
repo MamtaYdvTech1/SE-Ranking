@@ -15,7 +15,7 @@ export interface RankingSettingsState {
   sortByColumn?: string;
   chartNotes?: string;
   selectedChartNotes?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const ALL_TABLE_COLUMNS: string[] = [
@@ -172,12 +172,17 @@ export function useRankingSettings(projectId?: string) {
     try {
       const stored = localStorage.getItem(`ranking_settings_${projectId}`);
       if (stored) {
-        setSettings({ ...defaultRankingSettings, ...JSON.parse(stored) });
+        const parsed = JSON.parse(stored);
+        queueMicrotask(() => {
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        });
       }
     } catch {
       // ignore
     } finally {
-      setIsLoaded(true);
+      queueMicrotask(() => {
+        setIsLoaded(true);
+      });
     }
   }, [projectId]);
 

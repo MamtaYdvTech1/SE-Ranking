@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      authenticated: true,
       user: {
         id: userObj.id,
         email: userObj.email,
@@ -28,8 +29,12 @@ export async function GET(req: NextRequest) {
         firstName: userObj.firstName || '',
         lastName: userObj.lastName || '',
         avatarUrl: userObj.avatarUrl || null,
-        role: userObj.role || 'OWNER',
+        role: userObj.role || 'SEO_USER',
         status: userObj.status || 'active',
+        planTier: userObj.planTier || 'FREE_TRIAL',
+        toolPermissions: userObj.toolPermissions ? JSON.parse(userObj.toolPermissions) : null,
+        usageLimits: userObj.usageLimits ? JSON.parse(userObj.usageLimits) : null,
+        usageCurrent: userObj.usageCurrent ? JSON.parse(userObj.usageCurrent) : null,
         createdAt: userObj.createdAt,
         updatedAt: userObj.updatedAt,
         lastLoginAt: userObj.lastLoginAt,
