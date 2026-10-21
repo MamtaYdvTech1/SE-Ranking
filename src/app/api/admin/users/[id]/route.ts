@@ -18,6 +18,7 @@ const UpdateUserSchema = z.object({
   usageLimits: z.record(z.string(), z.number()).optional(),
   canCreateProject: z.boolean().optional(),
   canCreateClient: z.boolean().optional(),
+  projectIds: z.array(z.string()).optional(),
   version: z.number().int().optional(),
 });
 
@@ -151,6 +152,7 @@ export async function PATCH(
       usageLimits,
       canCreateProject,
       canCreateClient,
+      projectIds,
       version: clientVersion,
     } = parsed.data;
 
@@ -240,6 +242,38 @@ export async function PATCH(
         version: { increment: 1 },
       },
     });
+
+    // Sync assigned projects if projectIds was provided
+    if (projectIds !== undefined) {
+      const currentMemberships = await prisma.projectMember.findMany({
+        where: { userId: id },
+        select: { projectId: true },
+      });
+      const currentPids = new Set(currentMemberships.map((m) => m.projectId));
+      const desiredPids = new Set(projectIds);
+
+      for (const pId of desiredPids) {
+        if (!currentPids.has(pId)) {
+          await prisma.projectMember.upsert({
+            where: { projectId_userId: { projectId: pId, userId: id } },
+            update: { role: (role || existingUser.role) === "ADMIN" ? "ADMIN" : "SEO_USER" },
+            create: {
+              projectId: pId,
+              userId: id,
+              role: (role || existingUser.role) === "ADMIN" ? "ADMIN" : "SEO_USER",
+            },
+          });
+        }
+      }
+
+      for (const pId of currentPids) {
+        if (!desiredPids.has(pId)) {
+          await prisma.projectMember.deleteMany({
+            where: { projectId: pId, userId: id },
+          });
+        }
+      }
+    }
 
     // If role changed or user was deactivated, invalidated, rejected or suspended, revoke all sessions
     const shouldRevokeSessions =

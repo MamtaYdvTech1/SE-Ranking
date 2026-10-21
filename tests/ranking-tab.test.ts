@@ -132,9 +132,16 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
   });
 
   it('handles empty historical ranking records gracefully without errors', async () => {
-    // Create an ephemeral project with 1 keyword and no history
-    const user = await prisma.user.findFirst();
-    if (!user) return;
+    const user = await prisma.user.upsert({
+      where: { email: 'ranking-test-worker@example.com' },
+      update: {},
+      create: {
+        email: 'ranking-test-worker@example.com',
+        name: 'Ranking Test Worker',
+        role: 'SEO_USER',
+        status: 'active',
+      },
+    });
 
     const epProject = await prisma.project.create({
       data: {

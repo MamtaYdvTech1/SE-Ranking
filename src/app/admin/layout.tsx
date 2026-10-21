@@ -63,20 +63,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-xs text-slate-400 leading-relaxed">
             The Super Admin Panel is strictly reserved for Platform Administrators and Owners. Your current account ({user?.email || 'Guest'}) has the <span className="font-semibold text-amber-400 uppercase">{user?.role || 'CLIENT'}</span> role.
           </p>
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="pt-4 flex items-center justify-center">
             <Link
               href="/projects"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition shadow-md shadow-purple-500/20"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition shadow-md shadow-violet-500/20"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Return to User Dashboard</span>
-            </Link>
-            <Link
-              href={`/admin/login?redirect=${encodeURIComponent(pathname)}`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Admin Login</span>
+              <span>Return to Your Projects</span>
             </Link>
           </div>
         </div>

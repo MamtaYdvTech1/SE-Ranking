@@ -71,6 +71,8 @@ export default function AdminUsersPage() {
   const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "SEO_USER" | "CLIENT">("SEO_USER");
   const [inviteCanCreateProject, setInviteCanCreateProject] = useState(false);
+  const [availableProjects, setAvailableProjects] = useState<Array<{ id: string; name: string; domain: string }>>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [isInviting, setIsInviting] = useState(false);
   const [generatedInviteLink, setGeneratedInviteLink] = useState<string | null>(null);
 
@@ -217,6 +219,28 @@ export default function AdminUsersPage() {
     });
   };
 
+  const fetchAvailableProjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/projects?pageSize=100");
+      const data = await res.json();
+      if (res.ok && data.data?.items) {
+        setAvailableProjects(
+          data.data.items.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            domain: p.domain,
+          }))
+        );
+      }
+    } catch {
+      // Non-fatal
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAvailableProjects();
+  }, [fetchAvailableProjects]);
+
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsInviting(true);
@@ -231,6 +255,7 @@ export default function AdminUsersPage() {
           name: inviteName || undefined,
           role: inviteRole,
           canCreateProject: inviteCanCreateProject,
+          projectIds: selectedProjectIds,
         }),
       });
 
@@ -246,6 +271,7 @@ export default function AdminUsersPage() {
         setIsInviteModalOpen(false);
         setInviteEmail("");
         setInviteName("");
+        setSelectedProjectIds([]);
       }
       fetchUsers();
     } catch (err: any) {
@@ -784,6 +810,54 @@ export default function AdminUsersPage() {
                 <label htmlFor="canCreateProject" className="text-xs text-slate-300 cursor-pointer">
                   Grant permission to create new projects
                 </label>
+              </div>
+
+              {/* Project Assignments */}
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-semibold text-slate-200">
+                  Assign Projects (User will only access selected projects)
+                </label>
+                <p className="text-[11px] text-slate-400">
+                  Per PDF access policy, SEO users can only view and manage assigned projects.
+                </p>
+                <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950 p-2 space-y-1">
+                  {availableProjects.length === 0 ? (
+                    <div className="text-[11px] text-slate-500 py-1 px-2">
+                      No projects available. You can assign projects later.
+                    </div>
+                  ) : (
+                    availableProjects.map((proj) => {
+                      const isChecked = selectedProjectIds.includes(proj.id);
+                      return (
+                        <label
+                          key={proj.id}
+                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors text-xs ${
+                            isChecked
+                              ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                              : "hover:bg-slate-900 text-slate-300"
+                          }`}
+                        >
+                          <div className="flex flex-col min-w-0 pr-2">
+                            <span className="font-medium truncate">{proj.name}</span>
+                            <span className="text-[10px] text-slate-500 font-mono truncate">{proj.domain}</span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedProjectIds([...selectedProjectIds, proj.id]);
+                              } else {
+                                setSelectedProjectIds(selectedProjectIds.filter((id) => id !== proj.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-emerald-600 border-slate-700 bg-slate-900 focus:ring-emerald-500 shrink-0"
+                          />
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
               {/* Generated Link Box if email not configured */}

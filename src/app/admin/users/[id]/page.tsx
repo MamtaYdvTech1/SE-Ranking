@@ -116,6 +116,11 @@ export default function AdminUserDetailPage() {
   const [quotaLimits, setQuotaLimits] = useState<Record<string, number>>(DEFAULT_QUOTAS);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Projects management state
+  const [allProjects, setAllProjects] = useState<Array<{ id: string; name: string; domain: string }>>([]);
+  const [selectedAddProjectId, setSelectedAddProjectId] = useState<string>("");
+  const [isAssigningProject, setIsAssigningProject] = useState(false);
+
   // Confirm dialog
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -152,9 +157,93 @@ export default function AdminUserDetailPage() {
     }
   }, [userId]);
 
+  const fetchAllProjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/projects?pageSize=100");
+      const data = await res.json();
+      if (res.ok && data.data?.items) {
+        setAllProjects(
+          data.data.items.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            domain: p.domain,
+          }))
+        );
+      }
+    } catch {
+      // Non-fatal
+    }
+  }, []);
+
   useEffect(() => {
     fetchUser();
-  }, [fetchUser]);
+    fetchAllProjects();
+  }, [fetchUser, fetchAllProjects]);
+
+  const handleAddProject = async (projectId: string) => {
+    if (!userDetail || !projectId) return;
+    setIsAssigningProject(true);
+    try {
+      const currentIds = (userDetail.projects || []).map((p) => p.id);
+      if (currentIds.includes(projectId)) {
+        info("User already assigned to this project.");
+        return;
+      }
+      const updatedIds = [...currentIds, projectId];
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectIds: updatedIds,
+          version: userDetail.version,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to assign project");
+
+      success("Project assigned successfully!");
+      setSelectedAddProjectId("");
+      fetchUser();
+    } catch (err: any) {
+      error(err?.message || "Failed to assign project");
+    } finally {
+      setIsAssigningProject(false);
+    }
+  };
+
+  const handleRemoveProject = async (project: { id: string; name: string }) => {
+    if (!userDetail) return;
+    setConfirmDialog({
+      isOpen: true,
+      title: `Revoke access to ${project.name}?`,
+      description: `User ${userDetail.email} will immediately lose access to this project.`,
+      variant: "warning",
+      action: async () => {
+        try {
+          const updatedIds = (userDetail.projects || [])
+            .filter((p) => p.id !== project.id)
+            .map((p) => p.id);
+          const res = await fetch(`/api/admin/users/${userId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              projectIds: updatedIds,
+              version: userDetail.version,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to revoke project access");
+
+          success(`Access to ${project.name} revoked.`);
+          fetchUser();
+        } catch (err: any) {
+          error(err?.message || "Failed to revoke project");
+        } finally {
+          setConfirmDialog((p) => ({ ...p, isOpen: false }));
+        }
+      },
+    });
+  };
 
   const handleSaveGovernance = async () => {
     if (!userDetail) return;
@@ -604,6 +693,125 @@ export default function AdminUserDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Save Governance Button Bar */}
+      <div className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div>
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Pending Governance Changes</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Click save to persist role, subscription tier, tool feature flags, and custom quotas.
+          </div>
+        </div>
+        <button
+          onClick={handleSaveGovernance}
+          disabled={isUpdating}
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-950/20 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          <span>{isUpdating ? "Saving..." : "Save Governance Settings"}</span>
+        </button>
+      </div>
+
+      {/* Assigned Projects & Scope Management (PDF Section 3 Specification) */}
+      <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+              <FolderKanban className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Assigned Projects & Workspaces
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                  {userDetail.projects?.length || 0} Assigned
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Per PDF access policy, non-admin users only have access to explicitly assigned projects.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Assign Project Control */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedAddProjectId}
+              onChange={(e) => setSelectedAddProjectId(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="">Select project to assign...</option>
+              {allProjects
+                .filter((ap) => !(userDetail.projects || []).some((up) => up.id === ap.id))
+                .map((ap) => (
+                  <option key={ap.id} value={ap.id}>
+                    {ap.name} ({ap.domain})
+                  </option>
+                ))}
+            </select>
+            <button
+              onClick={() => handleAddProject(selectedAddProjectId)}
+              disabled={!selectedAddProjectId || isAssigningProject}
+              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition disabled:opacity-40 cursor-pointer shrink-0"
+            >
+              {isAssigningProject ? "Assigning..." : "Grant Access"}
+            </button>
+          </div>
+        </div>
+
+        {/* Projects List */}
+        {(!userDetail.projects || userDetail.projects.length === 0) ? (
+          <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80">
+            <FolderKanban className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              No Projects Assigned
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              This user cannot see or crawl any projects until you assign one above.
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {userDetail.projects.map((proj) => (
+              <div
+                key={proj.id}
+                className="py-3 flex items-center justify-between gap-3 text-xs"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-emerald-500 shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <Link
+                      href={`/admin/projects/${proj.id}`}
+                      className="font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-500 truncate block"
+                    >
+                      {proj.name}
+                    </Link>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                      {proj.domain}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    {proj.assignmentType || "Member"}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveProject(proj)}
+                    className="p-1 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title={`Revoke access to ${proj.name}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <ConfirmDialog
