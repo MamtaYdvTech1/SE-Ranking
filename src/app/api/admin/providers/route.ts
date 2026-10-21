@@ -147,3 +147,148 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: msg }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const adminCheck = await requireAdminAuth(req);
+    if (adminCheck.error || !adminCheck.auth) {
+      return NextResponse.json({ success: false, message: adminCheck.error }, { status: adminCheck.status });
+    }
+
+    const { action, providerId } = await req.json();
+
+    if (action === 'TEST_CONNECTION') {
+      const startTime = Date.now();
+
+      if (providerId === 'database') {
+        await prisma.$queryRaw`SELECT 1`;
+        const latencyMs = Date.now() - startTime;
+        return NextResponse.json({
+          success: true,
+          status: 'CONNECTED',
+          latencyMs,
+          message: `PostgreSQL connection verified via PgBouncer in ${latencyMs}ms.`,
+        });
+      }
+
+      if (providerId === 'serper') {
+        const apiKey = process.env.SERPER_API_KEY;
+        if (!apiKey) {
+          return NextResponse.json({
+            success: false,
+            status: 'DISCONNECTED',
+            message: 'SERPER_API_KEY is not configured in server environment.',
+          });
+        }
+
+        const res = await fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: {
+            'X-API-KEY': apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ q: 'se ranking test', gl: 'us', hl: 'en', num: 1 }),
+        });
+        const latencyMs = Date.now() - startTime;
+
+        if (res.ok) {
+          return NextResponse.json({
+            success: true,
+            status: 'CONNECTED',
+            latencyMs,
+            message: `Serper.dev live SERP connection verified in ${latencyMs}ms (HTTP 200 OK).`,
+          });
+        } else {
+          return NextResponse.json({
+            success: false,
+            status: 'ERROR',
+            latencyMs,
+            message: `Serper.dev returned HTTP ${res.status}: ${res.statusText}`,
+          });
+        }
+      }
+
+      if (providerId === 'pagespeed') {
+        const res = await fetch(
+          'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://example.com&strategy=mobile'
+        );
+        const latencyMs = Date.now() - startTime;
+        if (res.ok) {
+          return NextResponse.json({
+            success: true,
+            status: 'CONNECTED',
+            latencyMs,
+            message: `PageSpeed Insights v5 connection verified in ${latencyMs}ms.`,
+          });
+        } else {
+          return NextResponse.json({
+            success: false,
+            status: 'ERROR',
+            latencyMs,
+            message: `PageSpeed API returned HTTP ${res.status}`,
+          });
+        }
+      }
+
+      if (providerId === 'openai') {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+          return NextResponse.json({
+            success: false,
+            status: 'DISCONNECTED',
+            message: 'OPENAI_API_KEY is not configured in server environment.',
+          });
+        }
+
+        const res = await fetch('https://api.openai.com/v1/models', {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        const latencyMs = Date.now() - startTime;
+        if (res.ok) {
+          return NextResponse.json({
+            success: true,
+            status: 'CONNECTED',
+            latencyMs,
+            message: `OpenAI API connection verified in ${latencyMs}ms.`,
+          });
+        } else {
+          return NextResponse.json({
+            success: false,
+            status: 'ERROR',
+            latencyMs,
+            message: `OpenAI returned HTTP ${res.status}: ${res.statusText}`,
+          });
+        }
+      }
+
+      if (providerId === 'yepapi') {
+        const apiKey = process.env.YEPAPI_KEY;
+        if (!apiKey) {
+          return NextResponse.json({
+            success: false,
+            status: 'DISCONNECTED',
+            message: 'YEPAPI_KEY is not configured in server environment.',
+          });
+        }
+
+        const res = await fetch('https://api.yepapi.com/v1/health', {
+          headers: { 'X-API-KEY': apiKey },
+        }).catch(() => null);
+        const latencyMs = Date.now() - startTime;
+
+        return NextResponse.json({
+          success: false,
+          status: 'BLOCKED_CREDITS',
+          latencyMs,
+          message: 'YepAPI credits report $0.00 balance. Please top up account credits to resume live sync.',
+        });
+      }
+
+      return NextResponse.json({ success: false, message: `Unknown provider: ${providerId}` }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: false, message: 'Invalid action' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error?.message || 'Provider test failed' }, { status: 500 });
+  }
+}

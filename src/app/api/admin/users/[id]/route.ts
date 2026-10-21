@@ -307,9 +307,60 @@ export async function DELETE(
     // Safeguards: admin cannot delete self, cannot delete last admin
     await assertAdminCanModifyUser(adminCheck.auth.user.id, id, { isDelete: true });
 
-    const existing = await prisma.user.findUnique({ where: { id } });
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        projects: { where: { deletedAt: null }, select: { id: true, name: true } },
+        _count: {
+          select: {
+            projectMemberships: true,
+          },
+        },
+      },
+    });
+
     if (!existing || existing.deletedAt) {
       return NextResponse.json({ error: "User not found or already deleted." }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get("force") === "true";
+
+    // Check dependencies: active projects, jobs, reports
+    const ownedProjectsCount = existing.projects.length;
+    const memberProjectsCount = existing._count.projectMemberships;
+
+    const [activeJobsCount, reportsCount] = await Promise.all([
+      prisma.job.count({
+        where: {
+          projectId: { in: existing.projects.map((p) => p.id) },
+          status: { in: ["QUEUED", "RUNNING"] },
+        },
+      }).catch(() => 0),
+      prisma.report.count({
+        where: {
+          projectId: { in: existing.projects.map((p) => p.id) },
+          deletedAt: null,
+        },
+      }).catch(() => 0),
+    ]);
+
+    // If active dependencies exist and not confirmed with force=true, return warning
+    if ((ownedProjectsCount > 0 || activeJobsCount > 0) && !force) {
+      return NextResponse.json(
+        {
+          success: false,
+          requiresConfirmation: true,
+          message: `User owns ${ownedProjectsCount} active project(s) and has ${activeJobsCount} pending job(s). Please confirm deletion.`,
+          dependencies: {
+            ownedProjectsCount,
+            memberProjectsCount,
+            activeJobsCount,
+            reportsCount,
+          },
+        },
+        { status: 409 }
+      );
     }
 
     // Soft delete
@@ -325,21 +376,31 @@ export async function DELETE(
     // Invalidate sessions immediately
     await invalidateAllSessionsForUser(id);
 
-    // Audit Log
+    // Audit Log: USER_DELETED
     await createAuditLog({
       actorId: adminCheck.auth.user.id,
       actorEmail: adminCheck.auth.user.email,
-      action: "USER_SOFT_DELETE",
+      action: "USER_DELETED",
       entity: "User",
       entityId: id,
       beforeJson: { email: existing.email, role: existing.role },
-      afterJson: { deletedAt: new Date().toISOString() },
+      afterJson: {
+        deletedAt: new Date().toISOString(),
+        ownedProjectsCount,
+        memberProjectsCount,
+        activeJobsCount,
+      },
       req,
     });
 
     return NextResponse.json({
       success: true,
       message: `User ${existing.email} soft-deleted successfully.`,
+      dependenciesCleaned: {
+        ownedProjectsCount,
+        memberProjectsCount,
+        activeJobsCount,
+      },
     });
   } catch (err: any) {
     return NextResponse.json(

@@ -74,3 +74,104 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: error?.message || 'Failed to list jobs' }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const adminCheck = await requireAdminAuth(req);
+    if (adminCheck.error || !adminCheck.auth) {
+      return NextResponse.json({ success: false, message: adminCheck.error }, { status: adminCheck.status });
+    }
+
+    const { action, jobId, type, projectId, payload } = await req.json();
+
+    if (action === 'RETRY' && jobId) {
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
+      if (!job) {
+        return NextResponse.json({ success: false, message: 'Job not found' }, { status: 404 });
+      }
+
+      const updated = await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: 'queued',
+          attempts: { increment: 1 },
+          error: null,
+          startedAt: null,
+          completedAt: null,
+        },
+      });
+
+      await prisma.jobLog.create({
+        data: {
+          jobId,
+          level: 'info',
+          message: `Job retried manually by admin ${adminCheck.auth.user.email}`,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Job #${jobId} requeued for background execution.`,
+        data: updated,
+      });
+    }
+
+    if (action === 'CANCEL' && jobId) {
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
+      if (!job) {
+        return NextResponse.json({ success: false, message: 'Job not found' }, { status: 404 });
+      }
+
+      const updated = await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: 'cancelled',
+          completedAt: new Date(),
+        },
+      });
+
+      await prisma.jobLog.create({
+        data: {
+          jobId,
+          level: 'warn',
+          message: `Job cancelled manually by admin ${adminCheck.auth.user.email}`,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Job #${jobId} cancelled.`,
+        data: updated,
+      });
+    }
+
+    if (action === 'TRIGGER' && type) {
+      const newJob = await prisma.job.create({
+        data: {
+          type,
+          projectId: projectId || null,
+          payload: payload ? JSON.stringify(payload) : null,
+          status: 'queued',
+        },
+      });
+
+      await prisma.jobLog.create({
+        data: {
+          jobId: newJob.id,
+          level: 'info',
+          message: `Job created and queued by admin ${adminCheck.auth.user.email}`,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Job #${newJob.id} created and queued.`,
+        data: newJob,
+      });
+    }
+
+    return NextResponse.json({ success: false, message: 'Invalid action or parameters' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error?.message || 'Failed to execute job action' }, { status: 500 });
+  }
+}
