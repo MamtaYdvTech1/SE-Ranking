@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { hashPassword, createSession, setSessionCookie, requireAdminAuth } from '@/lib/server/auth';
-import { verifyProjectAccess } from '@/lib/server/projectAuth';
+import { prisma } from '../src/lib/db/prisma';
+import { hashPassword, createSession, setSessionCookie, requireAdminAuth } from '../src/lib/server/auth';
+import { verifyProjectAccess } from '../src/lib/server/projectAuth';
 
 describe('Supabase & PostgreSQL Security Hardening Suite', () => {
   let adminUser: { id: string; email: string };
@@ -121,7 +121,7 @@ describe('Supabase & PostgreSQL Security Hardening Suite', () => {
       });
       expect(user).toBeDefined();
 
-      const { sanitizeUser } = await import('@/lib/server/auth');
+      const { sanitizeUser } = await import('../src/lib/server/auth');
       const safe = sanitizeUser(user!);
       expect((safe as any).passwordHash).toBeUndefined();
     });
@@ -199,7 +199,7 @@ describe('Supabase & PostgreSQL Security Hardening Suite', () => {
         where: { id: seoUser1.id },
         data: { status: 'suspended' },
       });
-      const { invalidateAllSessionsForUser } = await import('@/lib/server/auth');
+      const { invalidateAllSessionsForUser } = await import('../src/lib/server/auth');
       await invalidateAllSessionsForUser(seoUser1.id);
 
       const req = new NextRequest(`http://localhost:3000/api/projects/${testProject.id}`, {
