@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     data: notifications.map((n) => ({
-      id: n.id,
+      id: String(n.id),
       title: n.title,
       message: n.message,
       type: n.type,
-      read: n.read,
+      read: n.isRead,
       userEmail: n.user?.email || "System-Wide Broadcast",
       userName: n.user?.name || "System",
       createdAt: n.createdAt.toISOString(),
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         title,
         message,
         type,
-        read: false,
+        isRead: false,
       })),
     });
 

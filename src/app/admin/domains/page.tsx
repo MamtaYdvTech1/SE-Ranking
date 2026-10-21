@@ -20,7 +20,7 @@ import { useToast } from "@/components/admin/ui/Toast";
 import { SkeletonLoader } from "@/components/admin/ui/SkeletonLoader";
 import { ErrorState } from "@/components/admin/ui/ErrorState";
 
-interface DomainItem {
+interface DomainItem extends Record<string, any> {
   id: string;
   projectId: string;
   projectName: string;
@@ -45,6 +45,10 @@ export default function AdminDomainsPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+  const [sortBy, setSortBy] = useState("domain");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,9 +118,9 @@ export default function AdminDomainsPage() {
   const columns: Column<DomainItem>[] = [
     {
       header: "Domain",
-      accessor: "domain",
+      key: "domain",
       sortable: true,
-      cell: (row) => (
+      render: (row: DomainItem) => (
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center font-bold text-xs">
             <Globe className="w-4 h-4" />
@@ -142,9 +146,9 @@ export default function AdminDomainsPage() {
     },
     {
       header: "Project & Client",
-      accessor: "projectName",
+      key: "projectName",
       sortable: true,
-      cell: (row) => (
+      render: (row: DomainItem) => (
         <div>
           <Link
             href={`/projects/${row.domain}/overview`}
@@ -162,14 +166,14 @@ export default function AdminDomainsPage() {
     },
     {
       header: "Status",
-      accessor: "status",
+      key: "status",
       sortable: true,
-      cell: (row) => <StatusBadge status={row.status} />,
+      render: (row: DomainItem) => <StatusBadge status={row.status} />,
     },
     {
       header: "SEO Scope",
-      accessor: "keywordsCount",
-      cell: (row) => (
+      key: "keywordsCount",
+      render: (row: DomainItem) => (
         <div className="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
           <div><strong className="text-slate-900 dark:text-slate-100">{row.keywordsCount}</strong> keywords tracked</div>
           <div className="text-[11px] text-slate-400">{row.auditPagesCount} audited pages · {row.backlinksCount} backlinks</div>
@@ -178,9 +182,9 @@ export default function AdminDomainsPage() {
     },
     {
       header: "Owner",
-      accessor: "ownerEmail",
+      key: "ownerEmail",
       sortable: true,
-      cell: (row) => <span className="text-xs text-slate-500 font-mono">{row.ownerEmail}</span>,
+      render: (row: DomainItem) => <span className="text-xs text-slate-500 font-mono">{row.ownerEmail}</span>,
     },
   ];
 
@@ -275,9 +279,18 @@ export default function AdminDomainsPage() {
         <DataTable
           columns={columns}
           data={filtered}
-          searchField="domain"
-          pageSize={15}
-          emptyMessage="No domains match the selected criteria."
+          totalCount={filtered.length}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSortChange={(col, dir) => {
+            setSortBy(col);
+            setSortDir(dir);
+          }}
+          isLoading={isLoading}
+          exportFilename="domains-portfolio.csv"
         />
       </div>
 

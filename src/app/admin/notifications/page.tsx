@@ -17,7 +17,7 @@ import { useToast } from "@/components/admin/ui/Toast";
 import { SkeletonLoader } from "@/components/admin/ui/SkeletonLoader";
 import { ErrorState } from "@/components/admin/ui/ErrorState";
 
-interface NotificationItem {
+interface NotificationItem extends Record<string, any> {
   id: string;
   title: string;
   message: string;
@@ -33,6 +33,10 @@ export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   // Broadcast modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,8 +100,8 @@ export default function AdminNotificationsPage() {
   const columns: Column<NotificationItem>[] = [
     {
       header: "Alert & Message",
-      accessor: "title",
-      cell: (row) => (
+      key: "title",
+      render: (row: NotificationItem) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span
@@ -121,8 +125,8 @@ export default function AdminNotificationsPage() {
     },
     {
       header: "Recipient",
-      accessor: "userEmail",
-      cell: (row) => (
+      key: "userEmail",
+      render: (row: NotificationItem) => (
         <div>
           <div className="font-semibold text-xs text-slate-800 dark:text-slate-200">{row.userName}</div>
           <div className="text-[11px] text-slate-400 font-mono">{row.userEmail}</div>
@@ -131,8 +135,8 @@ export default function AdminNotificationsPage() {
     },
     {
       header: "Status",
-      accessor: "read",
-      cell: (row) => (
+      key: "read",
+      render: (row: NotificationItem) => (
         <span
           className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
             row.read
@@ -146,8 +150,8 @@ export default function AdminNotificationsPage() {
     },
     {
       header: "Delivered",
-      accessor: "createdAt",
-      cell: (row) => (
+      key: "createdAt",
+      render: (row: NotificationItem) => (
         <span className="text-xs text-slate-400">
           {new Date(row.createdAt).toLocaleString()}
         </span>
@@ -220,9 +224,18 @@ export default function AdminNotificationsPage() {
         <DataTable
           columns={columns}
           data={notifications}
-          searchField="title"
-          pageSize={15}
-          emptyMessage="No notifications on record."
+          totalCount={notifications.length}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSortChange={(col, dir) => {
+            setSortBy(col);
+            setSortDir(dir);
+          }}
+          isLoading={isLoading}
+          exportFilename="notifications.csv"
         />
       </div>
 

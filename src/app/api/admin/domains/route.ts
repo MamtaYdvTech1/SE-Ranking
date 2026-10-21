@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         domain: d.domain,
         protocol: p.protocol || "https://",
         isPrimary: d.isPrimary,
-        status: d.verified ? "Active" : "Pending Verification",
+        status: d.isPrimary ? "Primary" : "Active",
         country: p.country,
         countryCode: p.countryCode,
         ownerEmail: p.user?.email || "—",
@@ -132,7 +132,6 @@ export async function POST(req: NextRequest) {
         projectId,
         domain: cleanDomain,
         isPrimary,
-        verified: true,
       },
     });
 

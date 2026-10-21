@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     prisma.job.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
-      select: { id: true, type: true, status: true, createdAt: true, finishedAt: true },
+      select: { id: true, type: true, status: true, createdAt: true, completedAt: true },
     }),
   ]);
 
@@ -91,8 +91,8 @@ export async function POST(req: NextRequest) {
     const job = await prisma.job.create({
       data: {
         type: scheduleId === "sched-rankings-daily" ? "RANK_UPDATE" : "SITE_AUDIT",
-        status: "QUEUED",
-        metadata: JSON.stringify({ triggeredManuallyBy: adminCheck.auth.user.email, scheduleId }),
+        status: "queued",
+        payload: JSON.stringify({ triggeredManuallyBy: adminCheck.auth.user.email, scheduleId }),
       },
     });
 
