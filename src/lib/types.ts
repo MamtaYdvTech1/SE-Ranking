@@ -141,6 +141,8 @@ export interface UserDto {
   isActive: boolean;
   status?: 'active' | 'pending' | 'approved' | 'rejected' | 'suspended' | 'deactivated' | string;
   planTier?: string;
+  canCreateProject?: boolean;
+  canCreateClient?: boolean;
   toolPermissions?: Record<string, boolean> | null;
   usageLimits?: Record<string, number> | null;
   usageCurrent?: Record<string, number> | null;

@@ -170,16 +170,22 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
   });
 
   it('validates YepAPI provider configuration and search engine capabilities', async () => {
-    const { YepApiRankingProvider } = await import('../src/lib/rankings/yepapi');
-    const provider = new YepApiRankingProvider();
-    expect(provider.id).toBe('yepapi');
-    expect(provider.name).toContain('YepAPI');
-    expect(provider.isConfigured()).toBe(true);
+    const originalKey = process.env.YEPAPI_KEY;
+    process.env.YEPAPI_KEY = 'yep_sk_live_test_1234567890';
+    try {
+      const { YepApiRankingProvider } = await import('../src/lib/rankings/yepapi');
+      const provider = new YepApiRankingProvider();
+      expect(provider.id).toBe('yepapi');
+      expect(provider.name).toContain('YepAPI');
+      expect(provider.isConfigured()).toBe(true);
 
-    const capabilities = provider.getEngineCapabilities();
-    expect(capabilities.length).toBeGreaterThan(0);
-    expect(capabilities.some((c) => c.engine === 'google')).toBe(true);
-    expect(capabilities.some((c) => c.engine === 'google-ai-overview')).toBe(true);
+      const capabilities = provider.getEngineCapabilities();
+      expect(capabilities.length).toBeGreaterThan(0);
+      expect(capabilities.some((c) => c.engine === 'google')).toBe(true);
+      expect(capabilities.some((c) => c.engine === 'google-ai-overview')).toBe(true);
+    } finally {
+      process.env.YEPAPI_KEY = originalKey;
+    }
   });
 
   it('validates DataForSEO migration wrapper compatibility', async () => {

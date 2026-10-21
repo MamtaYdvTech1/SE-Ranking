@@ -1,16 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAdminAuth, createAuditLog } from "@/lib/server/auth";
+import { requireAdminAuth, createAuditLog, hashPassword } from "@/lib/server/auth";
 import { z } from "zod";
 import crypto from "crypto";
 
-const InviteUserSchema = z.object({
+const CreateUserSchema = z.object({
   email: z.string().email("Valid email required"),
   name: z.string().optional(),
-  role: z.enum(["ADMIN", "SEO_USER", "CLIENT"]),
+  password: z.string().min(8, "Password must be at least 8 characters").optional(),
+  role: z.enum([
+    "SUPERADMIN",
+    "SUPER_ADMIN",
+    "ADMIN",
+    "SEO_MANAGER",
+    "SEO_USER",
+    "CLIENT",
+    "OWNER",
+    "MEMBER",
+  ]).default("SEO_USER"),
+  status: z.enum([
+    "active",
+    "pending",
+    "approved",
+    "rejected",
+    "suspended",
+    "deactivated",
+    "invited",
+  ]).optional(),
   projectIds: z.array(z.string()).optional(),
   canCreateProject: z.boolean().optional().default(false),
   canCreateClient: z.boolean().optional().default(false),
+  planTier: z.enum(["FREE_TRIAL", "STARTER", "PRO", "AGENCY", "ENTERPRISE"]).optional(),
+  toolPermissions: z.record(z.string(), z.boolean()).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -106,7 +127,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const parsed = InviteUserSchema.safeParse(body);
+    const parsed = CreateUserSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parsed.error.format() },
@@ -114,7 +135,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, name, role, projectIds = [], canCreateProject, canCreateClient } = parsed.data;
+    const {
+      email,
+      name,
+      password,
+      role = "SEO_USER",
+      status: requestedStatus,
+      projectIds = [],
+      canCreateProject = false,
+      canCreateClient = false,
+      planTier = "FREE_TRIAL",
+      toolPermissions,
+    } = parsed.data;
     const cleanEmail = email.toLowerCase().trim();
 
     // Check if user already exists
@@ -129,37 +161,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate unique one-time expiring invitation token (7 days)
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Determine status & passwordHash
+    const hasPassword = Boolean(password && password.trim().length >= 8);
+    const userStatus = requestedStatus || (hasPassword ? "active" : "invited");
+    const passwordHash = hasPassword ? hashPassword(password!) : null;
 
-    const invitation = await prisma.invitation.create({
-      data: {
-        email: cleanEmail,
-        role,
-        token,
-        projectIds: JSON.stringify(projectIds),
-        canCreateProject,
-        invitedById: adminCheck.auth.user.id,
-        expiresAt,
-        status: "pending",
-      },
-    });
+    // Generate unique one-time expiring invitation token if password wasn't set
+    let token = "";
+    let inviteLink = "";
+    if (!hasPassword) {
+      token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await prisma.invitation.create({
+        data: {
+          email: cleanEmail,
+          role,
+          token,
+          projectIds: JSON.stringify(projectIds),
+          canCreateProject,
+          invitedById: adminCheck.auth.user.id,
+          expiresAt,
+          status: "pending",
+        },
+      });
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://seranking.vercel.app";
+      inviteLink = `${appUrl}/admin/signup?token=${token}`;
+    }
 
-    // Create or reactivate user account in invited state
+    // Create or reactivate user account
     let targetUser;
+    const updateData: any = {
+      name: name || (existingUser?.name ?? cleanEmail.split("@")[0]),
+      role,
+      status: userStatus,
+      canCreateProject,
+      canCreateClient,
+      planTier,
+      deletedAt: null,
+      deletedBy: null,
+    };
+    if (passwordHash) {
+      updateData.passwordHash = passwordHash;
+    }
+    if (toolPermissions) {
+      updateData.toolPermissions = JSON.stringify(toolPermissions);
+    }
+
     if (existingUser) {
       targetUser = await prisma.user.update({
         where: { id: existingUser.id },
-        data: {
-          name: name || existingUser.name,
-          role,
-          status: "invited",
-          canCreateProject,
-          canCreateClient,
-          deletedAt: null,
-          deletedBy: null,
-        },
+        data: updateData,
       });
     } else {
       targetUser = await prisma.user.create({
@@ -167,9 +218,12 @@ export async function POST(req: NextRequest) {
           email: cleanEmail,
           name: name || cleanEmail.split("@")[0],
           role,
-          status: "invited",
+          status: userStatus,
           canCreateProject,
           canCreateClient,
+          planTier,
+          passwordHash: passwordHash || undefined,
+          toolPermissions: toolPermissions ? JSON.stringify(toolPermissions) : undefined,
         },
       });
     }
@@ -189,42 +243,36 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Email provider check
-    const smtpHost = process.env.SMTP_HOST || process.env.RESEND_API_KEY;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://seranking.vercel.app";
-    const inviteLink = `${appUrl}/admin/signup?token=${token}`;
-
-    const emailConfigured = Boolean(smtpHost);
-
     // Audit Log
     await createAuditLog({
       actorId: adminCheck.auth.user.id,
       actorEmail: adminCheck.auth.user.email,
-      action: "USER_INVITE",
+      action: hasPassword ? "USER_CREATED" : "USER_INVITE",
       entity: "User",
       entityId: targetUser.id,
       afterJson: {
         email: cleanEmail,
         role,
+        status: userStatus,
         projectIds,
-        emailConfigured,
+        hasDirectPassword: hasPassword,
       },
       req,
     });
 
     return NextResponse.json({
       success: true,
-      message: emailConfigured
-        ? `Invitation sent to ${cleanEmail}.`
-        : "Email provider not configured. Please share the generated invite link manually.",
+      message: hasPassword
+        ? `User ${cleanEmail} created successfully with direct credentials.`
+        : `Invitation created for ${cleanEmail}.`,
       data: {
         userId: targetUser.id,
         email: targetUser.email,
+        name: targetUser.name,
         role: targetUser.role,
         status: targetUser.status,
-        inviteToken: token,
-        inviteLink,
-        emailConfigured,
+        inviteToken: token || null,
+        inviteLink: inviteLink || null,
       },
     });
   } catch (err: any) {

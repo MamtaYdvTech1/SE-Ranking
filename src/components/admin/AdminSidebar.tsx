@@ -19,6 +19,11 @@ import {
   ArrowLeft,
   LogOut,
   ExternalLink,
+  KeyRound,
+  Globe,
+  Calendar,
+  Bell,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -48,9 +53,14 @@ const navSections: NavSection[] = [
     title: 'ACCESS & GOVERNANCE',
     items: [
       {
-        label: 'Users & Permissions',
+        label: 'Users',
         href: '/admin/users',
         icon: Users,
+      },
+      {
+        label: 'Roles & Permissions',
+        href: '/admin/roles',
+        icon: KeyRound,
       },
       {
         label: 'Clients',
@@ -58,9 +68,14 @@ const navSections: NavSection[] = [
         icon: Building2,
       },
       {
-        label: 'Projects & Domains',
+        label: 'Projects',
         href: '/admin/projects',
         icon: FolderKanban,
+      },
+      {
+        label: 'Domains',
+        href: '/admin/domains',
+        icon: Globe,
       },
     ],
   },
@@ -69,45 +84,60 @@ const navSections: NavSection[] = [
     items: [
       {
         label: 'Integrations',
-        href: '/integrations',
+        href: '/admin/providers',
         icon: Radio,
       },
       {
-        label: 'Background Jobs',
-        href: '/admin/jobs',
-        icon: Layers,
-      },
-      {
-        label: 'Usage & Costs',
+        label: 'Provider Usage',
         href: '/admin/api-usage',
         icon: CreditCard,
       },
       {
-        label: 'Audit & Activity Logs',
+        label: 'Jobs Monitor',
+        href: '/admin/jobs',
+        icon: Layers,
+      },
+      {
+        label: 'Schedules',
+        href: '/admin/schedules',
+        icon: Calendar,
+      },
+      {
+        label: 'Notifications',
+        href: '/admin/notifications',
+        icon: Bell,
+      },
+      {
+        label: 'Audit Logs',
         href: '/admin/activity-logs',
         icon: ShieldAlert,
       },
       {
-        label: 'Platform Settings',
-        href: '/settings',
+        label: 'Security',
+        href: '/admin/security',
+        icon: Lock,
+      },
+      {
+        label: 'Settings',
+        href: '/admin/settings',
         icon: Settings,
       },
     ],
   },
   {
-    title: 'SEO SUITE EXPLORER',
+    title: 'ANALYTICS & EXPORTS',
     items: [
       {
-        label: 'All SEO Datasets',
+        label: 'Reports',
+        href: '/admin/reports',
+        icon: FileSpreadsheet,
+      },
+      {
+        label: 'SEO Datasets',
         href: '/admin/seo-explorer',
         icon: Search,
         badge: 'Live',
         badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
-      },
-      {
-        label: 'Reports & Exports',
-        href: '/admin/reports',
-        icon: FileSpreadsheet,
       },
     ],
   },

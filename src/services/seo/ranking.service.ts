@@ -176,10 +176,14 @@ export async function collectRankingsForProject(
     }
   }
 
-  await prisma.project.update({
-    where: { id: project.id },
-    data: { lastRankingCheckAt: now },
-  });
+  try {
+    await prisma.project.update({
+      where: { id: project.id },
+      data: { lastRankingCheckAt: now },
+    });
+  } catch (err: any) {
+    if (err?.code !== 'P2025') throw err;
+  }
 
   await recordSerpCompetitors(project.id, project.domain, checkResponse.results, now);
 

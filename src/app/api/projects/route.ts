@@ -41,10 +41,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Role-based access control & ownership enforcement:
-    // Every user/owner strictly sees only their own projects unless global SUPERADMIN
-    if (auth.user.role !== 'SUPERADMIN') {
-      whereClause.userId = auth.user.id;
+    // Role-based access control & ownership enforcement (PDF Section 3):
+    // ADMIN and SUPERADMIN see all projects platform-wide.
+    // Account Owners (OWNER), SEO Users (SEO_USER), and Clients (CLIENT) see only assigned projects.
+    const userRole = (auth.user.role || '').toUpperCase();
+    const isGlobalAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
+    if (!isGlobalAdmin) {
+      whereClause.OR = [
+        { userId: auth.user.id },
+        { members: { some: { userId: auth.user.id } } },
+      ];
     }
 
     let projects: any[] = await projectDb.findMany({
@@ -217,6 +223,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const userRole = (auth.user.role || '').toUpperCase();
+    const isGlobalAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN' || userRole === 'OWNER';
+    if (!isGlobalAdmin) {
+      if (userRole === 'CLIENT' || (auth.user as any).canCreateProject === false) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'FORBIDDEN',
+              message: 'Permission denied: You do not have permission to create projects. Contact your administrator.',
+            },
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const body = await req.json();
 
     // Check if this is wizard format or simple format
@@ -380,6 +403,38 @@ export async function POST(req: NextRequest) {
         searchEngines: true,
       },
     });
+
+    // Synchronize ProjectMember records for ownership and team assignments (PDF Module 1)
+    if (createdProject.userId) {
+      await (prisma as any).projectMember.upsert({
+        where: {
+          projectId_userId: { projectId: createdProject.id, userId: createdProject.userId },
+        },
+        create: {
+          projectId: createdProject.id,
+          userId: createdProject.userId,
+          role: 'OWNER',
+          canEdit: true,
+        },
+        update: {},
+      }).catch(() => {});
+    }
+
+    const assignedSeoUser = body.assignedUserId || body.general?.assignedSeoOwner || body.assignedSeoOwner;
+    if (assignedSeoUser && assignedSeoUser !== createdProject.userId) {
+      await (prisma as any).projectMember.upsert({
+        where: {
+          projectId_userId: { projectId: createdProject.id, userId: assignedSeoUser },
+        },
+        create: {
+          projectId: createdProject.id,
+          userId: assignedSeoUser,
+          role: 'MEMBER',
+          canEdit: true,
+        },
+        update: {},
+      }).catch(() => {});
+    }
 
     // Bulk insert initial keywords if provided
     if (initialKeywords.length > 0) {
