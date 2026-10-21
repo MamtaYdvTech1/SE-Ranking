@@ -350,14 +350,6 @@ export default function LoginPage() {
                 Sign Up
               </Link>
             </div>
-
-            {/* Platform Super Admin Portal Link */}
-            <div className="pt-2 text-center text-xs text-gray-500">
-              Platform administrator?{' '}
-              <Link href="/admin/login" className="text-emerald-600 hover:text-emerald-700 hover:underline font-semibold">
-                Super Admin Portal &rarr;
-              </Link>
-            </div>
           </div>
         </div>
       </div>

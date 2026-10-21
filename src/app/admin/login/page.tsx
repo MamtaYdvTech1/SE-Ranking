@@ -20,7 +20,13 @@ import { useAuth } from '@/context/AuthContext';
 function AdminLoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/admin/dashboard';
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
+
+  React.useEffect(() => {
+    if (user && ['ADMIN', 'SUPERADMIN', 'OWNER'].includes((user.role || '').toUpperCase())) {
+      window.location.href = redirect;
+    }
+  }, [user, redirect]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -99,6 +105,20 @@ function AdminLoginForm() {
       {/* Main Form Card */}
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 z-10">
         <div className="bg-[#0b0f19]/90 backdrop-blur-xl border border-slate-800/80 shadow-2xl shadow-black/80 rounded-2xl p-6 sm:p-8 relative">
+          {user && !['ADMIN', 'SUPERADMIN', 'OWNER'].includes((user.role || '').toUpperCase()) && (
+            <div className="mb-5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">
+                You are currently signed in as <strong className="text-amber-200">{user.email}</strong> (Standard User). Standard users cannot access the Super Admin Panel.
+                <div className="mt-2">
+                  <Link href="/projects" className="underline font-semibold hover:text-white">
+                    Return to User Dashboard &rarr;
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-3">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />

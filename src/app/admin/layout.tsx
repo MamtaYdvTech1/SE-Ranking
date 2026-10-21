@@ -65,18 +65,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href={`/admin/login?redirect=${encodeURIComponent(pathname)}`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-500/20"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Sign In as Admin</span>
-            </Link>
-            <Link
               href="/projects"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition shadow-md shadow-purple-500/20"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Client Workspace</span>
+              <span>Return to User Dashboard</span>
+            </Link>
+            <Link
+              href={`/admin/login?redirect=${encodeURIComponent(pathname)}`}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition border border-slate-700"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Admin Login</span>
             </Link>
           </div>
         </div>
