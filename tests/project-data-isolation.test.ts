@@ -381,7 +381,7 @@ describe('End-to-End Multi-Project Data Isolation & Integrity Suite', () => {
       expect(res.summary.totalKeywords).toBe(2);
       expect(res.keywords.length).toBe(2);
 
-      const kwTexts = res.keywords.map((k) => k.keyword);
+      const kwTexts = res.keywords.map((k: any) => k.keyword);
       expect(kwTexts).toContain('flipkart online shopping');
       expect(kwTexts).toContain('buy mobiles online');
       expect(kwTexts).not.toContain('meesho sarees online');
@@ -410,7 +410,7 @@ describe('End-to-End Multi-Project Data Isolation & Integrity Suite', () => {
       expect(res.domain).toBe('tatacliq.com');
       expect(res.summary.totalKeywords).toBe(2);
 
-      const kwTexts = res.keywords.map((k) => k.keyword);
+      const kwTexts = res.keywords.map((k: any) => k.keyword);
       expect(kwTexts).toContain('luxury watches online india');
       expect(kwTexts).toContain('designer handbags for women');
       expect(kwTexts).not.toContain('flipkart online shopping');
@@ -529,10 +529,10 @@ describe('End-to-End Multi-Project Data Isolation & Integrity Suite', () => {
       const resTc = await getRankingSummary(MOCK_PROJECTS.tatacliq.id, 'month');
       const resEmpty = await getRankingSummary(MOCK_PROJECTS.empty.id, 'month');
 
-      const fkKw = new Set(resFk.keywords.map((k) => k.id));
-      const msKw = new Set(resMs.keywords.map((k) => k.id));
-      const tcKw = new Set(resTc.keywords.map((k) => k.id));
-      const emKw = new Set(resEmpty.keywords.map((k) => k.id));
+      const fkKw = new Set(resFk.keywords.map((k: any) => k.id));
+      const msKw = new Set(resMs.keywords.map((k: any) => k.id));
+      const tcKw = new Set(resTc.keywords.map((k: any) => k.id));
+      const emKw = new Set(resEmpty.keywords.map((k: any) => k.id));
 
       // Assert disjoint sets
       for (const id of msKw) expect(fkKw.has(id)).toBe(false);
