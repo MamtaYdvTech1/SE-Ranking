@@ -431,7 +431,7 @@ export default function HelpCenterPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFDFE] text-gray-900 flex flex-col justify-between font-sans select-none">
-      {/* Top Navbar matching exact user screenshot */}
+      {/* Top Navbar */}
       <header className="bg-white border-b border-gray-100 py-3.5 px-6 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -546,7 +546,7 @@ export default function HelpCenterPage() {
         </div>
       </header>
 
-      {/* Royal Blue Hero Banner matching screenshot */}
+      {/* Royal Blue Hero Banner */}
       <section className="bg-[#1054E2] text-white py-16 px-6 text-center">
         <div className="max-w-3xl mx-auto space-y-6">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
@@ -566,7 +566,7 @@ export default function HelpCenterPage() {
         </div>
       </section>
 
-      {/* 17 Category Cards Grid matching exact screenshots */}
+      {/* 17 Category Cards Grid */}
       <main className="flex-1 max-w-7xl mx-auto px-6 py-14 w-full">
         {filteredCategories.length === 0 ? (
           <div className="text-center py-16 space-y-3">
@@ -590,9 +590,9 @@ export default function HelpCenterPage() {
                   className="p-8 bg-white border border-gray-100 rounded-[24px] shadow-2xs hover:shadow-xl transition-all duration-200 group flex flex-col justify-between space-y-5 cursor-pointer text-left relative overflow-hidden"
                 >
                   <div className="space-y-4">
-                    {/* Render exact icons per user screenshot */}
+                    {/* Render exact icons */}
                     {cat.iconType === 'mcp-hub' ? (
-                      /* MCP Hub 3 connected icons matching screenshot */
+                      /* MCP Hub 3 connected icons */
                       <div className="flex items-center gap-2.5 py-1">
                         <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shrink-0">
                           <Zap className="w-4 h-4 fill-white text-white" />
@@ -623,7 +623,7 @@ export default function HelpCenterPage() {
                         </div>
                       </div>
                     ) : cat.iconType === 'se-visible' ? (
-                      /* SE Visible with wavy topographic contours matching screenshot */
+                      /* SE Visible with wavy topographic contours */
                       <div className="relative pt-2 pb-1">
                         <svg
                           className="absolute -top-6 -left-8 -right-8 w-[120%] h-20 text-[#00897B]/20 pointer-events-none"
@@ -809,7 +809,7 @@ export default function HelpCenterPage() {
         </div>
       )}
 
-      {/* Floating Chat Support Drawer matching exact screenshot */}
+      {/* Floating Chat Support Drawer */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
           type="button"
@@ -892,7 +892,7 @@ export default function HelpCenterPage() {
         )}
       </div>
 
-      {/* Footer matching exact screenshot */}
+      {/* Footer */}
       <footer className="border-t border-gray-100 bg-white py-8 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div className="flex items-center gap-2 font-bold text-gray-800">
@@ -902,7 +902,7 @@ export default function HelpCenterPage() {
 
           <div>© 2013 - 2026 SER Acquisition Inc. All Rights Reserved</div>
 
-          {/* Social Icons matching screenshot */}
+          {/* Social Icons */}
           <div className="flex items-center gap-4 text-gray-600 font-bold">
             <span className="cursor-pointer hover:text-blue-600">f</span>
             <span className="cursor-pointer hover:text-black">𝕏</span>

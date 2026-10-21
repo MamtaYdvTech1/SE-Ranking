@@ -23,7 +23,7 @@ import { CountryFlag } from '@/components/ui/CountryFlag';
 function DatabaseExpansionContent() {
   const { activeProject } = useApp();
   const searchParams = useSearchParams();
-  const mode = searchParams.get('mode') || 'competitive'; // 'competitive' (Screenshot 4) or 'keyword' (Screenshot 6)
+  const mode = searchParams.get('mode') || 'competitive'; // 'competitive' or 'keyword'
 
   const [showAlert, setShowAlert] = useState(true);
   const [domain, setDomain] = useState(activeProject?.domain || '');
@@ -82,7 +82,7 @@ function DatabaseExpansionContent() {
   return (
     <div className="flex-1 overflow-y-auto bg-white min-h-[calc(100vh-80px)] text-gray-900 select-none flex flex-col justify-between">
       <div className="p-4 sm:p-6 w-full space-y-3.5 max-w-[1400px] mx-auto">
-        {/* Dismissible Notice Banner matching Screenshot 4 & 6 */}
+        {/* Dismissible Notice Banner */}
         {showAlert && (
           <div className="p-3.5 sm:p-4 bg-[#F0F6FD] border border-[#D5E6F7] rounded-lg relative text-[12px] text-gray-700 leading-relaxed">
             <button
@@ -113,7 +113,7 @@ function DatabaseExpansionContent() {
           </div>
         )}
 
-        {/* Breadcrumb matching Screenshot 4 or 6 */}
+        {/* Breadcrumb or 6 */}
         <div className="flex items-center justify-between text-xs pt-1">
           <div className="text-[13px] text-[#8C98A9] font-normal flex items-center gap-1.5">
             <Link
@@ -143,9 +143,9 @@ function DatabaseExpansionContent() {
           </div>
         </div>
 
-        {/* Controls Row matching Screenshot 4 (Competitive) or Screenshot 6 (Keyword) */}
+        {/* Controls Row (Competitive) or (Keyword) */}
         {mode === 'keyword' ? (
-          /* Screenshot 6 Keyword Controls: Enter a keyword, flag, Analyze, September 2026, $ USD, Bulk keyword Analysis */
+          /* Keyword Controls: Enter a keyword, flag, Analyze, September 2026, $ USD, Bulk keyword Analysis */
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white max-w-sm flex-1 min-w-[260px] focus-within:border-[#0B69FF]">
               <input
@@ -235,7 +235,7 @@ function DatabaseExpansionContent() {
             </Link>
           </div>
         ) : (
-          /* Screenshot 4 Competitive Controls: Date selector, Currency, Country dropdown, Domain input, Analyze */
+          /* Competitive Controls: Date selector, Currency, Country dropdown, Domain input, Analyze */
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
             {/* Date period selector */}
             <div className="relative">
@@ -295,7 +295,7 @@ function DatabaseExpansionContent() {
               )}
             </div>
 
-            {/* Country Selector Dropdown with region tree matching Screenshot 4 */}
+            {/* Country Selector Dropdown with region tree */}
             <div className="relative">
               <button
                 type="button"
@@ -394,7 +394,7 @@ function DatabaseExpansionContent() {
           </div>
         )}
 
-        {/* Diagonal Striped Background Area matching Screenshot 4 & 6 */}
+        {/* Diagonal Striped Background Area */}
         <div
           className="relative rounded-lg border border-gray-200 overflow-hidden min-h-[500px] flex items-center justify-center p-6 text-center"
           style={{
@@ -423,7 +423,7 @@ function DatabaseExpansionContent() {
             </div>
           </div>
 
-          {/* Central Upgrade Card matching Screenshot 4 & 6 */}
+          {/* Central Upgrade Card */}
           <div className="relative z-10 max-w-lg bg-white/95 backdrop-blur-xs p-8 rounded-xl border border-gray-200 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-gray-900 tracking-tight">
               Want to submit your search queries for analysis?

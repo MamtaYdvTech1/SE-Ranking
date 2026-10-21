@@ -252,7 +252,7 @@ export function TopHeader() {
             </svg>
           </button>
 
-          {/* Apps Switcher Dropdown - Exact match to Screenshot */}
+          {/* Apps Switcher Dropdown */}
           <AppsDropdown
             isOpen={isAppsOpen}
             onClose={() => setIsAppsOpen(false)}
@@ -306,7 +306,7 @@ export function TopHeader() {
                   <X className="w-2.5 h-2.5 stroke-[2.5]" />
                 </button>
 
-                {/* Exact Tooltip matching screenshot: "Remove from Favorites" with downward arrow right above X */}
+                {/* Exact Tooltip : "Remove from Favorites" with downward arrow right above X */}
                 {hoveredCloseTabId === tab.id && (
                   <div className="absolute -top-7 right-0 bg-[#1E293B] text-white text-[11px] font-medium py-1 px-2.5 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none flex flex-col items-center">
                     <span>Remove from Favorites</span>
@@ -324,7 +324,7 @@ export function TopHeader() {
         {/* Subtle vertical separator matching real SE Ranking */}
         <div className="h-4 w-[1px] bg-white/25 mx-0.5 shrink-0" />
 
-        {/* Lightbulb Tips / Quick-start guide Button matching screenshot 7 */}
+        {/* Lightbulb Tips / Quick-start guide Button */}
         <div className="relative group/lightbulb flex items-center">
           <button
             type="button"
@@ -343,7 +343,7 @@ export function TopHeader() {
             <Lightbulb className="w-4 h-4" />
           </button>
 
-          {/* Exact Tooltip matching screenshot 7: "Quick-start guide" below bulb */}
+          {/* Exact Tooltip : "Quick-start guide" below bulb */}
           <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#2D3748] text-white text-[11px] font-medium py-1 px-2.5 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none hidden group-hover/lightbulb:flex flex-col items-center animate-in fade-in duration-100">
             <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[4px] border-b-[#2D3748] absolute -top-1" />
             <span>Quick-start guide</span>
@@ -455,7 +455,7 @@ export function TopHeader() {
           )}
         </div>
 
-        {/* Notification Bell matching screenshot with clean red indicator dot */}
+        {/* Notification Bell with clean red indicator dot */}
         <div ref={notificationsRef} className="relative h-full flex items-center">
           <button
             onClick={() => {
@@ -495,7 +495,7 @@ export function TopHeader() {
           )}
         </div>
 
-        {/* User Profile matching exact three-dots button and dropdown from screenshot */}
+        {/* User Profile matching exact three-dots button and dropdown from */}
         <div ref={profileRef} id="tour-user-dropdown" className="relative h-full flex items-center">
           <button
             onClick={() => {

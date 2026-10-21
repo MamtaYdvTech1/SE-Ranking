@@ -172,7 +172,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
   const [selectedKeywordsPeriod, setSelectedKeywordsPeriod] = useState<'3M' | '6M' | '1Y'>('3M');
   const [selectedActivityPeriod, setSelectedActivityPeriod] = useState<'ALL' | '7D' | '1M' | '3M' | '6M' | '1Y'>('ALL');
 
-  // Analytics State (Screenshot 1 / 5:38)
+  // Analytics State
   const [analyticsGroupBy, setAnalyticsGroupBy] = useState<'MONTHS' | 'WEEKS' | 'DAYS'>('MONTHS');
   const [stackedChartFilter, setStackedChartFilter] = useState('All Sources Selected');
   const [activeRatingsInFilter, setActiveRatingsInFilter] = useState<Record<string, boolean>>({
@@ -186,7 +186,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
     not_rated: true,
   });
 
-  // Audit View State (Screenshot 1 & 3)
+  // Audit View State
   const [selectedAuditSection, setSelectedAuditSection] = useState<'gbp' | 'listings' | 'reviews'>('gbp');
   const [auditFilter, setAuditFilter] = useState<'all' | 'errors' | 'warnings' | 'notices' | 'passed' | 'unchecked'>('all');
   const [expandedChecklistItems, setExpandedChecklistItems] = useState<Record<string, boolean>>({
@@ -205,13 +205,13 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
     'reviews-30-days': false,
   });
 
-  // Review List State (Screenshot 2)
+  // Review List State
   const [selectedSourceFilter, setSelectedSourceFilter] = useState('All sources');
   const [activeReviewModal, setActiveReviewModal] = useState<ReviewItem | null>(null);
   const [reviewReplyText, setReviewReplyText] = useState('');
   const [reviewListSearch, setReviewListSearch] = useState('');
 
-  // 10 Exact Reviews matching Screenshot 2
+  // 10 Exact Reviews
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([
     {
       id: 'rev-1',
@@ -295,7 +295,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
       id: 'rev-8',
       source: "Judy's Book",
       sourceIcon: '📖',
-      rating: null, // Not rated in screenshot
+      rating: null,
       date: 'Sep 18 2026',
       text: 'Es el tipico asador castellano, donde puedes degustar un delicioso cordero. Y claro, sin olvidar las tapas tradicionales.',
       author: 'spain_girl',
@@ -326,7 +326,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
     },
   ]);
 
-  // Full 56+ Directories Matching Screenshot 3 & 4
+  // Full 56+ Directories
   const directoryListings: DirectoryListing[] = [
     { id: 'd-1', name: 'Google', icon: '🔍', type: 'Local Directory', syncStatus: 'Synced', presence: 'Listed', errors: {} },
     { id: 'd-2', name: 'Facebook', icon: '📘', type: 'Social Media', syncStatus: 'Synced', presence: 'Listed', errors: {} },
@@ -394,7 +394,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
 
   return (
     <div className="flex-1 flex flex-col bg-[#F4F6F9] text-gray-900 min-h-screen font-sans">
-      {/* Top Notice Banner (Exact match to Screenshots) */}
+      {/* Top Notice Banner */}
       {!isBannerDismissed && (
         <div className="bg-[#EBF3FC] border-b border-[#CCE0F8] px-4 py-2.5 text-xs text-[#1E40AF] flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -865,7 +865,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
             </div>
           </div>
 
-          {/* Connect A Real Location Notice (Exact match to Screenshot 1 & 4) */}
+          {/* Connect A Real Location Notice */}
           {!isConnectBannerDismissed && (
             <div className="bg-white border-2 border-dashed border-[#CCE0F8] rounded-xl p-5 shadow-xs relative">
               <button
@@ -888,7 +888,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
             </div>
           )}
 
-          {/* Google Business Profile Performance & Views (Screenshot 1 / 5:35) */}
+          {/* Google Business Profile Performance & Views */}
           <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-2xs space-y-5" id="gbp-stats">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
@@ -903,7 +903,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
               </div>
             </div>
 
-            {/* Searches by keywords + Line Chart (Screenshot 1) */}
+            {/* Searches by keywords + Line Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" id="gbp-keywords">
               {/* Left Keyword Table */}
               <div className="lg:col-span-6 border border-gray-200 rounded-lg p-4 space-y-3">
@@ -1031,7 +1031,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
               </div>
             </div>
 
-            {/* 4 Activity Cards (Screenshot 1) */}
+            {/* 4 Activity Cards */}
             <div className="space-y-4 pt-2">
               {[
                 { title: 'Website visits', count: '5,571', color: '#84CC16', stroke: 'stroke-lime-500' },
@@ -1091,7 +1091,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: BUSINESS LISTINGS (Screenshots 3 & 4)                              */}
+      {/* TAB 2: BUSINESS LISTINGS */}
       {/* ========================================================================= */}
       {activeTab === 'listings' && (
         <div className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -1342,11 +1342,11 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: AUDIT CHECKLIST (Screenshots 1 & 3)                                */}
+      {/* TAB 3: AUDIT CHECKLIST */}
       {/* ========================================================================= */}
       {activeTab === 'audit' && (
         <div className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-          {/* Top Audit Summary Metrics (Screenshot 3 / 5:35) */}
+          {/* Top Audit Summary Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-5">
             {/* Errors (3 Cols) */}
             <div className="lg:col-span-3 bg-white rounded-lg border border-gray-200 p-5 shadow-2xs space-y-2">
@@ -1513,7 +1513,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
 
             {/* Checklist items */}
             <div className="lg:col-span-8 space-y-4">
-              {/* Filter Tabs matching Screenshot 1 */}
+              {/* Filter Tabs */}
               <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-gray-600 border-b border-gray-200 pb-3">
                 <button
                   onClick={() => setAuditFilter('all')}
@@ -1757,11 +1757,11 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: REVIEWS LIST (Screenshot 2)                                        */}
+      {/* TAB 4: REVIEWS LIST */}
       {/* ========================================================================= */}
       {activeTab === 'reviews' && (
         <div className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 space-y-5">
-          {/* Source Tabs Matching Screenshot 2 */}
+          {/* Source Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <button
               onClick={() => setSelectedSourceFilter('All sources')}
@@ -1991,7 +1991,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: REVIEWS ANALYTICS (Screenshot 1 / 5:38)                            */}
+      {/* TAB 5: REVIEWS ANALYTICS */}
       {/* ========================================================================= */}
       {activeTab === 'analytics' && (
         <div className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -2142,7 +2142,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
                   </svg>
                 </div>
 
-                {/* Rating Breakdown Table (Screenshot 1) */}
+                {/* Rating Breakdown Table */}
                 <div className="space-y-1 text-xs w-full sm:w-auto">
                   {[
                     { label: '5 ★★★★★', count: 15, pct: '25%', color: 'bg-emerald-500' },
@@ -2176,7 +2176,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
                 <span className="text-gray-400 text-xs">ⓘ</span>
               </div>
 
-              {/* Bar Chart Matching Screenshot 1 */}
+              {/* Bar Chart */}
               <div className="h-44 w-full flex items-end justify-between gap-2 pt-4 px-2">
                 {[
                   { name: 'Google', pct: 26.7, icon: 'G' },
@@ -2495,7 +2495,7 @@ function LocalMarketingContent({ initialTab = 'all-locations' }: { initialTab?: 
         onLocationAdded={handleGlobalLocationAdded}
       />
 
-      {/* Universal Local Marketing Export Data Modal matching Screenshot 2 */}
+      {/* Universal Local Marketing Export Data Modal */}
       <ExportDataModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

@@ -451,7 +451,7 @@ export function RankingTrendChart({
           </div>
         )}
 
-        {/* Floating Tooltip matching Reference Screenshot */}
+        {/* Floating Tooltip matching Reference */}
         {activePoint && !hoveredNote && (
           <div
             className="absolute pointer-events-none transition-all duration-75 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-lg shadow-xl p-3 text-left z-20"

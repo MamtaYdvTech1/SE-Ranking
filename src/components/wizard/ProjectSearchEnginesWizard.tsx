@@ -357,7 +357,7 @@ export function ProjectSearchEnginesWizard({
       )}
 
       {/* ========================================================================= */}
-      {/* 1. LEFT SIDEBAR (Matching SE Ranking Screenshot 1:1)                      */}
+      {/* 1. LEFT SIDEBAR (Matching SE Ranking :1) */}
       {/* ========================================================================= */}
       <div className="w-64 bg-[#0A58CA] text-white flex flex-col justify-between shrink-0 shadow-xl select-none">
         <div>
@@ -504,7 +504,7 @@ export function ProjectSearchEnginesWizard({
         </div>
 
         {/* ======================================================================= */}
-        {/* TAB 1: SEARCH ENGINES (Exact 1:1 Match with User Uploaded Screenshot)   */}
+        {/* TAB 1: SEARCH ENGINES (Exact 1:1 Match with User Uploaded ) */}
         {/* ======================================================================= */}
         {activeTab === 'search-engines' && (
           <div className="p-10 max-w-5xl w-full mx-auto space-y-8 animate-in fade-in duration-100">
@@ -578,7 +578,7 @@ export function ProjectSearchEnginesWizard({
                 </button>
               </div>
 
-              {/* Form Fields matching Screenshot */}
+              {/* Form Fields */}
               <form onSubmit={handleAddSearchEngine} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   {/* Country with real Flag and Code */}
@@ -662,7 +662,7 @@ export function ProjectSearchEnginesWizard({
                   </div>
                 </div>
 
-                {/* Submit Row matching Screenshot */}
+                {/* Submit Row */}
                 <div className="flex items-center justify-between pt-3 border-t border-[#EEF0F5]">
                   <span className="text-xs text-[#525B6C]">
                     99 more search engines available to add

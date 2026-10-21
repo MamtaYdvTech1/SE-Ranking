@@ -181,7 +181,7 @@ export function InsightsView({ reviews = [], onSelectReview }: InsightsViewProps
         </p>
       </div>
 
-      {/* Two Column Layout matching Screenshot 19 */}
+      {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Keywords Sentiment Table (5 Cols) */}
         <div className="lg:col-span-5 bg-white border border-gray-200 rounded-lg shadow-2xs overflow-hidden">

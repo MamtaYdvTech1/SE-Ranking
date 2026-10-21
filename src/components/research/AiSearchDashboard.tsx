@@ -113,7 +113,7 @@ export function AiSearchDashboard({ analysis, onNewSearch }: AiSearchDashboardPr
 
   return (
     <div className="w-full bg-[#F4F6F9] min-h-[calc(100vh-80px)] pb-16 text-gray-900 select-none">
-      {/* Top Breadcrumb & Control Bar (Screenshot 4 exact match) */}
+      {/* Top Breadcrumb & Control Bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2 text-gray-500">
           <span className="font-medium text-gray-900">{analysis.domain}</span>
@@ -203,7 +203,7 @@ export function AiSearchDashboard({ analysis, onNewSearch }: AiSearchDashboardPr
           </div>
         </div>
 
-        {/* Key Metrics Section (Screenshot 4 exact recreation) */}
+        {/* Key Metrics Section */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-4">
           <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Key metrics</h3>
@@ -284,7 +284,7 @@ export function AiSearchDashboard({ analysis, onNewSearch }: AiSearchDashboardPr
           </div>
         </div>
 
-        {/* Competitive Research - AI Search Engines Bar (Screenshot 4 Recreation) */}
+        {/* Competitive Research - AI Search Engines Bar */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-4">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-700 border-b border-gray-100 pb-2 mb-3">
             <div className="flex items-center gap-2">

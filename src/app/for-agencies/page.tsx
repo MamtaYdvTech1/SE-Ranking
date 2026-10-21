@@ -458,7 +458,7 @@ console.log(data);`,
         )}
       </header>
 
-      {/* 3. HERO SECTION (Exact Match with provided HTML & screenshot) */}
+      {/* 3. HERO SECTION */}
       <section className="top-block container pt-12 sm:pt-16 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Title & Subtitle */}
         <div className="se-title-text max-w-4xl mx-auto" data-size="h1" data-alignment="center">

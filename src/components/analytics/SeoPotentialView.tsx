@@ -313,7 +313,7 @@ export function SeoPotentialView() {
         </div>
       </div>
 
-      {/* TOP TABLE CONTROLS: 2 COLORED METRIC CARDS MATCHING SCREENSHOT EXACTLY */}
+      {/* TOP TABLE CONTROLS: 2 COLORED METRIC CARDS EXACTLY */}
       <div className="traffic-opportunity__top-table-controls grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CARD 1: BLUE CARD - Conversion into sales */}
         <div

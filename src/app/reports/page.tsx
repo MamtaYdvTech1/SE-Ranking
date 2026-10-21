@@ -70,7 +70,7 @@ export default function ReportBuilderPage() {
   // Navigation sub-tabs: 'reports' | 'templates'
   const [currentNavTab, setCurrentNavTab] = useState<'reports' | 'templates'>('reports');
 
-  // Templates table sub-tab: 'my' | 'shared' (Screenshot 2)
+  // Templates table sub-tab: 'my' | 'shared'
   const [templatesSubTab, setTemplatesSubTab] = useState<'my' | 'shared'>('my');
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
@@ -89,7 +89,7 @@ export default function ReportBuilderPage() {
   const [rowsPerPage, setRowsPerPage] = useState('20');
   const [isRowsDropdownOpen, setIsRowsDropdownOpen] = useState(false);
 
-  // Dismissible banners matching screenshot
+  // Dismissible banners
   const [showTopModularNotice, setShowTopModularNotice] = useState(true);
   const [showInfoBanner, setShowInfoBanner] = useState(true);
   const [showWarningBanner, setShowWarningBanner] = useState(true);
@@ -143,7 +143,7 @@ export default function ReportBuilderPage() {
 
   const [newTemplateName, setNewTemplateName] = useState('');
 
-  // Full-page Template Creator (Screenshot 4: admin.reports.list.html#/template/create)
+  // Full-page Template Creator
   const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const [templateTitle, setTemplateTitle] = useState('Untitled template');
   const [isEditingTemplateTitle, setIsEditingTemplateTitle] = useState(false);
@@ -168,7 +168,7 @@ export default function ReportBuilderPage() {
   const [templatePreviewMode, setTemplatePreviewMode] = useState<'diagrams' | 'outline'>('diagrams');
   const [expandedSectionInList, setExpandedSectionInList] = useState<string | null>(null);
 
-  // Full-page Report Editor state (Screenshot 2: admin.reports.list.html#/report/create)
+  // Full-page Report Editor state
   const [isEditingReport, setIsEditingReport] = useState(false);
   const [activeEditingReport, setActiveEditingReport] = useState<{
     name: string;
@@ -252,10 +252,10 @@ export default function ReportBuilderPage() {
   // Real reports loaded from database
   const [reports, setReports] = useState<ReportRow[]>([]);
 
-  // Starts with 0 templates matching Screenshot 2
+  // Starts with 0 templates
   const [myTemplates, setMyTemplates] = useState<TemplateItem[]>([]);
 
-  // All 12 system templates matching Screenshot 2 & user HTML
+  // All 12 system templates & user HTML
   const allSystemTemplates = [
     {
       id: 1,
@@ -462,7 +462,7 @@ export default function ReportBuilderPage() {
 
   const scheduledCount = reports.filter((r) => r.hasSchedule).length;
 
-  // Filtered templates matching Screenshot 2
+  // Filtered templates
   const filteredTemplates = myTemplates.filter((t) => {
     if (templatesSubTab === 'shared') return false;
     if (!templateSearchQuery.trim()) return true;
@@ -809,7 +809,7 @@ export default function ReportBuilderPage() {
   };
 
   // ==============================================================
-  // DEDICATED FULL-PAGE REPORT & TEMPLATE EDITOR (Screenshots 3 & 4)
+  // DEDICATED FULL-PAGE REPORT & TEMPLATE EDITOR
   // ==============================================================
   if (isCreatingTemplate) {
     return (
@@ -1309,12 +1309,12 @@ export default function ReportBuilderPage() {
   };
 
   // ==============================================================
-  // DEDICATED FULL-PAGE TEMPLATE CREATOR (Screenshot 4: #/template/create)
+  // DEDICATED FULL-PAGE TEMPLATE CREATOR
   // ==============================================================
   if (isCreatingTemplate) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none">
-        {/* Top Header matching Screenshot 4 */}
+        {/* Top Header */}
         <header className="h-14 bg-white border-b border-[#E2E8F0] px-6 flex items-center justify-between z-20 shrink-0">
           <div className="flex items-center gap-2.5">
             {isEditingTemplateTitle ? (
@@ -1377,7 +1377,7 @@ export default function ReportBuilderPage() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Column (Config Sidebar ~360px) */}
           <div className="w-[360px] bg-white border-r border-[#E2E8F0] flex flex-col shrink-0 overflow-y-auto">
-            {/* Tabs matching Screenshot 4: Sections | Formatting | Settings */}
+            {/* Tabs : Sections | Formatting | Settings */}
             <div className="flex border-b border-[#E2E8F0] px-4">
               {(['Sections', 'Formatting', 'Settings'] as const).map((tab) => (
                 <button
@@ -1395,7 +1395,7 @@ export default function ReportBuilderPage() {
               ))}
             </div>
 
-            {/* Tab 1: Settings (exact match to Screenshot 4) */}
+            {/* Tab 1: Settings */}
             {templateTab === 'Settings' && (
               <div className="p-6 space-y-6 animate-in fade-in duration-150">
                 {/* Export format */}
@@ -1675,7 +1675,7 @@ export default function ReportBuilderPage() {
             )}
           </div>
 
-          {/* Right Column: Live Document Sheet Canvas matching Screenshot 1 & rich diagrams */}
+          {/* Right Column: Live Document Sheet Canvas & rich diagrams */}
           <div className="flex-1 bg-[#EEF2F6] overflow-auto p-8 flex flex-col items-center">
             {/* View Switcher Bar */}
             <div className="flex items-center gap-2 mb-6 bg-white border border-[#CBD5E1] p-1 rounded-lg shadow-2xs shrink-0 select-none">
@@ -1701,7 +1701,7 @@ export default function ReportBuilderPage() {
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Modular Outline (Screenshot 1)</span>
+                <span>Modular Outline</span>
               </button>
             </div>
 
@@ -1714,7 +1714,7 @@ export default function ReportBuilderPage() {
               }`}
               style={{ fontFamily: templateFontFamily }}
             >
-              {/* Top report header matching Screenshot 1 */}
+              {/* Top report header */}
               <div className="border-b border-[#E2E8F0] pb-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded bg-[#7C3AED] text-white flex items-center justify-center font-bold text-xs shadow-xs">
@@ -1734,7 +1734,7 @@ export default function ReportBuilderPage() {
                 </div>
               </div>
 
-              {/* Mode A: Modular Outline List matching Screenshot 1 */}
+              {/* Mode A: Modular Outline List */}
               {templatePreviewMode === 'outline' ? (
                 <div className="py-6 space-y-3 flex-1">
                   {templateSections.length === 0 ? (
@@ -1832,7 +1832,7 @@ export default function ReportBuilderPage() {
 
       <div>
         {/* ============================================================== */}
-        {/* 1. TOP BLUE MODULAR NOTICE (Exact match to Screenshot 2)         */}
+        {/* 1. TOP BLUE MODULAR NOTICE */}
         {/* ============================================================== */}
         {showTopModularNotice && (
           <div className="bg-[#EAF3FD] border-b border-[#CFE2FE] px-8 py-2.5 text-xs text-[#1C4E80] flex items-center justify-between gap-4">
@@ -1856,7 +1856,7 @@ export default function ReportBuilderPage() {
         )}
 
         {/* ============================================================== */}
-        {/* 2. TOP BREADCRUMB BAR matching Screenshot 2                     */}
+        {/* 2. TOP BREADCRUMB BAR */}
         {/* ============================================================== */}
         <div className="flex items-center justify-between px-8 py-3.5 border-b border-[#E2E8F0] bg-white">
           <div className="flex items-center gap-2 text-xs text-[#8C9BA5]">
@@ -1895,7 +1895,7 @@ export default function ReportBuilderPage() {
         </div>
 
         {/* ============================================================== */}
-        {/* 3. HEADING & ACTION BAR matching Screenshot 2                  */}
+        {/* 3. HEADING & ACTION BAR */}
         {/* ============================================================== */}
         <div className="px-8 pt-5 pb-3 bg-white border-b border-[#E2E8F0]">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -1978,10 +1978,10 @@ export default function ReportBuilderPage() {
         <div className="p-8 max-w-[1440px] mx-auto space-y-4">
           {currentNavTab === 'templates' ? (
             /* ============================================================== */
-            /* DEDICATED TEMPLATES VIEW (Exact Match to Screenshot 2)         */
+            /* DEDICATED TEMPLATES VIEW */
             /* ============================================================== */
             <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-2xs overflow-hidden">
-              {/* Header / Sub-tabs & Search matching Screenshot 2 */}
+              {/* Header / Sub-tabs & Search */}
               <div className="p-3.5 border-b border-[#E2E8F0]">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -2055,7 +2055,7 @@ export default function ReportBuilderPage() {
               {/* Content: Empty State vs Templates Table */}
               {filteredTemplates.length === 0 ? (
                 <div className="py-20 px-4 text-center">
-                  {/* Stylized circular search icon matching Screenshot 2 */}
+                  {/* Stylized circular search icon */}
                   <div className="w-16 h-16 rounded-full bg-[#EBF3FD] text-[#7C3AED] flex items-center justify-center mx-auto mb-4 shadow-2xs">
                     <svg
                       width="32"
@@ -2292,7 +2292,7 @@ export default function ReportBuilderPage() {
                         onMouseEnter={() => setHoveredTemplateId(tpl.id)}
                         onMouseLeave={() => setHoveredTemplateId(null)}
                       >
-                        {/* SE Ranking Exact Dark Floating Tooltip matching Screenshot 3 */}
+                        {/* SE Ranking Exact Dark Floating Tooltip */}
                         {hoveredTemplateId === tpl.id && (
                           <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-64 bg-[#2D3748] text-white rounded-md p-3.5 shadow-2xl z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150">
                             <div className="font-bold text-[13px] text-white pb-2 mb-2 border-b border-gray-600/60 tracking-tight">
@@ -2580,11 +2580,11 @@ export default function ReportBuilderPage() {
                             />
                           </td>
 
-                          {/* Report Title & Action Buttons matching Screenshot 2 */}
+                          {/* Report Title & Action Buttons */}
                           <td className="py-3 px-2">
                             <div className="flex items-center justify-between pr-3">
                               <div className="flex items-center gap-2">
-                                {/* Red SE Ranking Folder Icon matching Screenshot 2 */}
+                                {/* Red SE Ranking Folder Icon */}
                                 <svg className="w-4 h-4 shrink-0 text-[#E53935]" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                                   <rect x="7" y="9" width="6" height="5" rx="1" fill="#FFFFFF" opacity="0.9" />
@@ -2659,7 +2659,7 @@ export default function ReportBuilderPage() {
                                 </button>
 
                                 {/* ======================================================= */}
-                                {/* EXACT CONTEXT MENU MATCHING SCREENSHOT 1 & 2            */}
+                                {/* EXACT CONTEXT MENU */}
                                 {/* ======================================================= */}
                                 {openMenuId === row.id && (
                                   <div className="absolute right-0 top-7 w-48 bg-white border border-[#CBD5E1] rounded-md shadow-xl py-1 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
@@ -2750,7 +2750,7 @@ export default function ReportBuilderPage() {
                             </div>
                           </td>
 
-                          {/* Updated column matching Screenshot 2 */}
+                          {/* Updated column */}
                           <td className="py-3 px-4 text-[#64748B] font-mono text-[11px]">
                             {row.updated}
                           </td>

@@ -288,7 +288,7 @@ export default function NotesPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col justify-between font-sans select-none">
       <div className="w-full max-w-7xl mx-auto px-6 py-5 space-y-5">
-        {/* Top Breadcrumb & Feedback Link matching screenshot */}
+        {/* Top Breadcrumb & Feedback Link */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-1.5 font-medium">
             <Link href="/project-overview" className="hover:text-blue-600">
@@ -318,7 +318,7 @@ export default function NotesPage() {
             <span>CREATE A NOTE</span>
           </button>
 
-          {/* Search box matching screenshot */}
+          {/* Search box */}
           <div className="relative w-full sm:w-72">
             <input
               type="text"
@@ -414,7 +414,7 @@ export default function NotesPage() {
           </div>
         </div>
 
-        {/* Notes Data Table matching exact screenshot */}
+        {/* Notes Data Table */}
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#FAFBFD] border-b border-gray-200 text-gray-400 font-bold uppercase text-[11px] tracking-wider">
@@ -513,7 +513,7 @@ export default function NotesPage() {
           </table>
         </div>
 
-        {/* Pagination matching screenshot */}
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <div className="inline-flex rounded-lg border border-gray-200 bg-white">

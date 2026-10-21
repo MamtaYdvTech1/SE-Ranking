@@ -294,7 +294,7 @@ export default function SearchAutocompletePage() {
     <div className="flex-1 bg-white min-h-[calc(100vh-80px)] text-[#2C384A] select-none pb-24 relative">
 
       <div className="max-w-[1040px] mx-auto p-4 sm:p-8 space-y-6">
-        {/* Title & Subtitle matching Screenshot 1 */}
+        {/* Title & Subtitle */}
         <div className="space-y-1">
           <h1 className="text-[26px] sm:text-[28px] font-semibold text-[#1E293B] tracking-tight leading-snug">
             Search Engine Autocomplete
@@ -304,10 +304,10 @@ export default function SearchAutocompletePage() {
           </p>
         </div>
 
-        {/* Main Interactive Form Card matching Screenshot 1 */}
+        {/* Main Interactive Form Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-7 shadow-2xs space-y-5">
           <form onSubmit={handleStartSearch} className="space-y-5">
-            {/* Top Textarea matching Screenshot 1 */}
+            {/* Top Textarea */}
             <div>
               <div className="flex items-center justify-between mb-1 text-xs">
                 <label className="text-[13px] font-medium text-[#475569]">
@@ -331,9 +331,9 @@ export default function SearchAutocompletePage() {
               />
             </div>
 
-            {/* Dropdowns row: Select search engine & Select a country (matches Screenshot 9) */}
+            {/* Dropdowns row: Select search engine & Select a country (matches ) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1 items-start">
-              {/* Left: Select a search engine matching Screenshot 9 */}
+              {/* Left: Select a search engine */}
               <div>
                 <label className="block text-[13px] font-medium text-[#475569] mb-1.5">
                   Select a search engine:
@@ -359,7 +359,7 @@ export default function SearchAutocompletePage() {
                     </label>
                   ))}
 
-                  {/* Numbered pagination 1 2 3 matching Screenshot 9 */}
+                  {/* Numbered pagination 1 2 3 */}
                   <div className="flex items-center gap-2 pt-1 border-t border-gray-100 text-xs">
                     {[1, 2, 3].map((lvl) => (
                       <button
@@ -379,7 +379,7 @@ export default function SearchAutocompletePage() {
                 </div>
               </div>
 
-              {/* Right: Select a country matching Screenshot 9 */}
+              {/* Right: Select a country */}
               <div className="relative" ref={dropdownRef}>
                 <label className="block text-[13px] font-medium text-[#475569] mb-1.5">
                   Select country:
@@ -447,7 +447,7 @@ export default function SearchAutocompletePage() {
               </div>
             </div>
 
-            {/* Add various prefixes and symbols matching Screenshot 9 */}
+            {/* Add various prefixes and symbols */}
             <div className="pt-2 space-y-2">
               <label className="block text-[13px] font-medium text-[#475569]">
                 Add various prefixes and symbols to a search query to gather additional suggestions
@@ -492,7 +492,7 @@ export default function SearchAutocompletePage() {
               </div>
             </div>
 
-            {/* Select search depth for suggestions with additional endings and symbols matching Screenshot 1 */}
+            {/* Select search depth for suggestions with additional endings and symbols */}
             <div className="pt-2 space-y-1.5">
               <label className="block text-[13px] font-medium text-[#475569]">
                 Select the search depth for gathering suggestions with additional endings and symbols:
@@ -519,7 +519,7 @@ export default function SearchAutocompletePage() {
               </div>
             </div>
 
-            {/* Pricing per query and Top up balance matching Screenshot 1 */}
+            {/* Pricing per query and Top up balance */}
             <div className="pt-3 border-t border-[#F1F5F9] space-y-1">
               <div className="text-[13px] font-medium text-[#475569]">Pricing per query</div>
               <div className="text-[20px] font-semibold text-[#1E293B]">$0</div>

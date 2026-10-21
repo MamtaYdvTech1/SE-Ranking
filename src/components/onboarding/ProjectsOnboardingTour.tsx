@@ -53,7 +53,7 @@ export function ProjectsOnboardingTour({
     onClose();
   };
 
-  // Position & content for each step matching screenshots 3, 4, 5, 6
+  // Position & content for each step , 4, 5, 6
   return (
     <div className="fixed inset-0 z-50 pointer-events-none select-none font-sans">
       {/* Dark Dim Backdrop with transparency allowing underlying interactive elements */}
@@ -131,7 +131,7 @@ export function ProjectsOnboardingTour({
           </div>
         )}
 
-        {/* Step 3: Brief statistics (Matching Screenshot 6 Exactly) */}
+        {/* Step 3: Brief statistics */}
         {currentStep === 3 && (
           <div className="w-[360px] bg-[#1E2538] border border-[#334155] rounded-xl p-5 text-white shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-200 fixed top-80 right-1/3">
             <div className="flex items-center justify-between border-b border-[#334155]/60 pb-2.5">
@@ -168,7 +168,7 @@ export function ProjectsOnboardingTour({
           </div>
         )}
 
-        {/* Step 4: Columns (Matching Screenshot 3 Exactly) */}
+        {/* Step 4: Columns */}
         {currentStep === 4 && (
           <div className="w-[390px] bg-[#1E2538] border border-[#334155] rounded-xl p-5 text-white shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-200 fixed top-80 right-1/4">
             <div className="flex items-center justify-between border-b border-[#334155]/60 pb-2.5">
@@ -210,7 +210,7 @@ export function ProjectsOnboardingTour({
           </div>
         )}
 
-        {/* Step 5: Managing projects (Matching Screenshot 4 Exactly) */}
+        {/* Step 5: Managing projects */}
         {currentStep === 5 && (
           <div className="w-[370px] bg-[#1E2538] border border-[#334155] rounded-xl p-5 text-white shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-200 fixed top-72 right-1/4">
             <div className="flex items-center justify-between border-b border-[#334155]/60 pb-2.5">
@@ -261,7 +261,7 @@ export function ProjectsOnboardingTour({
           </div>
         )}
 
-        {/* Step 6: Users (Matching Screenshot 5 Exactly) */}
+        {/* Step 6: Users */}
         {currentStep === 6 && (
           <div className="w-[370px] bg-[#1E2538] border border-[#334155] rounded-xl p-5 text-white shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95 duration-200 fixed top-24 right-48">
             <div className="flex items-center justify-between border-b border-[#334155]/60 pb-2.5">

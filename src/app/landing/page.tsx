@@ -89,7 +89,7 @@ const languages = [
   { code: 'あ', label: '日本語', href: 'https://seranking.com/jp/' },
 ];
 
-// Mock chart data for SEO Rankings - wavy curves matching reference screenshot
+// Mock chart data for SEO Rankings - wavy curves
 const mockRankingsTrend = [
   { date: 'Jun 24', pink: 72, blue: 70, teal: 35, purple: 28 },
   { date: 'Jun 25', pink: 98, blue: 45, teal: 68, purple: 64 },
@@ -99,7 +99,7 @@ const mockRankingsTrend = [
   { date: 'Jun 29', pink: 78, blue: 88, teal: 84, purple: 75 },
 ];
 
-// Case studies data (7 items) - Exact screenshot match
+// Case studies data (7 items)
 const caseStudies = [
   {
     company: 'Fractional Teams',
@@ -197,7 +197,7 @@ const ecoPlanableData = [
 
 
 
-// Testimonials data (7 items) - Exact screenshot match
+// Testimonials data (7 items)
 const testimonials = [
   {
     quote:
@@ -250,7 +250,7 @@ const testimonials = [
   },
 ];
 
-// Case studies official brand logos matching reference screenshots
+// Case studies official brand logos
 const renderCaseStudyLogo = (idx: number) => {
   switch (idx) {
     case 0: // Fractional Teams
@@ -557,7 +557,7 @@ export default function LandingPage() {
         onTourClick={() => setIsTourOpen(true)}
       />
 
-      {/* 3. Hero Section (Exact visual match to Screenshot) */}
+      {/* 3. Hero Section */}
       <section className="pt-20 sm:pt-24 pb-12 px-4 sm:px-6 max-w-5xl mx-auto text-center">
         <h1 className="text-[36px] sm:text-[48px] md:text-[52px] lg:text-[54px] font-extrabold text-[#7C3AED] tracking-tight leading-[1.12]">
           {t.hero.title}
@@ -590,7 +590,7 @@ export default function LandingPage() {
           <HeroAvatarSlider />
         </div>
 
-        {/* Static 6 Partner Logos row matching screenshot */}
+        {/* Static 6 Partner Logos row */}
         <div className="mt-12 max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-8 sm:gap-11 md:gap-14 text-[#596372] select-none">
           {/* soapbox */}
           <div className="flex items-center gap-2 hover:text-gray-900 transition-colors">
@@ -653,7 +653,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Complete AI SEO platform for every challenge (Exact Match to User Reference Screenshots) */}
+      {/* 4. Complete AI SEO platform for every challenge */}
       <section className="pt-12 pb-20 sm:pt-16 sm:pb-24 bg-white px-6 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-10">
           <div className="text-center">
@@ -690,9 +690,9 @@ export default function LandingPage() {
             })}
           </div>
 
-          {/* 2-Column Section Layout matching Screenshots */}
+          {/* 2-Column Section Layout */}
 
-          {/* TAB 1: AI Visibility (Exact Screenshot Match: uploaded_media_1790446897464.png) */}
+          {/* TAB 1: AI Visibility */}
           {platformTab === 'ai-visibility' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
               {/* Left Column: Interactive Mockup Card */}
@@ -927,10 +927,10 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 2: SEO Research (Exact Screenshot Match) */}
+          {/* TAB 2: SEO Research (Exact Match) */}
           {platformTab === 'seo-research' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
-              {/* Left Column: SEO Research Card (Exact Screenshot Match) */}
+              {/* Left Column: SEO Research Card (Exact Match) */}
               <div className="lg:col-span-7 bg-[#EEF3F8] border border-gray-200/80 rounded-3xl p-2 sm:p-4 shadow-xs flex items-center justify-center overflow-hidden">
                 <img
                   src="/images/mockups/seo-research.png"
@@ -976,7 +976,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 3: SEO Monitoring (Exact Screenshot Match) */}
+          {/* TAB 3: SEO Monitoring (Exact Match) */}
           {platformTab === 'seo-monitoring' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
               {/* Left Column: 3 Top Sparkline Cards + 3 Bottom Cards */}
@@ -1177,7 +1177,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 4: Content Marketing (Exact Screenshot Match) */}
+          {/* TAB 4: Content Marketing (Exact Match) */}
           {platformTab === 'content-marketing' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
               {/* Left Column: Content Editor Mockup Card */}
@@ -1331,7 +1331,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 5: Local Marketing (Exact Screenshot Match: Map + Business Listings + Reviews + Avg Pos) */}
+          {/* TAB 5: Local Marketing (Exact Match: Map + Business Listings + Reviews + Avg Pos) */}
           {platformTab === 'local-marketing' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
               {/* Left Column: Local Marketing Detailed Mockup Card */}
@@ -1362,7 +1362,7 @@ export default function LandingPage() {
                         <line x1="0" y1="90" x2="200" y2="90" stroke="#CBD5E1" strokeWidth="2" />
                       </svg>
 
-                      {/* Pins Matrix matching screenshot */}
+                      {/* Pins Matrix */}
                       <div className="relative z-10 grid grid-cols-4 gap-2 text-[8px] font-bold text-white text-center">
                         <span className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shadow-xs">4.3</span>
                         <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shadow-xs">1.1</span>
@@ -1560,10 +1560,10 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 6: Agency Success Kit (Exact Screenshot Match: My Logo + SEO Report + Circular Wheel) */}
+          {/* TAB 6: Agency Success Kit (Exact Match: My Logo + SEO Report + Circular Wheel) */}
           {platformTab === 'agency-kit' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
-              {/* Left Column: Agency Kit Card (Exact Screenshot Match) */}
+              {/* Left Column: Agency Kit Card (Exact Match) */}
               <div className="lg:col-span-7 bg-[#EEF3F8] border border-gray-200/80 rounded-3xl p-2 sm:p-4 shadow-xs flex items-center justify-center overflow-hidden">
                 <img
                   src="/images/mockups/agency-kit.png"
@@ -1605,10 +1605,10 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* TAB 7: Integrations (Exact Screenshot Match: 5 Category Boxes) */}
+          {/* TAB 7: Integrations (Exact Match: 5 Category Boxes) */}
           {platformTab === 'integrations' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
-              {/* Left Column: Integrations Mockup Card (Exact Screenshot Match) */}
+              {/* Left Column: Integrations Mockup Card (Exact Match) */}
               <div className="lg:col-span-7 bg-[#EEF3F8] border border-gray-200/80 rounded-3xl p-2 sm:p-4 shadow-xs flex items-center justify-center overflow-hidden">
                 <img
                   src="/images/mockups/integrations.png"
@@ -1644,7 +1644,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. Power up your stack, workflows, and reporting with SE Ranking data (Exact Screenshot Match) */}
+      {/* 5. Power up your stack, workflows, and reporting with SE Ranking data (Exact Match) */}
       <section className="py-16 sm:py-24 px-6 sm:px-8 max-w-7xl mx-auto space-y-12">
         <div className="text-center max-w-4xl mx-auto space-y-3">
           <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#7C3AED] tracking-tight leading-tight">
@@ -1655,7 +1655,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* 2-Column Section Layout matching Screenshot */}
+        {/* 2-Column Section Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left Column: Official Diagram Image */}
           <div className="lg:col-span-6 flex items-center justify-center card-hover-left group animate-slide-left">
@@ -1726,7 +1726,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. Precise. Credible. AI-Ready. It's all about our unique data (Exact Screenshot Match) */}
+      {/* 6. Precise. Credible. AI-Ready. It's all about our unique data (Exact Match) */}
       <section className="py-16 sm:py-24 bg-white px-4 sm:px-8 border-t border-gray-100">
         <div className="max-w-7xl mx-auto space-y-10">
           <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -1738,7 +1738,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* 5 Cards Row matching screenshot */}
+          {/* 5 Cards Row */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4 lg:gap-5">
             {/* 188 Country Databases */}
             <div className="rounded-3xl p-5 sm:p-6 lg:p-7 flex flex-col justify-between h-[210px] sm:h-[235px] shadow-xs" style={{ backgroundColor: '#C4FFC4', color: '#101423' }}>
@@ -1822,7 +1822,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* G2 Awards Box (Exact Screenshot Match) */}
+          {/* G2 Awards Box (Exact Match) */}
           <div className="bg-[#F8FAFC] rounded-3xl p-6 sm:p-9 border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8">
             <div className="space-y-1.5 max-w-lg">
               <h3 className="text-xl sm:text-2xl font-black text-[#7C3AED] tracking-tight">
@@ -1857,7 +1857,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 7. Brand visibility across the ecosystem (Exact Match to User Reference Screenshots) */}
+      {/* 7. Brand visibility across the ecosystem */}
       <section className="py-20 sm:py-28 bg-[#EBF8FE] border-t border-blue-100/50 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Section Header */}
@@ -1891,7 +1891,7 @@ export default function LandingPage() {
                   Track rankings, research competitors, analyze brand mentions, and pull SEO and GEO data into your own workflows and reporting systems with API access.
                 </p>
 
-                {/* Card Mockup: SEO & GEO Analytics Exact Screenshot Match */}
+                {/* Card Mockup: SEO & GEO Analytics Exact Match */}
                 <div className="bg-[#FAFBFD] border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3.5 text-xs">
                   {/* Top 4 Metric Pills */}
                   <div className="grid grid-cols-4 gap-2 text-left pb-2 border-b border-gray-100">
@@ -2549,7 +2549,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 8. Brand, grow, and win more clients with the Agency Pack (Exact Screenshot Match) */}
+      {/* 8. Brand, grow, and win more clients with the Agency Pack (Exact Match) */}
       <section className="py-16 sm:py-24 bg-white border-t border-gray-100 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-10">
           <div className="text-center max-w-4xl mx-auto space-y-4">
@@ -2585,7 +2585,7 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* 1. Tab: Agency Catalog (Exact 100% match to official user screenshot) */}
+          {/* 1. Tab: Agency Catalog (Exact 100% match to official user ) */}
           {agencyPackTab === 'catalog' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center pt-2">
               {/* Left Column: Agency Catalog Official Image Mockup */}
@@ -2597,7 +2597,7 @@ export default function LandingPage() {
                 />
               </div>
 
-              {/* Right Column (Exact Screenshot Match) */}
+              {/* Right Column (Exact Match) */}
               <div className="lg:col-span-5 xl:col-span-5 pl-2 sm:pl-6 space-y-6 text-left card-hover-right group animate-slide-right">
                 <h3 className="text-4xl sm:text-[44px] font-bold text-[#7C3AED] tracking-tight leading-[1.15] heading-purple-hover">
                   Agency Catalog
@@ -2617,7 +2617,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* 2. Tab: White Label Reporting (Exact 100% match to user screenshot) */}
+          {/* 2. Tab: White Label Reporting (Exact 100% match to user ) */}
           {agencyPackTab === 'reporting' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center pt-2">
               {/* Left Column: Full-width SEO Report Card with Gauge */}
@@ -2640,7 +2640,7 @@ export default function LandingPage() {
                     </p>
                   </div>
 
-                  {/* Polar radial semi-circle gauge matching exact screenshot */}
+                  {/* Polar radial semi-circle gauge */}
                   <div className="pt-4 flex justify-center overflow-visible">
                     <svg
                       width="340"
@@ -2702,7 +2702,7 @@ export default function LandingPage() {
                         fill="#0B1336"
                       />
 
-                      {/* Inner semi-circle hub matching screenshot */}
+                      {/* Inner semi-circle hub */}
                       <path
                         d="M 130 170 A 40 40 0 0 1 210 170 Z"
                         fill="#E2EDF8"
@@ -2736,7 +2736,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* 3. Tab: Lead Generator (Exact 100% match to screenshot 2) */}
+          {/* 3. Tab: Lead Generator (Exact 100% match to ) */}
           {agencyPackTab === 'lead-gen' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center pt-2">
               {/* Left Column: Leads Mockup Card Full Width */}
@@ -2771,7 +2771,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Leads Table matching screenshot */}
+                  {/* Leads Table */}
                   <div className="rounded-[16px] border border-gray-200/80 overflow-hidden divide-y divide-gray-100">
                     <div
                       onClick={() => {
@@ -2976,7 +2976,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* 5. Tab: Client Seats (Full width table, exact screenshot match) */}
+          {/* 5. Tab: Client Seats (Full width table, exact match) */}
           {agencyPackTab === 'seats' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center pt-2">
               {/* Left Column: Users Table Mockup Card Full Width */}
@@ -3066,14 +3066,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 9. Why SEO pros from 150+ countries choose us (Exact Screenshot Match) */}
+      {/* 9. Why SEO pros from 150+ countries choose us (Exact Match) */}
       <section className="py-20 sm:py-28 bg-white border-t border-gray-100 px-4 sm:px-8">
         <div className="max-w-4xl mx-auto space-y-10 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#7C3AED] tracking-tight">
             {t.testimonials.title}
           </h2>
 
-          {/* Interactive Pagination < 1 / 7 > matching screenshot */}
+          {/* Interactive Pagination < 1 / 7 > */}
           <div className="flex items-center justify-center gap-2">
             <button
               type="button"
@@ -3125,7 +3125,7 @@ export default function LandingPage() {
       </section>
 
 
-      {/* 10. Pricing & Add-ons (Exact Screenshot Match with proper typographic balance) */}
+      {/* 10. Pricing & Add-ons (Exact Match with proper typographic balance) */}
       <section id="pricing" className="py-16 sm:py-24 bg-white border-t border-gray-200 px-4 sm:px-8">
         <div className="max-w-5xl mx-auto space-y-12">
           {/* Section Header */}
@@ -3264,13 +3264,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 11. Customer Success Stories (Exact Screenshot Match for all 7 slides) */}
+      {/* 11. Customer Success Stories (Exact Match for all 7 slides) */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-5xl mx-auto space-y-8">
         <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#7C3AED] text-center leading-tight tracking-tight max-w-3xl mx-auto">
           How agencies, brands, and businesses worldwide win with SE Ranking
         </h2>
 
-        {/* Dark Forest Green Box matching Screenshot 1 to 7 */}
+        {/* Dark Forest Green Box to 7 */}
         <div className="bg-[#0B2816] text-white rounded-[28px] sm:rounded-[32px] p-7 sm:p-12 lg:p-14 space-y-8 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
             <h3 className="text-xl sm:text-2xl lg:text-[25px] font-bold text-white max-w-2xl leading-[1.35]">
@@ -3342,7 +3342,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 12. Full Width Royal Blue CTA Banner with Speech Bubble & Chamfer (Exact Screenshot Match) */}
+      {/* 12. Full Width Royal Blue CTA Banner with Speech Bubble & Chamfer (Exact Match) */}
       <section className="py-12 sm:py-16 px-4 sm:px-8 max-w-5xl mx-auto">
         <div className="relative pt-6">
           {/* Top Speech bubble pointer tab */}

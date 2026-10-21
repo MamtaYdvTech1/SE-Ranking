@@ -191,7 +191,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* 4. PLATFORM PRICING TIERS (Screenshot 1) */}
+      {/* 4. PLATFORM PRICING TIERS */}
       {pricingMode === 'platform' && (
         <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -421,7 +421,7 @@ export default function PricingPage() {
         </section>
       )}
 
-      {/* 5. API PRICING TIERS (Screenshot 2) */}
+      {/* 5. API PRICING TIERS */}
       {pricingMode === 'api' && (
         <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">

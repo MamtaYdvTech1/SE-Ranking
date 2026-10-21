@@ -35,7 +35,7 @@ export function AppsDropdown({
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
-            {/* Green wave icon matching exact screenshot */}
+            {/* Green wave icon */}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path
                 d="M2.5 13.5C4.5 9 7 9 9.5 13.5C12 18 14.5 18 16.5 13.5C18.5 9 20.5 9 22 10.5"

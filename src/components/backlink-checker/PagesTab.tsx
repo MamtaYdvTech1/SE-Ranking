@@ -736,7 +736,7 @@ export function PagesTab({
               )}
             </button>
 
-            {/* Checkbox dropdown menu directly below + FILTER (Screenshot 1) */}
+            {/* Checkbox dropdown menu directly below + FILTER */}
             {isFilterMenuOpen && (
               <div className="absolute left-0 top-full mt-1.5 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl py-2 z-40 text-xs animate-in fade-in zoom-in-95 duration-100">
                 {[
@@ -815,7 +815,7 @@ export function PagesTab({
                   <span className="text-slate-400 text-xs font-bold">&gt;</span>
                 </button>
 
-                {/* Save Filter Preset Flyout positioned to the LEFT (Screenshot) */}
+                {/* Save Filter Preset Flyout positioned to the LEFT */}
                 {isSaveFlyoutOpen && (
                   <div
                     role="dialog"
@@ -1072,7 +1072,7 @@ export function PagesTab({
                                 >
                                   {item.url}
                                 </a>
-                                {/* Status Code 200/301 badge directly underneath URL (Screenshot) */}
+                                {/* Status Code 200/301 badge directly underneath URL */}
                                 <div className="mt-1">
                                   <span
                                     className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${

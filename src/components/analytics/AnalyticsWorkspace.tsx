@@ -484,7 +484,7 @@ export function AnalyticsWorkspace({ projectId, initialTab = "overview" }: Analy
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  // Google Accounts for OAuth Picker matching exact user screenshot
+  // Google Accounts for OAuth Picker
   const googleAccounts = useMemo(() => {
     const list = [
       {

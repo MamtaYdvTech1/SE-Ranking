@@ -90,7 +90,7 @@ export function IpsTab({
   const [sortField, setSortField] = useState<"ip" | "refDomains" | "backlinks" | "none">("refDomains");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // Pagination (screenshot has 20 per page, with 21 total -> page 1 has 20, page 2 has 1)
+  // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
   const [goToPageInput, setGoToPageInput] = useState<string>("1");
@@ -1418,7 +1418,7 @@ export function IpsTab({
         </div>
       </div>
 
-      {/* Bottom Pagination matching Screenshot: < 1 2 >  Go to page: [ 1 ]   20 ▾ */}
+      {/* Bottom Pagination : < 1 2 > Go to page: [ 1 ] 20 ▾ */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-xs">
         {/* Page Switcher: < 1 2 > */}
         <div className="flex items-center gap-1">

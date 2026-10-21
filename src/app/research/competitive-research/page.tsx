@@ -55,7 +55,7 @@ export default function CompetitiveResearchGooglePage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#F7F9FC] to-white min-h-[calc(100vh-80px)] flex flex-col justify-between select-none">
-      {/* Top Header links matching Screenshot 1: Have any questions? and Feedback */}
+      {/* Top Header links : Have any questions? and Feedback */}
       <div className="w-full flex items-center justify-end px-6 py-2.5 gap-4 text-xs text-gray-500 border-b border-gray-100 bg-white/50">
         <Link
           href="/help"

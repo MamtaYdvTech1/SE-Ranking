@@ -108,7 +108,7 @@ export default function KeywordManagerPage() {
     <div className="flex-1 bg-white min-h-[calc(100vh-80px)] flex flex-col justify-between text-gray-900 select-none relative overflow-x-hidden">
 
       {lists.length === 0 ? (
-        /* Empty State / Start View matching Screenshot 1 exactly */
+        /* Empty State / Start View exactly */
         <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center max-w-2xl mx-auto">
           {/* Isometric Illustration matching km-start.DFoihzyS.svg */}
           <div className="w-80 h-56 sm:w-96 sm:h-64 mb-6 relative flex items-center justify-center">
@@ -206,7 +206,7 @@ export default function KeywordManagerPage() {
             </svg>
           </div>
 
-          {/* Title & Subtitle matching Screenshot 1 */}
+          {/* Title & Subtitle */}
           <h2 className="text-[22px] font-bold text-gray-900 mb-2 tracking-tight">
             Keyword Manager
           </h2>
@@ -214,7 +214,7 @@ export default function KeywordManagerPage() {
             Create and manage keyword lists to monitor rankings and other data
           </p>
 
-          {/* Green Action Button matching Screenshot 1 */}
+          {/* Green Action Button */}
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#20B26C] hover:bg-[#1A965A] text-white rounded-md text-xs font-bold transition-all uppercase tracking-wider shadow-xs cursor-pointer"
@@ -292,7 +292,7 @@ export default function KeywordManagerPage() {
         </div>
       )}
 
-      {/* New list Modal matching Screenshot 2 exactly */}
+      {/* New list Modal exactly */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-2xs p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border border-gray-200 overflow-hidden text-gray-900 animate-in fade-in zoom-in-95 duration-150">
@@ -326,7 +326,7 @@ export default function KeywordManagerPage() {
                 />
               </div>
 
-              {/* List keywords checkbox matching Screenshot 2 */}
+              {/* List keywords checkbox */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 pt-0.5">
                   <input
@@ -361,7 +361,7 @@ export default function KeywordManagerPage() {
                 )}
               </div>
 
-              {/* Footer Buttons matching Screenshot 2 */}
+              {/* Footer Buttons */}
               <div className="flex items-center justify-end gap-2.5 pt-3">
                 <button
                   type="button"

@@ -333,7 +333,7 @@ export function SeRankingShareOfVoice({
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. FOUR KPI CARDS (Matching SE Ranking Screenshot) */}
+        {/* 3. FOUR KPI CARDS (Matching SE Ranking ) */}
         {/* ========================================================================= */}
         <div className="bg-white border border-[#E3E6EE] rounded-xl shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#EEF0F5]">
           <div className="p-4 space-y-1">

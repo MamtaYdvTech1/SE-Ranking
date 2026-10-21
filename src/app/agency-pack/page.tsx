@@ -265,7 +265,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
   };
 
   // ==========================================
-  // TAB 1: LOGIN PAGE STATE (Screenshots 1 & 2)
+  // TAB 1: LOGIN PAGE STATE
   // ==========================================
   const [loginLogoUrl, setLoginLogoUrl] = useState<string | null>(null);
   const [showCompanyNameOnLogin, setShowCompanyNameOnLogin] = useState(true);
@@ -528,7 +528,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const [isEmailModified, setIsEmailModified] = useState(false);
 
-  // Email Template states matching mobile screenshot
+  // Email Template states
   const [usePreconfiguredTemplate, setUsePreconfiguredTemplate] = useState(true);
   const [emailLogoUrl, setEmailLogoUrl] = useState<string | null>(null);
   const [emailFromName, setEmailFromName] = useState('');
@@ -924,7 +924,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
 
       <div>
 
-        {/* Top Breadcrumb Bar matching Screenshot 1 */}
+        {/* Top Breadcrumb Bar */}
         {activeTab !== 'report-builder' &&
           activeTab !== 'lead-generator' &&
           activeTab !== 'lead-widgets' && (
@@ -958,7 +958,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
         )}
 
         {/* ============================================================== */}
-        {/* VIEW 1: LOGIN PAGE (Exact match to Screenshots 1 & 2)           */}
+        {/* VIEW 1: LOGIN PAGE */}
         {/* ============================================================== */}
         {activeTab === 'login-page' && (
           <div className="p-8 max-w-4xl mx-auto space-y-6">
@@ -1135,7 +1135,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
               </div>
             </div>
 
-            {/* Page language dropdown with real country flags matching Screenshot 2 & 3 */}
+            {/* Page language dropdown with real country flags */}
             <div className="space-y-1.5 pt-1">
               <label className="block text-xs font-semibold text-[#1E293B]">Page language:</label>
               <div className="max-w-[280px] relative">
@@ -1183,7 +1183,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
               </div>
             </div>
 
-            {/* Action Buttons matching Screenshot 2 */}
+            {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-6">
               <button
                 type="button"
@@ -1685,11 +1685,11 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
         )}
 
         {/* ============================================================== */}
-        {/* VIEW 4: EMAIL SETTINGS (1:1 MATCHING USER SCREENSHOT)          */}
+        {/* VIEW 4: EMAIL SETTINGS */}
         {/* ============================================================== */}
         {activeTab === 'email-settings' && (
           <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-8 font-sans text-[#1E293B]">
-            {/* Title with Info Icon matching Screenshot */}
+            {/* Title with Info Icon */}
             <div className="flex items-center gap-1.5 pt-1">
               <h1 className="text-[20px] font-bold text-[#1E293B] tracking-tight">
                 Email settings
@@ -1847,7 +1847,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                   Body:
                 </label>
                 <div className="border border-[#CBD5E1] rounded-[4px] overflow-hidden bg-white">
-                  {/* Toolbar matching screenshot */}
+                  {/* Toolbar */}
                   <div className="flex items-center gap-1 p-2 bg-[#F8FAFC] border-b border-[#E2E8F0] flex-wrap text-gray-600">
                     <button type="button" className="p-1 hover:bg-gray-200 rounded cursor-pointer" title="Undo"><RotateCcw className="w-3.5 h-3.5" /></button>
                     <button type="button" className="p-1 hover:bg-gray-200 rounded cursor-pointer" title="Redo"><RotateCw className="w-3.5 h-3.5" /></button>
@@ -2060,7 +2060,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
               </div>
             </div>
 
-            {/* Action Buttons matching screenshot */}
+            {/* Action Buttons */}
             <div className="flex items-center gap-3 pt-6 border-t border-[#E2E8F0]">
               <button
                 type="button"
@@ -2123,7 +2123,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
         {/* ============================================================== */}
         {activeTab === 'report-builder' && (
           <div className="flex-1 flex flex-col font-sans text-[#1E293B]">
-            {/* Top Blue Info Banner matching Screenshot 1 */}
+            {/* Top Blue Info Banner */}
                 {showRbBanner && (
                   <div className="bg-[#EBF5FF] border-b border-[#C8DFFA] px-8 py-2.5 text-[12px] text-[#1E429F] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -2146,7 +2146,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                 )}
 
                 <div className="px-8 py-5 max-w-[1380px] w-full">
-              {/* Breadcrumb Row matching Screenshot 1 */}
+              {/* Breadcrumb Row */}
               <div className="flex items-center justify-between text-xs text-[#8C9BA5] pb-3">
                 <div className="flex items-center gap-2">
                   <Link href="/settings" className="hover:text-[#1E293B] transition-colors">
@@ -2168,7 +2168,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                 </button>
               </div>
 
-              {/* Title with Info Icon matching Screenshot 1 */}
+              {/* Title with Info Icon */}
               <div className="flex items-baseline gap-1 pt-2 pb-6">
                 <h1 className="text-[22px] font-medium text-[#1E293B] tracking-tight">
                   Report Builder
@@ -2384,7 +2384,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                       Cover page logo
                     </label>
                     <div className="flex items-start gap-4">
-                      {/* Preview Box showing SE Ranking Logo matching Screenshot 2 */}
+                      {/* Preview Box showing SE Ranking Logo */}
                       <div className="w-28 h-20 bg-white border border-[#CBD5E1] rounded-[4px] flex items-center justify-center p-2 shrink-0 shadow-2xs overflow-hidden">
                         {rbCoverLogo === 'default_se_ranking' ? (
                           <div className="flex items-center gap-1.5 scale-90">
@@ -2544,7 +2544,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: LIVE INTERACTIVE PREVIEW (5 cols) matching Screenshot 4 */}
+              {/* RIGHT COLUMN: LIVE INTERACTIVE PREVIEW (5 cols) */}
               <div className="lg:col-span-5 space-y-6">
                 
                 {/* 1. HEADER PREVIEW SECTION */}
@@ -2733,7 +2733,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
                       ) : null}
                     </div>
 
-                    {/* Center Titles matching Screenshot 2 & 3 */}
+                    {/* Center Titles */}
                     <div className="space-y-2 text-center my-auto">
                       <div className="text-[11px] text-[#64748B] font-medium">
                         Report
@@ -2763,11 +2763,11 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
       )}
 
         {/* ============================================================== */}
-        {/* VIEW 6: LEAD GENERATOR (START) matching Screenshot 1            */}
+        {/* VIEW 6: LEAD GENERATOR (START) */}
         {/* ============================================================== */}
         {activeTab === 'lead-generator' && (
           <div className="flex-1 flex flex-col font-sans text-[#1E293B]">
-            {/* Top Navigation Bar matching Screenshot 1 */}
+            {/* Top Navigation Bar */}
             <div className="flex items-center justify-between px-8 py-3.5 border-b border-[#E2E8F0] bg-white">
               <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
                 <Link
@@ -2798,10 +2798,10 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
               </div>
             </div>
 
-            {/* Hero Centered Section matching Screenshot 1 */}
+            {/* Hero Centered Section */}
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[540px]">
               <div className="max-w-md flex flex-col items-center space-y-4">
-                {/* Stylized Vector Illustration matching Screenshot 1 */}
+                {/* Stylized Vector Illustration */}
                 <div className="w-64 h-48 flex items-center justify-center relative select-none">
                   <svg viewBox="0 0 320 240" className="w-full h-full">
                     {/* Background floating graphics */}
@@ -2899,13 +2899,13 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
         )}
 
         {/* ============================================================== */}
-        {/* VIEW 7: LEAD GENERATOR (WIDGETS) matching Screenshot 2         */}
+        {/* VIEW 7: LEAD GENERATOR (WIDGETS) */}
         {/* ============================================================== */}
         {activeTab === 'lead-widgets' && (
           <div className="flex-1 flex flex-col font-sans text-[#1E293B]">
 
 
-            {/* Breadcrumb Row matching Screenshot 2 */}
+            {/* Breadcrumb Row */}
             <div className="flex items-center justify-between px-8 py-3.5 border-b border-[#E2E8F0] bg-white">
               <div className="flex items-center gap-2 text-xs text-[#8C9BA5]">
                 <button
@@ -3105,7 +3105,7 @@ function AgencyPackContent({ initialTab = 'interface-customization' }: { initial
               {/* Subtle Divider */}
               <div className="border-b border-[#E2E8F0] my-6" />
 
-              {/* 2. ADDED SECTION matching Screenshot 2 */}
+              {/* 2. ADDED SECTION */}
               <div className="space-y-3 pb-8">
                 <div className="flex items-center justify-between">
                   <span className="text-[14px] font-semibold text-[#1E293B]">

@@ -253,7 +253,7 @@ function ProjectOverviewPageContent() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  // Key metrics customize menu state matching Screenshot 1
+  // Key metrics customize menu state
   const [isKeyMetricsMenuOpen, setIsKeyMetricsMenuOpen] = useState(false);
   const keyMetricsMenuRef = useRef<HTMLDivElement>(null);
   const [keyMetricsVisible, setKeyMetricsVisible] = useState({
@@ -265,7 +265,7 @@ function ProjectOverviewPageContent() {
     healthScore: false,
   });
 
-  // Content Score Modal state matching Screenshot 3
+  // Content Score Modal state
   const [isContentScoreModalOpen, setIsContentScoreModalOpen] = useState(false);
   const [selectedContentRow, setSelectedContentRow] = useState({
     url: `https://www.${displayDomain}/deals`,
@@ -2786,7 +2786,7 @@ function ProjectOverviewPageContent() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4">
               {/* Main Content (8 cols) */}
               <div className="lg:col-span-8 flex flex-col justify-between">
-                {/* 4 Metrics Row matching Screenshot 2: 85, 60, 11, 3 */}
+                {/* 4 Metrics Row : 85, 60, 11, 3 */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-gray-100">
                   {/* Total backlinks */}
                   <div>
@@ -2845,7 +2845,7 @@ function ProjectOverviewPageContent() {
                   </div>
                 </div>
 
-                {/* Highcharts Dual Y-Axis Spline Chart matching Screenshot 2 */}
+                {/* Highcharts Dual Y-Axis Spline Chart */}
                 <div className="w-full relative mt-3 select-none" style={{ minHeight: '220px' }}>
                   {dynamicBlPoints.length === 0 ? (
                     <div className="w-full h-48 flex flex-col items-center justify-center text-gray-400">
@@ -3194,7 +3194,7 @@ function ProjectOverviewPageContent() {
                   </button>
                 </div>
 
-                {/* View Full Report Button under chart matching Screenshot 2 */}
+                {/* View Full Report Button under chart */}
                 <div className="pt-3">
                   <Link
                     href="/backlinks-monitor"
@@ -3205,7 +3205,7 @@ function ProjectOverviewPageContent() {
                 </div>
               </div>
 
-              {/* Aside Column (4 cols) matching Screenshot 2: TOXIC BACKLINKS 82 & BROKEN BACKLINKS 0 */}
+              {/* Aside Column (4 cols) : TOXIC BACKLINKS 82 & BROKEN BACKLINKS 0 */}
               <div className="lg:col-span-4 flex flex-col justify-start gap-4 border-t lg:border-t-0 lg:border-l border-gray-100 lg:pl-6 pt-4 lg:pt-0">
                 {/* Toxic backlinks with live search & audit trigger */}
                 <div
@@ -3230,7 +3230,7 @@ function ProjectOverviewPageContent() {
                   </div>
                 </div>
 
-                {/* Fine Horizontal Divider Line matching Screenshot 2 */}
+                {/* Fine Horizontal Divider Line */}
                 <div className="border-b border-gray-200 my-1" />
 
                 {/* Broken backlinks */}
@@ -3954,7 +3954,7 @@ function ProjectOverviewPageContent() {
                       : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  {/* 4-square grid icon matching user screenshot */}
+                  {/* 4-square grid icon */}
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                     <rect x="1" y="1" width="6" height="6" rx="1" />
                     <rect x="9" y="1" width="6" height="6" rx="1" />
@@ -3982,7 +3982,7 @@ function ProjectOverviewPageContent() {
                               <span className="text-gray-300 cursor-grab active:cursor-grabbing hover:text-gray-600">
                                 <GripVertical className="w-4 h-4" />
                               </span>
-                              {/* Custom solid black square checkmark matching screenshot */}
+                              {/* Custom solid black square checkmark */}
                               <button
                                 type="button"
                                 onClick={() => toggleWidgetVisibility(wid)}
@@ -4120,7 +4120,7 @@ function ProjectOverviewPageContent() {
         }}
       />
 
-      {/* Guest Link Modal (Exact from SE Ranking Screenshot) */}
+      {/* Guest Link Modal (Exact from SE Ranking ) */}
       {isGuestLinkOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -4935,7 +4935,7 @@ function ProjectOverviewPageContent() {
         </div>
       )}
 
-      {/* Content Score Modal matching Screenshot 3 */}
+      {/* Content Score Modal */}
       {isContentScoreModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -4960,7 +4960,7 @@ function ProjectOverviewPageContent() {
               </button>
             </div>
 
-            {/* Warning Callout Box matching Screenshot 3 */}
+            {/* Warning Callout Box */}
             <div className="p-3.5 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl text-xs text-[#92400E] leading-relaxed flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
@@ -5232,7 +5232,7 @@ function ProjectOverviewPageContent() {
         </div>
       )}
 
-      {/* Authentic Google Account Chooser Modal matching User Screenshot */}
+      {/* Authentic Google Account Chooser Modal */}
       <GoogleAccountChooserModal
         isOpen={isGoogleChooserOpen}
         onClose={() => setIsGoogleChooserOpen(false)}
@@ -5241,7 +5241,7 @@ function ProjectOverviewPageContent() {
         onSelectAccount={handleGoogleAccountSelected}
       />
 
-      {/* Real Project Setup / AI Search Engine Wizard Modal (User Screenshot 3) */}
+      {/* Real Project Setup / AI Search Engine Wizard Modal (User ) */}
       <CreateProjectModal
         isOpen={isCreateProjectModalOpen}
         onClose={() => setIsCreateProjectModalOpen(false)}

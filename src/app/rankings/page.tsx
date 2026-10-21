@@ -993,7 +993,7 @@ function RankingsPageContent() {
     }
   }, [tabParam]);
 
-  // Ranking Settings Gear Dropdown & Modal state matching Screenshot 1 & 3
+  // Ranking Settings Gear Dropdown & Modal state
   const [rankingSettings, setRankingSettings] = useState({
     showCharts: true,
     showAllSearchEngines: false,
@@ -1013,20 +1013,20 @@ function RankingsPageContent() {
   const [isRankingSettingsModalOpen, setIsRankingSettingsModalOpen] = useState(false);
   const [activeSettingsSubmenu, setActiveSettingsSubmenu] = useState<string | null>(null);
 
-  // Export Modal state matching Screenshot 1 & 2
+  // Export Modal state
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedExportFormat, setSelectedExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
 
-  // Google Data Studio Dropdown & Modal matching Screenshot 1
+  // Google Data Studio Dropdown & Modal
   const [isDataStudioOpen, setIsDataStudioOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const dataStudioRef = useRef<HTMLDivElement>(null);
 
-  // Manual Rechecks Quota state matching Screenshot 1 & 5
+  // Manual Rechecks Quota state
   const [manualRechecksUsed, setManualRechecksUsed] = useState(0);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
 
-  // Dual Calendar Date Picker Popover matching Screenshot 1 & 4
+  // Dual Calendar Date Picker Popover
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const [selectedDateRangeLabel, setSelectedDateRangeLabel] = useState('Last 30 Days');
@@ -1139,12 +1139,12 @@ function RankingsPageContent() {
     showToast(`Added ${added.name} (${added.countryName}) search engine`);
   };
 
-  // View Mode Dropdown matching Screenshot 3 & 4
+  // View Mode Dropdown
   const [isViewModeDropdownOpen, setIsViewModeDropdownOpen] = useState(false);
   const viewModeRef = useRef<HTMLDivElement>(null);
   const [selectedViewMode, setSelectedViewMode] = useState<'List' | 'Groups' | 'Tags' | 'URL in SERP' | 'Target URL' | 'Date'>('List');
 
-  // Position Filters state matching Screenshot 1
+  // Position Filters state
   const [selectedRange, setSelectedRange] = useState<string>('all');
   const [posMin, setPosMin] = useState('');
   const [posMax, setPosMax] = useState('');
@@ -1178,7 +1178,7 @@ function RankingsPageContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Insights Section matching Screenshot 1, 2, 3
+  // Insights Section , 2, 3
   const [isInsightsOpen, setIsInsightsOpen] = useState(true);
   const [isInsightsExpanded, setIsInsightsExpanded] = useState(false);
 
@@ -2507,7 +2507,7 @@ function RankingsPageContent() {
         {/* Top Controls Row: Search Engine, Date Range Picker, Data Studio, Export, and RANKING SETTINGS ICON */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            {/* Search Engine Dropdown (Screenshot 1) */}
+            {/* Search Engine Dropdown */}
             <div className="relative" ref={engineDropdownRef}>
               <button
                 type="button"
@@ -2620,7 +2620,7 @@ function RankingsPageContent() {
                 <span>{selectedDateRangeLabel}</span>
               </button>
 
-              {/* Exact Dual-Month Calendar Popover matching Screenshot 4 */}
+              {/* Exact Dual-Month Calendar Popover */}
               {isDatePickerOpen && (
                 <div className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl p-5 z-50 animate-in fade-in zoom-in-95 duration-150 w-[660px]">
                   <div className="flex items-start gap-6">
@@ -2897,7 +2897,7 @@ function RankingsPageContent() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Google Looker Studio with Dropdown Menu matching Screenshot 1 */}
+            {/* Google Looker Studio with Dropdown Menu */}
             <div className="relative" ref={dataStudioRef}>
               <button
                 type="button"
@@ -2992,7 +2992,7 @@ function RankingsPageContent() {
               )}
             </div>
 
-            {/* Export Button opening Modal matching Screenshot 1 & 2 */}
+            {/* Export Button opening Modal */}
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
@@ -3002,7 +3002,7 @@ function RankingsPageContent() {
               <span>EXPORT</span>
             </button>
 
-            {/* SETTINGS GEAR DROPDOWN (Project settings & Ranking settings) matching exact user screenshot */}
+            {/* SETTINGS GEAR DROPDOWN (Project settings & Ranking settings) */}
             <div className="relative" ref={rankingSettingsRef}>
               <button
                 type="button"
@@ -3045,7 +3045,7 @@ function RankingsPageContent() {
           </div>
         </div>
 
-        {/* 100% INDEXED Thin Line & Badge matching Screenshot 1 */}
+        {/* 100% INDEXED Thin Line & Badge */}
         <div className="relative pt-1">
           <div className="w-full bg-gray-200 h-0.5 rounded-full overflow-hidden">
             <div
@@ -3060,7 +3060,7 @@ function RankingsPageContent() {
           </div>
         </div>
 
-        {/* Action Buttons: + ADD KEYWORDS & RECHECK DATA Dropdown matching Screenshot 1 & 5 */}
+        {/* Action Buttons: + ADD KEYWORDS & RECHECK DATA Dropdown */}
         <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
@@ -3071,7 +3071,7 @@ function RankingsPageContent() {
             <span>ADD KEYWORDS</span>
           </button>
 
-          {/* Recheck Data Dropdown with Flyout Submenus matching Screenshot 5 */}
+          {/* Recheck Data Dropdown with Flyout Submenus */}
           <div className="relative" ref={recheckDropdownRef}>
             <button
               type="button"
@@ -3163,7 +3163,7 @@ function RankingsPageContent() {
         </div>
 
         {/* ========================================================================= */}
-        {/* DETAILED VIEW MATCHING USER REAL SE RANKING HTML & SCREENSHOTS */}
+        {/* DETAILED VIEW MATCHING USER REAL SE RANKING HTML & */}
         {/* ========================================================================= */}
         {activeTab === 'detailed' && (
           <div className="space-y-4">
@@ -4454,7 +4454,7 @@ function RankingsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* HISTORICAL DATA VIEW MATCHING USER REAL HTML & SCREENSHOTS */}
+        {/* HISTORICAL DATA VIEW MATCHING USER REAL HTML & */}
         {/* ========================================================================= */}
         {activeTab === 'historical' && (
           <div className="space-y-4">
@@ -6613,7 +6613,7 @@ function RankingsPageContent() {
 
       </div>
 
-      {/* CREATE A NOTE MODAL matching exact SE Ranking user screenshot */}
+      {/* CREATE A NOTE MODAL matching exact SE Ranking user */}
       <CreateNoteModal
         isOpen={isCreateNoteOpen}
         onClose={() => setIsCreateNoteOpen(false)}
@@ -6801,7 +6801,7 @@ function RankingsPageContent() {
         onSelectAccount={handleGaAccountSelected}
       />
 
-      {/* RANKING SETTINGS MODAL matching Screenshot 3 */}
+      {/* RANKING SETTINGS MODAL */}
       {isRankingSettingsModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
@@ -7143,7 +7143,7 @@ function RankingsPageContent() {
               </div>
             </div>
 
-            {/* Bottom Actions matching Screenshot 3 */}
+            {/* Bottom Actions */}
             <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
               <button
                 type="button"
@@ -7176,7 +7176,7 @@ function RankingsPageContent() {
         </div>
       )}
 
-      {/* EXPORT DATA MODAL matching Screenshot 2 */}
+      {/* EXPORT DATA MODAL */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-xl w-full p-7 shadow-2xl space-y-6 border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
@@ -7194,7 +7194,7 @@ function RankingsPageContent() {
             <div>
               <p className="text-xs text-gray-600 mb-3 font-medium">Format:</p>
               <div className="grid grid-cols-2 gap-4">
-                {/* Excel Option Card matching Screenshot 2 */}
+                {/* Excel Option Card */}
                 <div
                   onClick={() => setSelectedExportFormat('xlsx')}
                   className={`p-6 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2 ${
@@ -7215,7 +7215,7 @@ function RankingsPageContent() {
                   </div>
                 </div>
 
-                {/* CSV Option Card matching Screenshot 2 */}
+                {/* CSV Option Card */}
                 <div
                   onClick={() => setSelectedExportFormat('csv')}
                   className={`p-6 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2 ${
@@ -7259,7 +7259,7 @@ function RankingsPageContent() {
         </div>
       )}
 
-      {/* HOW IT WORKS MODAL (Google Looker Studio) matching Screenshot 1 */}
+      {/* HOW IT WORKS MODAL (Google Looker Studio) */}
       {isHowItWorksOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
@@ -7550,7 +7550,7 @@ function RankingsPageContent() {
         onClose={() => setIsFeedbackOpen(false)}
       />
 
-      {/* Blue Project Settings Modal matching user screenshot */}
+      {/* Blue Project Settings Modal */}
       <ProjectSettingsModal
         isOpen={isProjectSettingsModalOpen}
         onClose={() => setIsProjectSettingsModalOpen(false)}

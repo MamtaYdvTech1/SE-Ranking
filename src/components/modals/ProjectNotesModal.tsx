@@ -998,7 +998,7 @@ export function ProjectNotesModal({
         </div>
       </div>
 
-      {/* Create Note Sub-Modal matching Screenshot 1 */}
+      {/* Create Note Sub-Modal */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-60 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 border border-gray-200 animate-in fade-in zoom-in-95 duration-150">

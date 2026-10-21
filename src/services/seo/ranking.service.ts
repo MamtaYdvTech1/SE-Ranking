@@ -477,16 +477,75 @@ export async function getRankingSummary(
       ],
       trend: [],
       serpDynamics: {
+        totalInSerp: 0,
+        improvedCount: 0,
+        declinedCount: 0,
+        unchangedCount: 0,
+        improvedBrackets: { top1: 0, top2_3: 0, top4_5: 0, top6_10: 0, top11_30: 0, top31_100: 0, over100: 0 },
+        declinedBrackets: { top1: 0, top2_3: 0, top4_5: 0, top6_10: 0, top11_30: 0, top31_100: 0, over100: 0 },
+        unchangedBrackets: { top1: 0, top2_3: 0, top4_5: 0, top6_10: 0, top11_30: 0, top31_100: 0, over100: 0 },
+        jumped: {
+          count: 0,
+          percentage: 0,
+          top1: 0,
+          top2_3: 0,
+          top4_5: 0,
+          top6_10: 0,
+          top11_30: 0,
+          top31_100: 0,
+          over100: 0,
+        },
+        dropped: {
+          count: 0,
+          percentage: 0,
+          top1: 0,
+          top2_3: 0,
+          top4_5: 0,
+          top6_10: 0,
+          top11_30: 0,
+          top31_100: 0,
+          over100: 0,
+        },
+        unchanged: {
+          count: 0,
+          percentage: 0,
+          top1: 0,
+          top2_3: 0,
+          top4_5: 0,
+          top6_10: 0,
+          top11_30: 0,
+          top31_100: 0,
+          over100: 0,
+        },
         jumpedCount: 0,
         droppedCount: 0,
         unchangedCount: 0,
-        jumpedList: [],
-        droppedList: [],
-        unchangedList: [],
+        jumpedList: [] as Array<{ keywordId: string; keywordText: string; from: number; to: number }>,
+        droppedList: [] as Array<{ keywordId: string; keywordText: string; from: number; to: number }>,
+        unchangedList: [] as Array<{ keywordId: string; keywordText: string; position: number }>,
       },
-      competitors: [],
-      pages: [],
-      keywords: [],
+      competitors: [] as Array<{ id: string; domain: string; name: string; visibilityScore: number; avgPosition: number; totalKeywords: number; isManual: boolean }>,
+      pages: [] as Array<{ url: string; totalKeywords: number; trafficForecast: number; avgPosition: number }>,
+      keywords: [] as Array<{
+        id: string;
+        keyword: string;
+        rank: number | null;
+        prevRank: number | null;
+        change: number;
+        bestRank: number | null;
+        worstRank: number | null;
+        volume: number;
+        cpc: string;
+        difficulty: number;
+        searchEngine: string;
+        countryCode: string;
+        device: string;
+        url: string;
+        rankingStatus: string;
+        dateChecked: string;
+        group: string;
+        isActive: boolean;
+      }>,
     };
   }
 

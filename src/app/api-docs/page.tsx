@@ -18,7 +18,7 @@ export default function ApiDashboardPage() {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
 
-  // Dynamic API Keys list matching user screenshot & backed by API
+  // Dynamic API Keys list & backed by API
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([
     {
       id: 'key-1',

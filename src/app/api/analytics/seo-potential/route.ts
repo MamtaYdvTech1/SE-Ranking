@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // If keywords calculate to zero (or demo baseline match screenshot)
+      // If keywords calculate to zero (or demo baseline match )
       if (currentTraffic === 0) {
         currentTraffic = 26;
       }

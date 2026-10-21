@@ -219,7 +219,7 @@ export function MarketingHeader({
               </svg>
             </button>
 
-            {/* Apps Switcher Dropdown - Exact match to Screenshot */}
+            {/* Apps Switcher Dropdown */}
             <AppsDropdown
               isOpen={activeMenu === 'suite'}
               onClose={() => setActiveMenu(null)}

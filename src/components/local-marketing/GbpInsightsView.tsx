@@ -79,7 +79,7 @@ export function GbpInsightsView({ onAddLocation }: GbpInsightsViewProps) {
         </div>
       </div>
 
-      {/* Views by Platform and Device matching Screenshot 11 */}
+      {/* Views by Platform and Device */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-2xs space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-xs text-gray-800 uppercase tracking-wider">
@@ -188,7 +188,7 @@ export function GbpInsightsView({ onAddLocation }: GbpInsightsViewProps) {
           </div>
         </div>
 
-        {/* Views Timeline Chart matching Screenshot 11 */}
+        {/* Views Timeline Chart */}
         <div className="pt-4 border-t border-gray-100 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -273,7 +273,7 @@ export function GbpInsightsView({ onAddLocation }: GbpInsightsViewProps) {
         </div>
       )}
 
-      {/* Searches by keywords & 4 Activity Seismographs matching Screenshot 11 & 12 */}
+      {/* Searches by keywords & 4 Activity Seismographs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Searches by keywords (6 Cols) */}
         <div className="lg:col-span-6 bg-white rounded-lg border border-gray-200 p-5 shadow-2xs space-y-4">
@@ -373,7 +373,7 @@ export function GbpInsightsView({ onAddLocation }: GbpInsightsViewProps) {
         </div>
       </div>
 
-      {/* 4 Activity Seismographs matching Screenshot 12 */}
+      {/* 4 Activity Seismographs */}
       <div className="space-y-4">
         {[
           { title: 'Website visits', count: '5,571', color: '#84CC16', icon: Globe },

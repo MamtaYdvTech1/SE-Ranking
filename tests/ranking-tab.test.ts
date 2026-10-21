@@ -71,7 +71,7 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
       expect(res2.domain).toBe(p2.domain);
 
       // Verify keyword IDs do not overlap between project 1 and project 2
-      const p1KeywordIds = new Set(res1.keywords.map((k) => k.id));
+      const p1KeywordIds = new Set(res1.keywords.map((k: any) => k.id));
       for (const k2 of res2.keywords) {
         expect(p1KeywordIds.has(k2.id)).toBe(false);
       }
@@ -104,7 +104,7 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
       data.serpDynamics.dropped.count +
       data.serpDynamics.unchanged.count;
 
-    const rankedKeywords = data.keywords.filter((k) => k.rank != null && k.rank > 0 && k.rank <= 100);
+    const rankedKeywords = data.keywords.filter((k: any) => k.rank != null && k.rank > 0 && k.rank <= 100);
     expect(totalDynamics).toBe(rankedKeywords.length);
   });
 
@@ -422,7 +422,7 @@ describe('Ranking Tab Architecture, Calculations & Isolation Suite', () => {
 
     try {
       const summary = await getRankingSummary(testProject.id, { timeRange: '7D' });
-      // Trend MUST strictly be empty when no rankingHistory exists - NEVER fabricate fake points
+      // Trend MUST strictly be empty when no rankingHistory exists - NEVER fabricate synthetic points
       expect(summary.trend).toEqual([]);
       expect(summary.trend.length).toBe(0);
       expect(summary.summary.totalKeywords).toBe(1);

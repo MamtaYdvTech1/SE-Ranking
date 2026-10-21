@@ -173,7 +173,7 @@ export function CreateNoteModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Segmented Tab Bar (Exact match to screenshot: PROJECT NOTE / KEYWORD NOTE) */}
+          {/* Segmented Tab Bar */}
           <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden text-xs font-bold uppercase tracking-wider">
             <button
               type="button"
@@ -378,7 +378,7 @@ export function CreateNoteModal({
               </div>
             </div>
 
-            {/* Info tooltip notice matching screenshot */}
+            {/* Info tooltip notice */}
             <div className="flex items-center gap-1.5 text-xs text-gray-500 pt-1">
               <Info className="w-3.5 h-3.5 text-gray-400 shrink-0" />
               <span>This note will appear on the &quot;Detailed&quot; chart.</span>

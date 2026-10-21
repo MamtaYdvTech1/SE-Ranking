@@ -343,7 +343,7 @@ export default function CompetitorAnalysisToolPage() {
         )}
       </header>
 
-      {/* 3. HERO SECTION - Exact Match to Screenshot */}
+      {/* 3. HERO SECTION */}
       <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/40 via-white to-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
@@ -472,7 +472,7 @@ export default function CompetitorAnalysisToolPage() {
               </div>
             </div>
 
-            {/* 4 KPI Banner Cards matching screenshot */}
+            {/* 4 KPI Banner Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100">
                 <div className="text-xs font-medium text-gray-600">Organic Traffic</div>

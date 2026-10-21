@@ -103,7 +103,7 @@ export function WebsiteMetricsTable({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      {/* Table Sub-Header Controls matching Reference Screenshot */}
+      {/* Table Sub-Header Controls matching Reference */}
       <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-4 flex-wrap bg-slate-50/50">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-800">Projects</span>

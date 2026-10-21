@@ -1902,7 +1902,7 @@ export function AiSourcesView({
               )}
             </div>
 
-            {/* Brands in AI answer filter (Screenshot 1) */}
+            {/* Brands in AI answer filter */}
             {activeTableFilters.brandsInAiAnswer && (
               <div className="relative" ref={brandsInAiAnswerRef}>
                 <button
@@ -1965,7 +1965,7 @@ export function AiSourcesView({
               </div>
             )}
 
-            {/* Is brand mentioned? filter (Unified Pill matching Screenshot 2) */}
+            {/* Is brand mentioned? filter (Unified Pill ) */}
             {activeTableFilters.isBrandMentioned && (
               <div className="relative inline-flex items-stretch" ref={brandMentionedDropdownRef}>
                 {isBrandMentionedFilter === null ? (
@@ -2131,7 +2131,7 @@ export function AiSourcesView({
               </div>
             )}
 
-            {/* Type filter (Multi-select matching Screenshot 1 & 2) */}
+            {/* Type filter (Multi-select ) */}
             {activeTableFilters.type && (
               <div className="relative inline-flex items-stretch" ref={typeDropdownRef}>
                 {selectedTypeFilters.length === 0 ? (
@@ -2272,7 +2272,7 @@ export function AiSourcesView({
               </div>
             )}
 
-            {/* + Filter button (Screenshot 3) */}
+            {/* + Filter button */}
             <div className="relative" ref={filterMenuRef}>
               <button
                 type="button"

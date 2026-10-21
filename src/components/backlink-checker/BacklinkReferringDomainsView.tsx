@@ -229,7 +229,7 @@ export function BacklinkReferringDomainsView({
     setCurrentPage(1);
   };
 
-  // + FILTER Popover & Checkbox selections matching design screenshot
+  // + FILTER Popover & Checkbox selections matching design
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const filterPopoverRef = React.useRef<HTMLDivElement>(null);
 
@@ -1273,7 +1273,7 @@ export function BacklinkReferringDomainsView({
               </button>
             </div>
 
-            {/* History Button & Dual-Month Popover matching screenshot */}
+            {/* History Button & Dual-Month Popover */}
             <div className="relative" ref={historyPopoverRef}>
               <button
                 type="button"
@@ -1377,7 +1377,7 @@ export function BacklinkReferringDomainsView({
               )}
             </div>
 
-            {/* + FILTER button & Dropdown Popover matching user screenshot */}
+            {/* + FILTER button & Dropdown Popover */}
             <div className="relative" ref={filterPopoverRef}>
               <button
                 type="button"
@@ -2813,7 +2813,7 @@ export function BacklinkReferringDomainsView({
           </table>
         </div>
 
-        {/* 8. PAGINATION CONTROLS (MATCHING SCREENSHOT 3) */}
+        {/* 8. PAGINATION CONTROLS */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs">
           {/* Left: Previous <, Pages (1..9), Next > */}
           <div className="flex items-center gap-1">

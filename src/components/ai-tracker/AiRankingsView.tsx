@@ -1821,7 +1821,7 @@ export function AiRankingsView({
         {isInsightsExpanded && (
           <div className="mt-4">
             {!isViewMoreInsights ? (
-              /* Stacked Deck Preview Mode matching Screenshot 1 */
+              /* Stacked Deck Preview Mode */
               <div className="relative">
                 {/* Card 1: 19 untracked keywords have AI Overviews */}
                 <div className="relative z-10 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-4 shadow-xs">
@@ -1864,7 +1864,7 @@ export function AiRankingsView({
                 </div>
               </div>
             ) : (
-              /* Expanded 4-Card Stacked Mode matching Screenshots 2 & 3 */
+              /* Expanded 4-Card Stacked Mode */
               <div className="space-y-3.5">
                 {/* Card 1: 19 untracked keywords have AI Overviews */}
                 <div className="bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-4 shadow-xs">

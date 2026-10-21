@@ -30,7 +30,7 @@ export interface WhiteLabelConfig {
   updatedAt: string;
 }
 
-// In-memory default matching screenshots
+// In-memory default
 const DEFAULT_CONFIG: WhiteLabelConfig = {
   headerName: 'SE Ranking',
   headerLogo: null,

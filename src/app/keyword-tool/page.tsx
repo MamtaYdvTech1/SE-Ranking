@@ -431,7 +431,7 @@ export default function KeywordToolPage() {
           </p>
         </div>
 
-        {/* Interactive Keyword Search Bar matching Screenshot */}
+        {/* Interactive Keyword Search Bar */}
         <div className="max-w-3xl mx-auto mb-10">
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-gray-300 shadow-xl">
             <div className="flex-1 flex items-center gap-3 px-3 w-full">
@@ -772,7 +772,7 @@ export default function KeywordToolPage() {
         </div>
       </section>
 
-      {/* 8. FAQ ACCORDION WITH COMPARISON TABLE (Matching Screenshot) */}
+      {/* 8. FAQ ACCORDION WITH COMPARISON TABLE */}
       <section className="py-24 bg-gray-50 border-t border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -800,7 +800,7 @@ export default function KeywordToolPage() {
                   <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
                     <p className="mb-4">{faq.a}</p>
 
-                    {/* Comparison Table matching Screenshot for FAQ 1 */}
+                    {/* Comparison Table for FAQ 1 */}
                     {faq.hasTable && (
                       <div className="overflow-x-auto mt-4 rounded-xl border border-gray-200">
                         <table className="w-full text-left text-xs">

@@ -52,10 +52,13 @@ import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { ProjectFavicon } from '@/components/ui/ProjectFavicon';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useAuth } from '@/context/AuthContext';
 
 function ProjectsDashboardPageContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const { projects, activeProject, setActiveProject, hasCreatedProject, setHasCreatedProject, refreshProjects } = useApp();
+  const canCreate = user ? user.canCreateProject !== false : true;
 
   const [activeMetricTab, setActiveMetricTab] = useState<
     'avg_pos' | 'traffic' | 'visibility' | 'top10' | 'mention' | 'link'
@@ -72,7 +75,7 @@ function ProjectsDashboardPageContent() {
   const [recheckToast, setRecheckToast] = useState<string | null>(null);
   const [expandedProjectIds, setExpandedProjectIds] = useState<string[]>([]);
 
-  // Context menu state for project row actions (matching SE-Ranking screenshot)
+  // Context menu state for project row actions (matching SE-Ranking )
   const [menuAnchor, setMenuAnchor] = useState<{
     projectId: string;
     project: any;
@@ -95,7 +98,7 @@ function ProjectsDashboardPageContent() {
     }
   }, []);
 
-  // Group menu anchor state for group row actions (matching SE-Ranking screenshot)
+  // Group menu anchor state for group row actions (matching SE-Ranking )
   const [groupMenuAnchor, setGroupMenuAnchor] = useState<{
     groupId: string;
     group: any;
@@ -226,7 +229,7 @@ function ProjectsDashboardPageContent() {
   // Prompt hover tooltip
   const [hoveredPromptTab, setHoveredPromptTab] = useState<'mention' | 'link' | null>(null);
 
-  // Columns visibility matching Screenshot 1 & SE Ranking standard columns
+  // Columns visibility & SE Ranking standard columns
   const [visibleColumns, setVisibleColumns] = useState({
     topRanks: true, // TOP 5 / 10 / 30
     keywords: true,
@@ -335,7 +338,7 @@ function ProjectsDashboardPageContent() {
     } catch {}
   };
 
-  // Groups dynamic management state matching user screenshot & SE Ranking
+  // Groups dynamic management state & SE Ranking
   const DEFAULT_PROJECT_GROUPS: Array<{ id: string; name: string; projectIds: string[] }> = [];
   const [projectGroups, setProjectGroups] = useState<Array<{ id: string; name: string; projectIds: string[] }>>([]);
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<string[]>([]);
@@ -369,7 +372,7 @@ function ProjectsDashboardPageContent() {
     }
   }, []);
 
-  // Group dropdown & Recheck modal & Delete modal matching screenshots
+  // Group dropdown & Recheck modal & Delete modal
   const [isGroupDropdownOpen, setIsGroupDropdownOpen] = useState(false);
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [isRecheckModalOpen, setIsRecheckModalOpen] = useState(false);
@@ -427,13 +430,13 @@ function ProjectsDashboardPageContent() {
     }
   };
 
-  // Export Data Modal State matching exact user screenshot
+  // Export Data Modal State
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportSearch, setExportSearch] = useState('');
   const [selectedExportProjectIds, setSelectedExportProjectIds] = useState<string[]>([]);
   const [isUngroupedExpanded, setIsUngroupedExpanded] = useState(true);
 
-  // Dashboard Settings Modal State (matches screenshots 1-5)
+  // Dashboard Settings Modal State (matches -5)
   const [isDashboardSettingsOpen, setIsDashboardSettingsOpen] = useState(false);
   const [settingsSubView, setSettingsSubView] = useState<
     'main' | 'websites' | 'chart_type' | 'comparison' | 'subaccounts'
@@ -1132,7 +1135,7 @@ function ProjectsDashboardPageContent() {
         })}
       </tr>
 
-      {/* Sub-row 2: AI Search India matching Screenshot 3 */}
+      {/* Sub-row 2: AI Search India */}
       <tr className="bg-[#FAFBFD]/60 border-t border-dashed border-gray-100 text-xs text-gray-600">
         <td className="p-2.5"></td>
         <td className="p-2.5 pl-8">
@@ -1361,7 +1364,7 @@ function ProjectsDashboardPageContent() {
             </div>
           </td>
 
-          {/* Group Row Metrics matching Screenshot 1 */}
+          {/* Group Row Metrics */}
           {columnOrder.map((colKey) => {
             if (!visibleColumns[colKey as keyof typeof visibleColumns]) return null;
             if (colKey === 'topRanks') {
@@ -1407,7 +1410,7 @@ function ProjectsDashboardPageContent() {
             if (colKey === 'dt') {
               return (
                 <td key={colKey} className="p-3 text-center text-gray-600 font-medium">
-                  {/* Empty matching screenshot */}
+                  {/* Empty */}
                 </td>
               );
             }
@@ -1513,7 +1516,7 @@ function ProjectsDashboardPageContent() {
                     </div>
                   </td>
 
-                  {/* Project Metrics matching Screenshot 1 */}
+                  {/* Project Metrics */}
                   {columnOrder.map((colKey) => {
                     if (!visibleColumns[colKey as keyof typeof visibleColumns]) return null;
                     if (colKey === 'topRanks') {
@@ -1689,7 +1692,7 @@ function ProjectsDashboardPageContent() {
   if (!hasCreatedProject || projects.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto bg-[#F8FAFC] text-gray-900 pb-16 select-none relative flex flex-col">
-        {/* Main Onboarding Canvas matching screenshot */}
+        {/* Main Onboarding Canvas */}
         <div className="w-full max-w-5xl mx-auto px-6 pt-6 sm:pt-8 pb-10 flex flex-col items-center">
           {/* Hero Title & Subtitle */}
           <div className="text-center space-y-2 mb-8">
@@ -1701,7 +1704,7 @@ function ProjectsDashboardPageContent() {
             </p>
           </div>
 
-          {/* Emerald Green Hero Card matching Screenshot */}
+          {/* Emerald Green Hero Card */}
           <div className="w-full bg-[#00A86B] rounded-2xl p-7 sm:p-9 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
             {/* Subtle organic vector waves decoration */}
             <svg
@@ -1717,24 +1720,28 @@ function ProjectsDashboardPageContent() {
 
             <div className="space-y-1 relative z-10">
               <h2 className="text-2xl sm:text-[26px] font-bold tracking-tight">
-                Add your first website
+                {canCreate ? 'Add your first website' : 'No Projects Assigned'}
               </h2>
               <p className="text-white/90 text-sm font-normal">
-                Track your search rankings, audit your site, monitor your competitors
+                {canCreate
+                  ? 'Track your search rankings, audit your site, monitor your competitors'
+                  : 'Your account is active, but no websites have been assigned to your workspace yet. Please contact your platform administrator.'}
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-white hover:bg-gray-50 text-[#1E2532] font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer uppercase tracking-wider self-start sm:self-center relative z-10"
-            >
-              <Plus className="w-4 h-4 stroke-[3] text-[#0062FF]" />
-              <span>ADD WEBSITE</span>
-            </button>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-white hover:bg-gray-50 text-[#1E2532] font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-xs transition-colors flex items-center gap-2 shrink-0 cursor-pointer uppercase tracking-wider self-start sm:self-center relative z-10"
+              >
+                <Plus className="w-4 h-4 stroke-[3] text-[#0062FF]" />
+                <span>ADD WEBSITE</span>
+              </button>
+            )}
           </div>
 
-          {/* 3 SEO Tool Feature Cards Grid matching Screenshot */}
+          {/* 3 SEO Tool Feature Cards Grid */}
           <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             {/* Card 1: Rankings */}
             <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
@@ -1844,7 +1851,7 @@ function ProjectsDashboardPageContent() {
 
       <div className="max-w-[1440px] mx-auto px-6 py-4 space-y-4">
 
-        {/* Top Feedback line matching Screenshot */}
+        {/* Top Feedback line */}
         <div className="flex justify-end text-xs">
           <button
             type="button"
@@ -1855,7 +1862,7 @@ function ProjectsDashboardPageContent() {
           </button>
         </div>
 
-        {/* Action Header matching Screenshot */}
+        {/* Action Header */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">Active websites</h1>
@@ -1887,16 +1894,18 @@ function ProjectsDashboardPageContent() {
 
         {/* Primary Action Buttons */}
         <div className="flex items-center gap-2.5">
-          <button
-            id="tour-create-project"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold rounded shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>CREATE PROJECT</span>
-          </button>
+          {canCreate && (
+            <button
+              id="tour-create-project"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold rounded shadow-xs transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>CREATE PROJECT</span>
+            </button>
+          )}
 
-          {/* Recheck Data Dropdown matching Screenshot 1 & 2 */}
+          {/* Recheck Data Dropdown */}
           <div className="relative recheck-dropdown-container">
             <button
               onClick={() => setIsRecheckOpen(!isRecheckOpen)}
@@ -1919,7 +1928,7 @@ function ProjectsDashboardPageContent() {
                   <span>Recheck rankings</span>
                   <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
 
-                  {/* Level 2 Flyout Menu matching Screenshot 1 */}
+                  {/* Level 2 Flyout Menu */}
                   {hoveredRecheckMenu === 'rankings' && (
                     <div className="absolute top-0 left-full ml-1 w-44 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-40 text-xs animate-in fade-in duration-75">
                       <button
@@ -1955,7 +1964,7 @@ function ProjectsDashboardPageContent() {
                   <span>Recheck search volume</span>
                   <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
 
-                  {/* Level 2 Flyout Menu matching Screenshot 2 */}
+                  {/* Level 2 Flyout Menu */}
                   {hoveredRecheckMenu === 'search_volume' && (
                     <div className="absolute top-0 left-full ml-1 w-44 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-40 text-xs animate-in fade-in duration-75">
                       <button
@@ -2200,7 +2209,7 @@ function ProjectsDashboardPageContent() {
           </div>
         </div>
 
-        {/* Chart View with vertical rotated label & Multi-series dynamic lines (Matching Screenshots 1 & 2) */}
+        {/* Chart View with vertical rotated label & Multi-series dynamic lines */}
         {displayCharts && (
           <div id="ProjectsChart" className="space-y-3">
             <div className="relative h-64 w-full pt-2 border border-gray-100 rounded-lg p-3 bg-white">
@@ -2334,9 +2343,9 @@ function ProjectsDashboardPageContent() {
       </>
     )}
 
-        {/* Search, Action Header & Table matching SE-Ranking Screenshots 1 & 2 */}
+        {/* Search, Action Header & Table matching SE-Ranking & 2 */}
         <div className="pt-4">
-          {/* Search Input Bar matching screenshot */}
+          {/* Search Input Bar */}
           <div className="relative w-full max-w-sm mb-4">
             <input
               type="text"
@@ -2354,7 +2363,7 @@ function ProjectsDashboardPageContent() {
             </h2>
 
             <div className="flex items-center gap-2">
-              {/* Copy table/rows button with Dropdown matching Screenshot 2 */}
+              {/* Copy table/rows button with Dropdown */}
               <div className="relative copy-dropdown-container">
                 <button
                   type="button"
@@ -2374,7 +2383,7 @@ function ProjectsDashboardPageContent() {
                   <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isCopyOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Tooltip on hover matching Screenshot 2 */}
+                {/* Tooltip on hover */}
                 {isCopyTooltipHovered && !isCopyOpen && (
                   <div className="absolute -top-7 right-0 bg-[#2C3E50] text-white text-[11px] font-medium py-1 px-2.5 rounded shadow-xl whitespace-nowrap z-50 pointer-events-none flex flex-col items-center">
                     <span>Copy table/rows</span>
@@ -2382,7 +2391,7 @@ function ProjectsDashboardPageContent() {
                   </div>
                 )}
 
-                {/* Dropdown Menu matching Screenshot 2 */}
+                {/* Dropdown Menu */}
                 {isCopyOpen && (
                   <div className="absolute top-full right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-30 text-xs text-gray-800 animate-in fade-in duration-100">
                     <button
@@ -2410,7 +2419,7 @@ function ProjectsDashboardPageContent() {
                 )}
               </div>
 
-              {/* Expand/collapse all groups Button matching screenshot 1 */}
+              {/* Expand/collapse all groups Button */}
               <div className="relative">
                 <button
                   type="button"
@@ -2435,7 +2444,7 @@ function ProjectsDashboardPageContent() {
                 )}
               </div>
 
-              {/* + NEW GROUP Button with Popover matching Screenshot 2 */}
+              {/* + NEW GROUP Button with Popover */}
               <div id="new-group-btn-container" className="relative">
                 <button
                   type="button"
@@ -2459,7 +2468,7 @@ function ProjectsDashboardPageContent() {
                   </div>
                 )}
 
-                {/* Create a new group Popover matching Screenshot 2 */}
+                {/* Create a new group Popover */}
                 {isCreateGroupModalOpen && (
                   <div
                     data-create-group-popover
@@ -2509,7 +2518,7 @@ function ProjectsDashboardPageContent() {
                 )}
               </div>
 
-              {/* COLUMNS Button with Dropdown matching Screenshot 1 */}
+              {/* COLUMNS Button with Dropdown */}
               <div className="relative columns-dropdown-container">
                 <button
                   id="tour-columns-btn"
@@ -2525,7 +2534,7 @@ function ProjectsDashboardPageContent() {
                   <span>COLUMNS</span>
                 </button>
 
-                {/* Columns Selection Dropdown matching Screenshot 1 */}
+                {/* Columns Selection Dropdown */}
                 {isColumnsOpen && (
                   <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-2xl py-2 z-30 text-xs text-gray-800 animate-in fade-in duration-100 max-h-80 overflow-y-auto">
                     {[
@@ -2672,7 +2681,7 @@ function ProjectsDashboardPageContent() {
             </div>
           )}
 
-          {/* Projects & Groups Table matching User's Exact Screenshots */}
+          {/* Projects & Groups Table matching User's Exact */}
           <div className="border border-gray-200 rounded-lg overflow-x-auto shadow-2xs">
             <table className="w-full text-left text-xs divide-y divide-gray-200">
               <thead className="bg-[#FAFBFD] font-bold text-[#64748B] uppercase text-[10.5px] tracking-wider select-none border-b border-gray-200">
@@ -2737,14 +2746,20 @@ function ProjectsDashboardPageContent() {
                           <Layers className="w-7 h-7" />
                         </div>
                         <h3 className="text-base font-bold text-gray-900 mb-1">
-                          {searchQuery ? 'No websites match your search' : 'No projects added yet'}
+                          {searchQuery
+                            ? 'No websites match your search'
+                            : !canCreate
+                            ? 'No projects assigned'
+                            : 'No projects added yet'}
                         </h3>
                         <p className="text-xs text-gray-500 mb-5 leading-relaxed">
                           {searchQuery
                             ? `We couldn't find any projects matching "${searchQuery}". Try a different search keyword.`
+                            : !canCreate
+                            ? 'No projects have been assigned to your account yet. Please contact your platform administrator to grant project access.'
                             : 'Add your website to start tracking search engine rankings, technical SEO audits, backlinks, and AI Overviews.'}
                         </p>
-                        {!searchQuery && (
+                        {!searchQuery && canCreate && (
                           <button
                             type="button"
                             onClick={() => setIsCreateModalOpen(true)}
@@ -2823,7 +2838,7 @@ function ProjectsDashboardPageContent() {
         onClose={() => setIsBugModalOpen(false)}
       />
 
-      {/* Dashboard Settings Modal (Matches user screenshots 1-5) */}
+      {/* Dashboard Settings Modal (Matches user -5) */}
       {isDashboardSettingsOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -2848,7 +2863,7 @@ function ProjectsDashboardPageContent() {
 
             {/* Modal Body */}
             <div className="p-6 text-xs text-gray-800">
-              {/* VIEW 1: MAIN SETTINGS (matches Screenshot 1) */}
+              {/* VIEW 1: MAIN SETTINGS (matches ) */}
               {settingsSubView === 'main' && (
                 <div className="space-y-4">
                   {/* Display charts toggle */}
@@ -2962,7 +2977,7 @@ function ProjectsDashboardPageContent() {
                 </div>
               )}
 
-              {/* VIEW 2: WEBSITES SUBVIEW (matches Screenshot 2) */}
+              {/* VIEW 2: WEBSITES SUBVIEW (matches ) */}
               {settingsSubView === 'websites' && (
                 <div className="space-y-3">
                   {projects.map((p) => {
@@ -2995,7 +3010,7 @@ function ProjectsDashboardPageContent() {
                 </div>
               )}
 
-              {/* VIEW 3: DEFAULT CHART TYPE (matches Screenshot 3) */}
+              {/* VIEW 3: DEFAULT CHART TYPE (matches ) */}
               {settingsSubView === 'chart_type' && (
                 <div className="divide-y divide-gray-100">
                   {[
@@ -3022,7 +3037,7 @@ function ProjectsDashboardPageContent() {
                 </div>
               )}
 
-              {/* VIEW 4: PERIOD FOR COMPARISON (matches Screenshot 4) */}
+              {/* VIEW 4: PERIOD FOR COMPARISON (matches ) */}
               {settingsSubView === 'comparison' && (
                 <div className="divide-y divide-gray-100">
                   {['Last month', 'Last 3 months', 'Last 6 months', 'Last year'].map((period) => (
@@ -3042,7 +3057,7 @@ function ProjectsDashboardPageContent() {
                 </div>
               )}
 
-              {/* VIEW 5: SUBACCOUNTS (matches Screenshot 5) */}
+              {/* VIEW 5: SUBACCOUNTS (matches ) */}
               {settingsSubView === 'subaccounts' && (
                 <div className="divide-y divide-gray-100">
                   {['Do not show', 'In a general list', 'In a separate table'].map((opt) => (
@@ -3063,7 +3078,7 @@ function ProjectsDashboardPageContent() {
               )}
             </div>
 
-            {/* Modal Footer matching Screenshots */}
+            {/* Modal Footer */}
             <div className="px-6 py-3.5 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between">
               {settingsSubView !== 'main' ? (
                 <button
@@ -3139,13 +3154,13 @@ function ProjectsDashboardPageContent() {
         </div>
       )}
 
-      {/* Tell us what you think Feedback Modal matching Screenshot */}
+      {/* Tell us what you think Feedback Modal */}
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
       />
 
-      {/* Export Data Modal matching user screenshot */}
+      {/* Export Data Modal */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-100">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[540px] overflow-hidden flex flex-col border border-gray-100">
@@ -3298,7 +3313,7 @@ function ProjectsDashboardPageContent() {
         </div>
       )}
 
-      {/* Recheck rankings Modal (Exact match to screenshot 6) */}
+      {/* Recheck rankings Modal */}
       {isRecheckModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4 animate-in fade-in duration-150 select-none">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200">
@@ -3364,7 +3379,7 @@ function ProjectsDashboardPageContent() {
         </div>
       )}
 
-      {/* Group Context Menu matching SE-Ranking screenshot */}
+      {/* Group Context Menu matching SE-Ranking */}
       {groupMenuAnchor && (
         <div
           data-group-context-menu
@@ -3597,7 +3612,7 @@ function ProjectsDashboardPageContent() {
 
 
 
-      {/* SE-Ranking Project Row Context Menu matching user screenshot & html snippet */}
+      {/* SE-Ranking Project Row Context Menu & html snippet */}
       {menuAnchor && (
         <div
           data-project-context-menu

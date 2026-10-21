@@ -111,7 +111,7 @@ export function SEWizardView() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Handle Tab Switch with authentic 300ms Shimmer Skeleton (Screenshot 2)
+  // Handle Tab Switch with authentic 300ms Shimmer Skeleton
   const switchTab = (tab: WizardTab) => {
     if (tab === activeTab) return;
     setIsTabTransitioning(true);
@@ -150,7 +150,7 @@ export function SEWizardView() {
   }, [router]);
 
   // ----------------------------------------------------
-  // SEARCH ENGINES TAB STATE (Screenshot 1)
+  // SEARCH ENGINES TAB STATE
   // ----------------------------------------------------
   const [selectedEngineType, setSelectedEngineType] = useState<'Google' | 'AI Overviews' | 'AI Mode' | 'ChatGPT'>('Google');
   const [selectedDevice, setSelectedDevice] = useState<'desktop' | 'mobile'>('desktop');
@@ -241,7 +241,7 @@ export function SEWizardView() {
   };
 
   // ----------------------------------------------------
-  // KEYWORDS TAB STATE (Screenshot 3 & 4)
+  // KEYWORDS TAB STATE
   // ----------------------------------------------------
   const [keywordTextarea, setKeywordTextarea] = useState('');
   const [suggestKeywords, setSuggestKeywords] = useState(false);
@@ -514,7 +514,7 @@ export function SEWizardView() {
 
   return (
     <div className="min-h-screen w-full flex bg-[#F4F6F9] font-sans text-gray-900 select-none">
-      {/* 1. LEFT BLUE SIDEBAR (Screenshot 1, 2, 3, 4) */}
+      {/* 1. LEFT BLUE SIDEBAR */}
       <aside className="w-64 sm:w-72 bg-[#1054E2] text-white flex flex-col justify-between shrink-0 shadow-lg min-h-screen">
         <div className="p-6 sm:p-7">
           {/* SE Ranking Logo */}
@@ -551,7 +551,7 @@ export function SEWizardView() {
               <span>General information</span>
             </button>
 
-            {/* Search engines (Screenshot 1 Active) */}
+            {/* Search engines */}
             <button
               type="button"
               onClick={() => switchTab('search-engines')}
@@ -565,7 +565,7 @@ export function SEWizardView() {
               <span>Search engines</span>
             </button>
 
-            {/* Keywords (Screenshot 3 & 4 Active) */}
+            {/* Keywords */}
             <button
               type="button"
               onClick={() => switchTab('keywords')}
@@ -644,7 +644,7 @@ export function SEWizardView() {
             </h2>
 
             <div className="flex items-center gap-4">
-              {/* Keywords Limit Yellow Pill (Screenshot 3 & 4) */}
+              {/* Keywords Limit Yellow Pill */}
               {activeTab === 'keywords' && !isTabTransitioning && (
                 <div className="bg-[#FEF3C7] border border-[#FCD34D] text-[#92400E] text-[12px] font-medium px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-[#D97706]" />
@@ -655,7 +655,7 @@ export function SEWizardView() {
                 </div>
               )}
 
-              {/* Prompt Limits Badge (Screenshot 1) */}
+              {/* Prompt Limits Badge */}
               {activeTab === 'prompts' && !isTabTransitioning && (
                 <div className="bg-[#FEF3C7] border border-[#FCD34D] text-[#92400E] text-[12px] font-medium px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-[#D97706]" />
@@ -665,7 +665,7 @@ export function SEWizardView() {
                 </div>
               )}
 
-              {/* Competitors Limit Badge (Screenshot 2 & 3) */}
+              {/* Competitors Limit Badge */}
               {activeTab === 'competitors' && !isTabTransitioning && (
                 <div className="bg-[#FEF3C7] border border-[#FCD34D] text-[#92400E] text-[12px] font-medium px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
                   <Clock className="w-3.5 h-3.5 text-[#D97706]" />
@@ -690,7 +690,7 @@ export function SEWizardView() {
             </div>
           </div>
 
-          {/* 3. SHIMMER SKELETON LOADING STATE (Screenshot 2) */}
+          {/* 3. SHIMMER SKELETON LOADING STATE */}
           {isTabTransitioning ? (
             <div className="px-8 sm:px-12 py-8 max-w-4xl space-y-6 animate-pulse">
               <div className="space-y-3">
@@ -708,7 +708,7 @@ export function SEWizardView() {
           ) : (
             <>
               {/* ---------------------------------------------------- */}
-              {/* TAB 1: SEARCH ENGINES (Screenshot 1)                */}
+              {/* TAB 1: SEARCH ENGINES */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'search-engines' && (
                 <div className="px-8 sm:px-12 py-6 max-w-4xl space-y-6">
@@ -811,7 +811,7 @@ export function SEWizardView() {
                       </div>
                     </div>
 
-                    {/* Country & Location Dropdowns (Screenshot 1) */}
+                    {/* Country & Location Dropdowns */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Country Dropdown */}
                       <div className="relative" ref={countryDropdownRef}>
@@ -833,7 +833,7 @@ export function SEWizardView() {
                           <ChevronDown className="w-4 h-4 text-gray-500" />
                         </button>
 
-                        {/* Country Searchable Popover Menu (Screenshot 1) */}
+                        {/* Country Searchable Popover Menu */}
                         {isCountryDropdownOpen && (
                           <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
                             {/* Search Input */}
@@ -894,7 +894,7 @@ export function SEWizardView() {
                       </div>
                     </div>
 
-                    {/* Add Search Engine Button (Green button from Screenshot 1) */}
+                    {/* Add Search Engine Button (Green button from ) */}
                     <div className="flex justify-end pt-2">
                       <button
                         type="button"
@@ -907,7 +907,7 @@ export function SEWizardView() {
                     </div>
                   </div>
 
-                  {/* Added Search Engines Table Card (Screenshot 1) */}
+                  {/* Added Search Engines Table Card */}
                   <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
                     {/* Search Input Bar */}
                     <div className="p-3 border-b border-gray-100 flex items-center gap-2">
@@ -979,7 +979,7 @@ export function SEWizardView() {
               )}
 
               {/* ---------------------------------------------------- */}
-              {/* TAB 2: KEYWORDS (Screenshot 3 & 4)                   */}
+              {/* TAB 2: KEYWORDS */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'keywords' && (
                 <div className="px-8 sm:px-12 py-6 max-w-4xl space-y-6">
@@ -1048,7 +1048,7 @@ export function SEWizardView() {
                     </div>
                   </div>
 
-                  {/* Section 2: Enter Keywords to Add Card (Screenshot 3 & 4) */}
+                  {/* Section 2: Enter Keywords to Add Card */}
                   <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-2xs space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1071,7 +1071,7 @@ export function SEWizardView() {
                       </button>
                     </div>
 
-                    {/* Numbered Textarea with Gutter (Screenshot 3 & 4) */}
+                    {/* Numbered Textarea with Gutter */}
                     <div className="border border-blue-400 rounded-lg overflow-hidden flex bg-white focus-within:ring-2 focus-within:ring-blue-100">
                       {/* Line Number Gutter 1. to 10. */}
                       <div className="bg-gray-50/50 py-2 px-3 text-gray-400 text-xs font-mono select-none text-right border-r border-gray-100 flex flex-col space-y-[2px]">
@@ -1141,7 +1141,7 @@ export function SEWizardView() {
                         </div>
                       </div>
 
-                      {/* Remaining Limits Counter & CTA Button (Screenshot 3 & 4) */}
+                      {/* Remaining Limits Counter & CTA Button */}
                       <div className="flex items-center gap-4 self-end sm:self-center">
                         <span className="text-xs text-gray-500">
                           {enteredCount} of {remainingLimits} remaining keyword limits will be used
@@ -1163,7 +1163,7 @@ export function SEWizardView() {
                     </div>
                   </div>
 
-                  {/* Section 3: Keywords Added to Project Table (Screenshot 3 & 4) */}
+                  {/* Section 3: Keywords Added to Project Table */}
                   <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
                     {/* Header with Count */}
                     <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -1172,7 +1172,7 @@ export function SEWizardView() {
                       </h3>
                     </div>
 
-                    {/* Filter Bar with Search Engine Filter Dropdown (Screenshot 4) */}
+                    {/* Filter Bar with Search Engine Filter Dropdown */}
                     <div className="p-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1">
                         {/* Search Input */}
@@ -1187,7 +1187,7 @@ export function SEWizardView() {
                           />
                         </div>
 
-                        {/* Search Engine Dropdown Filter (Screenshot 4) */}
+                        {/* Search Engine Dropdown Filter */}
                         <div className="relative" ref={engineFilterRef}>
                           <button
                             type="button"
@@ -1198,7 +1198,7 @@ export function SEWizardView() {
                             <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
                           </button>
 
-                          {/* Popover Filter (Screenshot 4 Open State) */}
+                          {/* Popover Filter */}
                           {isEngineFilterDropdownOpen && (
                             <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-3 space-y-3">
                               <button
@@ -1262,7 +1262,7 @@ export function SEWizardView() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {/* Group Expandable Row (Screenshot 3 & 4) */}
+                        {/* Group Expandable Row */}
                         <tr className="bg-gray-50/40 hover:bg-gray-50">
                           <td className="py-2.5 px-4 text-gray-400">
                             <GripVertical className="w-4 h-4 cursor-grab" />
@@ -1326,11 +1326,11 @@ export function SEWizardView() {
               )}
 
               {/* ---------------------------------------------------- */}
-              {/* TAB 3: PROMPTS (Exact match to Screenshot 1)        */}
+              {/* TAB 3: PROMPTS */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'prompts' && (
                 <div className="px-8 sm:px-12 py-10 max-w-4xl space-y-6">
-                  {/* Center Hero Card matching Screenshot 1 */}
+                  {/* Center Hero Card */}
                   <div className="bg-white border border-gray-200 rounded-2xl p-12 shadow-2xs flex flex-col items-center justify-center text-center max-w-2xl mx-auto my-6">
                     {/* Purple Sparkle Icon */}
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mb-5">
@@ -1360,7 +1360,7 @@ export function SEWizardView() {
               )}
 
               {/* ---------------------------------------------------- */}
-              {/* TAB 4: COMPETITORS (Exact match to Screenshots 2 & 3) */}
+              {/* TAB 4: COMPETITORS */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'competitors' && (
                 <div className="px-8 sm:px-12 py-6 max-w-5xl space-y-6">
@@ -1498,7 +1498,7 @@ export function SEWizardView() {
               )}
 
               {/* ---------------------------------------------------- */}
-              {/* TAB 5: ANALYTICS (Exact match to Screenshot 4)       */}
+              {/* TAB 5: ANALYTICS */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'analytics' && (
                 <div className="px-8 sm:px-12 py-8 max-w-4xl space-y-6">
@@ -1552,7 +1552,7 @@ export function SEWizardView() {
               {/* ---------------------------------------------------- */}
               {/* TAB 6: GENERAL INFORMATION                           */}
               {/* ---------------------------------------------------- */}
-              {/* TAB 6: GENERAL INFORMATION (Screenshot 3)           */}
+              {/* TAB 6: GENERAL INFORMATION */}
               {/* ---------------------------------------------------- */}
               {activeTab === 'general' && (
                 <div className="px-8 sm:px-12 py-6 max-w-4xl space-y-6">
@@ -1681,7 +1681,7 @@ export function SEWizardView() {
           )}
         </div>
 
-        {/* 4. BOTTOM CENTER "BACK TO PROJECT" BUTTON (Screenshot 1, 2, 3, 4) */}
+        {/* 4. BOTTOM CENTER "BACK TO PROJECT" BUTTON */}
         <div className="py-6 flex justify-center border-t border-gray-100 bg-white">
           <button
             type="button"

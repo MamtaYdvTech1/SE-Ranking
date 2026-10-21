@@ -209,7 +209,7 @@ function KeywordGrouperContent() {
       />
 
       {/* ========================================================================= */}
-      {/* 1. RESULTS TAB VIEW: Keyword grouping history matching Screenshot 8 */}
+      {/* 1. RESULTS TAB VIEW: Keyword grouping history */}
       {/* ========================================================================= */}
       {tab === 'results' ? (
         selectedReport ? (
@@ -304,9 +304,9 @@ function KeywordGrouperContent() {
             </div>
           </div>
         ) : (
-          /* Keyword grouping history table matching Screenshot 8 */
+          /* Keyword grouping history table */
           <div className="w-full">
-            {/* Top header matching Screenshot 8 */}
+            {/* Top header */}
             <div className="p-6 pb-2 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
@@ -326,7 +326,7 @@ function KeywordGrouperContent() {
               </div>
             </div>
 
-            {/* History Table matching Screenshot 8 columns */}
+            {/* History Table columns */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -398,12 +398,12 @@ function KeywordGrouperContent() {
           </div>
         )
       ) : (
-        /* Settings / Form View matching Screenshot 1, 2, 3 exactly */
+        /* Settings / Form View , 2, 3 exactly */
         <div className="max-w-4xl mx-auto p-6 sm:p-8 space-y-6">
-          {/* Breadcrumb / Title matching Screenshot 1 */}
+          {/* Breadcrumb / Title */}
           <div className="text-xs text-gray-400 font-medium">Keyword Grouper</div>
 
-          {/* Info Box matching Screenshot 1 */}
+          {/* Info Box */}
           {showInfo && (
             <div className="p-4 bg-gray-50/80 border border-gray-200 rounded-lg relative text-xs text-gray-700 leading-relaxed">
               <button
@@ -424,7 +424,7 @@ function KeywordGrouperContent() {
           )}
 
           <form onSubmit={handleStartGrouping} className="space-y-6">
-            {/* Report Title Input matching Screenshot 1 */}
+            {/* Report Title Input */}
             <div>
               <input
                 type="text"
@@ -435,7 +435,7 @@ function KeywordGrouperContent() {
               />
             </div>
 
-            {/* Search Engine Settings Header matching Screenshot 1 */}
+            {/* Search Engine Settings Header */}
             <div className="space-y-3.5">
               <h3 className="text-base font-bold text-gray-900 tracking-tight">
                 Search engine settings
@@ -521,7 +521,7 @@ function KeywordGrouperContent() {
               </div>
             </div>
 
-            {/* Keyword Grouping Accuracy matching Screenshot 1 & 2 */}
+            {/* Keyword Grouping Accuracy */}
             <div className="space-y-2 pt-2">
               <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
                 <span>Keyword grouping accuracy</span>
@@ -546,7 +546,7 @@ function KeywordGrouperContent() {
               </div>
             </div>
 
-            {/* Method matching Screenshot 2 */}
+            {/* Method */}
             <div className="space-y-2 pt-2">
               <h3 className="text-sm font-bold text-gray-900">Method</h3>
               <div className="relative max-w-xs">
@@ -565,7 +565,7 @@ function KeywordGrouperContent() {
               </p>
             </div>
 
-            {/* Search Volume Check matching Screenshot 2 & 3 */}
+            {/* Search Volume Check */}
             <div className="space-y-2 pt-2">
               <h3 className="text-sm font-bold text-gray-900">Search volume check</h3>
               <div className="relative max-w-xs">
@@ -584,7 +584,7 @@ function KeywordGrouperContent() {
               </p>
             </div>
 
-            {/* Search Queries Input matching Screenshot 2 & 3 */}
+            {/* Search Queries Input */}
             <div className="space-y-3 pt-2">
               <div className="text-[11px] text-gray-500 leading-relaxed space-y-1">
                 <p>
@@ -614,7 +614,7 @@ function KeywordGrouperContent() {
                 className="w-full p-3 border border-gray-300 rounded-lg text-xs font-mono focus:outline-hidden focus:border-[#0B69FF] bg-white text-gray-900 leading-relaxed"
               />
 
-              {/* Dotted Upload Box matching Screenshot 3 */}
+              {/* Dotted Upload Box */}
               <div className="border border-dashed border-[#50A7FF] bg-white rounded-lg p-6 text-center space-y-3">
                 <p className="text-xs text-gray-700">
                   XLS, XLSX, CSV and text file formats are supported and loadable. Just make sure each new search query is placed in a new row.
@@ -629,7 +629,7 @@ function KeywordGrouperContent() {
               </div>
             </div>
 
-            {/* Pricing Summary & Start Grouping Button matching Screenshot 3 */}
+            {/* Pricing Summary & Start Grouping Button */}
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-xs">
                 <div>

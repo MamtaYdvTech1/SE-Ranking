@@ -29,7 +29,7 @@ export default function ApiWalletPage() {
   // Calculations
   const pricePerCredit = 0.0002; // $0.20 per 1,000 credits
   const totalCostUsd = creditsAmount * pricePerCredit;
-  const inrConversionRate = 99.9578; // 1 USD = 99.9578 INR (includes 4% conversion fee) matching screenshot
+  const inrConversionRate = 99.9578; // 1 USD = 99.9578 INR (includes 4% conversion fee)
   const totalCostInr = (totalCostUsd * inrConversionRate).toFixed(2);
   const formattedUsd = totalCostUsd.toFixed(2);
 
@@ -520,7 +520,7 @@ export default function ApiWalletPage() {
 
       </div>
 
-      {/* ===================== STRIPE CHECKOUT MODAL (MATCHING USER SCREENSHOT 100%) ===================== */}
+      {/* STRIPE CHECKOUT MODAL (%) */}
       {isStripeModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden border border-gray-200 relative my-auto animate-in zoom-in-95 duration-200">

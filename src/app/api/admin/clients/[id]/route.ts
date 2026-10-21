@@ -10,6 +10,7 @@ const UpdateClientSchema = z.object({
   phone: z.string().optional(),
   notes: z.string().optional(),
   status: z.enum(["active", "archived", "deactivated"]).optional(),
+  projectIds: z.array(z.string()).optional(),
 });
 
 export async function GET(
@@ -57,6 +58,7 @@ export async function GET(
       status: client.status,
       notes: client.notes,
       createdAt: client.createdAt.toISOString(),
+      updatedAt: client.updatedAt.toISOString(),
       projects: client.projects.map((p) => ({
         id: p.id,
         name: p.name,
@@ -97,10 +99,31 @@ export async function PATCH(
       return NextResponse.json({ error: "Client not found." }, { status: 404 });
     }
 
+    const { projectIds, ...clientData } = parsed.data;
+
     const updated = await prisma.client.update({
       where: { id },
-      data: parsed.data,
+      data: clientData,
     });
+
+    if (projectIds !== undefined) {
+      // Disconnect projects no longer in projectIds
+      await prisma.project.updateMany({
+        where: {
+          clientId: id,
+          id: { notIn: projectIds },
+        },
+        data: { clientId: null },
+      });
+
+      // Connect projects in projectIds
+      if (projectIds.length > 0) {
+        await prisma.project.updateMany({
+          where: { id: { in: projectIds } },
+          data: { clientId: id },
+        });
+      }
+    }
 
     await createAuditLog({
       actorId: adminCheck.auth.user.id,
@@ -135,8 +158,40 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const isPermanent = searchParams.get("permanent") === "true";
 
   try {
+    const existing = await prisma.client.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Client not found." }, { status: 404 });
+    }
+
+    if (isPermanent) {
+      // Unlink all projects before hard deletion
+      await prisma.project.updateMany({
+        where: { clientId: id },
+        data: { clientId: null },
+      });
+
+      await prisma.client.delete({ where: { id } });
+
+      await createAuditLog({
+        actorId: adminCheck.auth.user.id,
+        actorEmail: adminCheck.auth.user.email,
+        action: "CLIENT_DELETE",
+        entity: "Client",
+        entityId: id,
+        beforeJson: { name: existing.name, email: existing.email },
+        req,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Client ${existing.name} permanently deleted.`,
+      });
+    }
+
     const client = await prisma.client.update({
       where: { id },
       data: { status: "archived" },
@@ -158,7 +213,7 @@ export async function DELETE(
     });
   } catch (err: any) {
     return NextResponse.json(
-      { error: err?.message || "Failed to archive client." },
+      { error: err?.message || "Failed to process client deletion." },
       { status: 500 }
     );
   }

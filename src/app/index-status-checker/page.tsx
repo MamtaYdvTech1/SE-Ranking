@@ -168,7 +168,7 @@ function IndexStatusCheckerContent() {
     <div className="flex-1 bg-white min-h-[calc(100vh-80px)] text-gray-900 select-none pb-20 relative flex flex-col justify-between">
       <div className="max-w-[1240px] mx-auto p-4 sm:p-6 sm:pt-4 space-y-4 w-full">
         {/* ========================================================================= */}
-        {/* 1. RESULTS TAB: Index Status Checker result history matching Screenshot 13 */}
+        {/* 1. RESULTS TAB: Index Status Checker result history */}
         {/* ========================================================================= */}
         {isResultsTab ? (
           selectedHistory ? (
@@ -265,7 +265,7 @@ function IndexStatusCheckerContent() {
               </div>
             </div>
           ) : (
-            /* Result History table matching Screenshot 13 */
+            /* Result History table */
             <div className="space-y-4">
               <div className="text-[14px] text-[#8C98A9] font-normal flex items-center gap-1.5">
                 <Link href="/index-status-checker" className="hover:text-[#0B69FF]">
@@ -293,7 +293,7 @@ function IndexStatusCheckerContent() {
                 </Link>
               </div>
 
-              {/* Table matching Screenshot 13: FIRST URL | DATE | SEARCH ENGINE | ACTION */}
+              {/* Table : FIRST URL | DATE | SEARCH ENGINE | ACTION */}
               <div className="bg-white border border-gray-200 rounded overflow-hidden shadow-2xs">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
@@ -360,13 +360,13 @@ function IndexStatusCheckerContent() {
           )
         ) : (
           /* ========================================================================= */
-          /* 2. FORM VIEW: Index Status Checker Form matching Screenshot 12 */
+          /* 2. FORM VIEW: Index Status Checker Form */
           /* ========================================================================= */
           <>
-            {/* Title / Breadcrumb matching Screenshot 12 */}
+            {/* Title / Breadcrumb */}
             <div className="text-[14px] text-[#8C98A9] font-normal">Index Status Checker</div>
 
-            {/* Notice Info Box matching Screenshot 12 */}
+            {/* Notice Info Box */}
             {showBanner && (
               <div className="p-3 bg-[#F8F9FA] border border-[#E4E8EE] rounded text-[13px] text-[#4E5D78] relative flex items-center justify-between shadow-2xs leading-relaxed max-w-4xl">
                 <div className="flex items-center gap-2.5 pr-6">
@@ -388,7 +388,7 @@ function IndexStatusCheckerContent() {
               </div>
             )}
 
-            {/* Main Form matching Screenshot 12 */}
+            {/* Main Form */}
             <div className="pt-2">
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                 {/* Check page index status in */}
@@ -412,7 +412,7 @@ function IndexStatusCheckerContent() {
                   </div>
                 </div>
 
-                {/* URLs Textarea matching Screenshot 12 */}
+                {/* URLs Textarea */}
                 <div>
                   <div className="flex items-center justify-between w-[440px] max-w-full mb-1">
                     <span className="text-[11px] text-gray-400">Enter a URL list:</span>
@@ -446,18 +446,18 @@ function IndexStatusCheckerContent() {
                   </label>
                 </div>
 
-                {/* Price line matching Screenshot 12 */}
+                {/* Price line */}
                 <div className="text-[13px] text-[#4E5D78] pt-1">
                   Price: <span className="font-semibold text-[#0B69FF]">$0.005</span> per URL
                 </div>
 
-                {/* Total amount to be charged line matching Screenshot 12 */}
+                {/* Total amount to be charged line */}
                 <div className="text-[16px] text-[#2C384A] font-medium flex items-center gap-1.5 pt-1">
                   <span>Total amount to be charged:</span>
                   <span className="text-[26px] font-normal text-[#0B69FF]">${totalCost}</span>
                 </div>
 
-                {/* Submit Button matching Screenshot 12 */}
+                {/* Submit Button */}
                 <div className="pt-2">
                   <button
                     type="submit"

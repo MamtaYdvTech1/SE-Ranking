@@ -86,7 +86,7 @@ function CloudflareChallengeContent({
     <div className="fixed inset-0 z-[9999] bg-[#000000] text-white flex flex-col justify-between p-6 sm:p-12 md:p-16 font-sans select-none antialiased overflow-y-auto">
       {/* Main Content Area - Generous, Prominent & Authentic */}
       <div className="max-w-[560px] w-full mx-auto pt-10 sm:pt-20 space-y-6">
-        {/* Domain with Bar Chart Icon Matching Screenshot Exactly */}
+        {/* Domain with Bar Chart Icon Exactly */}
         <div className="flex items-center gap-3">
           <div className="flex items-end gap-[3px] h-[22px] w-[22px] text-[#9CA3AF]">
             <span className="w-[3.5px] h-[8px] bg-[#9CA3AF] rounded-[1px]" />

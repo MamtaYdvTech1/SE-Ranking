@@ -442,7 +442,7 @@ export function SeRankingVisibilityRating({
                 );
               })}
 
-              {/* Vertical Crosshair Line matching Screenshot */}
+              {/* Vertical Crosshair Line */}
               <line
                 x1={activeHoverX}
                 y1={paddingY}
@@ -501,7 +501,7 @@ export function SeRankingVisibilityRating({
               })}
             </svg>
 
-            {/* Highcharts Multi-Series Tooltip Popup matching Screenshot */}
+            {/* Highcharts Multi-Series Tooltip Popup */}
             <div
               className="absolute z-40 bg-white/95 backdrop-blur-xs border border-gray-300 rounded-lg shadow-xl p-3 text-xs min-w-[240px] pointer-events-none transition-all duration-75"
               style={{

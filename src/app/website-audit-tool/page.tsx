@@ -347,7 +347,7 @@ export default function WebsiteAuditToolPage() {
         )}
       </header>
 
-      {/* 3. HERO SECTION - Exact Match to Screenshot */}
+      {/* 3. HERO SECTION */}
       <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/40 via-white to-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
@@ -459,7 +459,7 @@ export default function WebsiteAuditToolPage() {
                   </div>
                 </div>
 
-                {/* Sub Tab buttons matching screenshot */}
+                {/* Sub Tab buttons */}
                 <div className="mt-8 space-y-1.5">
                   {[
                     { id: 'overview', label: 'Audit Overview', icon: FileSearch },
@@ -759,7 +759,7 @@ export default function WebsiteAuditToolPage() {
         </div>
       </section>
 
-      {/* 6. SECTION 4: DEEP DIVE SHOWCASE (3 Alternating Rows matching screenshot) */}
+      {/* 6. SECTION 4: DEEP DIVE SHOWCASE (3 Alternating Rows ) */}
       <section className="py-20 bg-gray-50/60 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
           {/* Row 1 */}

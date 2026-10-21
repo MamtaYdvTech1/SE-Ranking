@@ -390,7 +390,7 @@ function AnalyticsPageContent() {
   const [showSnippetsNotice, setShowSnippetsNotice] = useState(true);
   const [showPotentialNotice, setShowPotentialNotice] = useState(true);
 
-  // Snippets interactive state matching Screenshots 1 & 2
+  // Snippets interactive state
   const [selectedEngine, setSelectedEngine] = useState('India');
   const [isEngineDropdownOpen, setIsEngineDropdownOpen] = useState(false);
   const engineDropdownRef = useRef<HTMLDivElement>(null);
@@ -407,7 +407,7 @@ function AnalyticsPageContent() {
   const [activeSnippetTimeframe, setActiveSnippetTimeframe] = useState<'week' | 'month' | '3month' | '6month'>('week');
   const [hasSnippetsData, setHasSnippetsData] = useState(true);
 
-  // SEO Potential State matching Screenshots 1 & 2
+  // SEO Potential State
   const [conversionRatio, setConversionRatio] = useState('1:100');
   const [avgRevenue, setAvgRevenue] = useState(50);
   const [estimatedTop, setEstimatedTop] = useState(10);
@@ -529,7 +529,7 @@ function AnalyticsPageContent() {
 
       <div>
         {/* ========================================================================= */}
-        {/* TOP DISMISSIBLE NOTICES MATCHING SCREENSHOTS */}
+        {/* TOP DISMISSIBLE NOTICES */}
         {/* ========================================================================= */}
 
         {/* Snippets Blue Notice Banner */}
@@ -587,7 +587,7 @@ function AnalyticsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TOP BREADCRUMB & METADATA BAR (Matching all Screenshots) */}
+        {/* TOP BREADCRUMB & METADATA BAR (Matching all ) */}
         {/* ========================================================================= */}
         <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-gray-500 gap-2">
           <div className="flex items-center gap-2">
@@ -983,7 +983,7 @@ function AnalyticsPageContent() {
               )}
             </div>
           ) : (
-            /* Pixel-Perfect Start Analytics Page matching User Screenshot 1 & 2 & HTML */
+            /* Pixel-Perfect Start Analytics Page & HTML */
             <div className="section-wrapper__content flex-1 flex flex-col justify-between py-8 px-6 min-h-[calc(100vh-140px)]">
               <div className="start-analytics-page max-w-4xl w-full mx-auto my-auto text-center pt-8 pb-12">
                 <div className="start-analytics-page__wrapper space-y-7">
@@ -1168,7 +1168,7 @@ function AnalyticsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: SNIPPETS (1:1 Matching User Screenshots with Rich Diagrams & Previews) */}
+        {/* TAB 2: SNIPPETS */}
         {/* ========================================================================= */}
         {tabParam === 'snippets' && (
           <div className="px-6 py-5 max-w-[1400px] mx-auto space-y-4 animate-in fade-in duration-200">
@@ -1180,14 +1180,14 @@ function AnalyticsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 3: GOOGLE SEARCH CONSOLE DATA (1:1 Matching User Screenshot) */}
+        {/* TAB 3: GOOGLE SEARCH CONSOLE DATA */}
         {/* ========================================================================= */}
         {tabParam === 'gsc' && (
           <div className="animate-in fade-in duration-200">
             {!isGSCConnected ? (
-              /* Initial Connection Screen Matching User Screenshot */
+              /* Initial Connection Screen */
               <div className="max-w-3xl mx-auto px-6 pt-16 pb-20 text-center space-y-6">
-                {/* Vector Illustration matching Screenshot */}
+                {/* Vector Illustration */}
                 <div className="w-72 h-56 mx-auto relative flex items-center justify-center">
                   {/* Modern Illustration Graphic */}
                   <svg viewBox="0 0 320 240" className="w-full h-full" fill="none">
@@ -1249,7 +1249,7 @@ function AnalyticsPageContent() {
                   </p>
                 </div>
 
-                {/* Connect Button Matching Screenshot */}
+                {/* Connect Button */}
                 <div className="pt-2 flex justify-center">
                   <button
                     type="button"
@@ -1394,7 +1394,7 @@ function AnalyticsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: SEO POTENTIAL (100% Authentic Match to SE Ranking Screenshot & DOM) */}
+        {/* TAB 4: SEO POTENTIAL (100% Authentic Match to SE Ranking & DOM) */}
         {/* ========================================================================= */}
         {tabParam === 'potential' && (
           <div className="px-6 py-5 max-w-[1400px] mx-auto animate-in fade-in duration-200">
@@ -1882,7 +1882,7 @@ function AnalyticsPageContent() {
         onNotesCountChange={(cnt) => setNotesCount(cnt)}
       />
 
-      {/* Authentic Google Account Chooser Modal matching Screenshot */}
+      {/* Authentic Google Account Chooser Modal */}
       <GoogleAccountChooserModal
         isOpen={isGoogleChooserOpen}
         onClose={() => setIsGoogleChooserOpen(false)}

@@ -142,7 +142,7 @@ export default function BacklinkGapAnalyzerPage() {
   return (
     <div className="min-h-screen bg-[#F4F6F9] text-[#171B24] font-sans flex flex-col justify-between">
       <div>
-        {/* ===================== TOP BLUE NOTICE BANNER (Matching Screenshot) ===================== */}
+        {/* TOP BLUE NOTICE BANNER */}
         {showTopNotice && (
           <div className="bg-[#EDF5FF] border-b border-[#BBD7FF] px-6 py-2.5 text-xs text-[#1E3A8A] flex items-center justify-between select-none shadow-2xs">
             <div className="flex items-center gap-2.5 flex-1 pr-6 leading-relaxed">
@@ -163,13 +163,13 @@ export default function BacklinkGapAnalyzerPage() {
           </div>
         )}
 
-        {/* ===================== SUB-HEADER BAR (Matching Screenshot) ===================== */}
+        {/* SUB-HEADER BAR */}
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="text-xs font-semibold text-[#8C95A6]">
             Backlink Gap Analyzer
           </div>
 
-          {/* Account Limit Badge (Matching Screenshot: yellow pill with clock icon) */}
+          {/* Account Limit Badge */}
           <div className="bg-[#FFF9E6] border border-[#FFE699] rounded-full px-3 py-1 flex items-center gap-1.5 text-xs font-semibold text-[#92400E] shadow-2xs select-none">
             <svg className="w-3.5 h-3.5 text-[#B78103]" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" />
@@ -181,7 +181,7 @@ export default function BacklinkGapAnalyzerPage() {
           </div>
         </div>
 
-        {/* ===================== MAIN CENTER FORM (Matching Screenshot) ===================== */}
+        {/* MAIN CENTER FORM */}
         <div className="max-w-3xl mx-auto px-4 py-6">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-[#171B24] tracking-tight">
@@ -219,7 +219,7 @@ export default function BacklinkGapAnalyzerPage() {
                     </svg>
                   </button>
 
-                  {/* Dropdown Menu (Exact match to Screenshot 3) */}
+                  {/* Dropdown Menu */}
                   {isMainTypeDropdownOpen && (
                     <div className="absolute left-0 mt-1 w-56 bg-white border border-[#E2E8F0] rounded-[8px] shadow-xl py-1 z-30 text-xs">
                       {TYPE_OPTIONS.map((opt) => (
@@ -359,7 +359,7 @@ export default function BacklinkGapAnalyzerPage() {
               </span>
             </div>
 
-            {/* ===================== SUBSCRIPTION INFO CARD (Matching Screenshot) ===================== */}
+            {/* SUBSCRIPTION INFO CARD */}
             <div className="bg-[#EDF5FF] border border-[#BBD7FF] rounded-[8px] p-3.5 sm:p-4 flex items-start gap-3 my-6 shadow-2xs">
               <div className="w-5 h-5 rounded-full bg-[#1976D2] text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
                 i
@@ -369,7 +369,7 @@ export default function BacklinkGapAnalyzerPage() {
               </div>
             </div>
 
-            {/* ===================== FOOTER SUBMIT ROW (Matching Screenshot) ===================== */}
+            {/* FOOTER SUBMIT ROW */}
             <div className="flex items-center justify-between pt-2">
               <div className="text-xs font-semibold text-[#8C95A6]">
                 Account limit <span className="font-bold text-[#171B24]">1 / 10</span>

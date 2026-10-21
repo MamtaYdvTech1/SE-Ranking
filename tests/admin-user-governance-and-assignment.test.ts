@@ -97,7 +97,7 @@ describe('Admin User Governance & Strict Project Assignment Isolation Suite', ()
   });
 
   it('allows assigned SEO user to access Project A', async () => {
-    // Fake request with auth context of assigned user
+    // Construct request with auth context of assigned user
     const req = new NextRequest('http://localhost:3000/api/projects/' + testProjectA.id, {
       headers: {
         'x-user-id': assignedSeoUser.id,

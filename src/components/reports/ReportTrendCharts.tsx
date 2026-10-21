@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 // ============================================================================
-// 1. SEARCH VISIBILITY TREND CHART (Exact Match to Screenshot 1 & 2)
+// 1. SEARCH VISIBILITY TREND CHART
 // ============================================================================
 export interface SearchVisibilityChartProps {
   domain?: string;
@@ -19,7 +19,7 @@ export function SearchVisibilityChart({
   // 7 dates corresponding to the period Sep 28 - Oct 04
   const dates = ['Sep 28', 'Sep 29', 'Sep 30', 'Oct 01', 'Oct 02', 'Oct 03', 'Oct 04'];
 
-  // Exact data lines matching user screenshot:
+  // Exact data lines :
   // Google USA (#ab5e1a) - stays very high around 96 -> 95
   // Bing USA (#7b38d8) - dips from 95 down to ~78 then recovers to 92
   // Google UK (#ea3966) - dips from 91 down to ~74 then recovers to 90
@@ -177,7 +177,7 @@ export function SearchVisibilityChart({
             </g>
           ))}
 
-          {/* Exact Point Labels matching user screenshot (96, 95 at start; 95, 92 at end) */}
+          {/* Point Labels: (96, 95 at start; 95, 92 at end) */}
           {/* Start Points */}
           <g className="highcharts-data-labels" fontSize="11" fontWeight="bold">
             {/* 96 Google USA */}
@@ -283,7 +283,7 @@ export function SearchVisibilityChart({
         )}
       </div>
 
-      {/* Chart Legend matching user screenshot 1:1 */}
+      {/* Chart Legend :1 */}
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-[#171B24] pt-1">
         {seriesData.map((s) => (
           <div key={s.id} className="flex items-center gap-1.5 cursor-default hover:opacity-80 transition-opacity">
@@ -303,7 +303,7 @@ export function SearchVisibilityChart({
 }
 
 // ============================================================================
-// 2. AVERAGE POSITION TREND CHART (Exact Match to Screenshot 1 & 2)
+// 2. AVERAGE POSITION TREND CHART
 // ============================================================================
 export interface AvgPositionChartProps {
   domain?: string;
@@ -442,7 +442,7 @@ export function AvgPositionChart({
             </g>
           ))}
 
-          {/* Exact Point Labels matching user screenshot:
+          {/* Point Labels:
               Start: 4 (Google USA), 27 (Bing USA)
               End: 4, 11 (Bing USA), 12 (Average for all), 14 (Google UK)
           */}
@@ -571,7 +571,7 @@ export function AvgPositionChart({
 }
 
 // ============================================================================
-// 3. TRAFFIC FORECAST TREND CHART (Exact Match to Screenshot 1 & 2)
+// 3. TRAFFIC FORECAST TREND CHART
 // ============================================================================
 export interface TrafficForecastChartProps {
   domain?: string;
@@ -586,7 +586,7 @@ export function TrafficForecastChart({
 
   const dates = ['Sep 28', 'Sep 29', 'Sep 30', 'Oct 01', 'Oct 02', 'Oct 03', 'Oct 04'];
 
-  // Exact Traffic matching screenshot:
+  // Exact Traffic :
   // Google UK (#ea3966): starts at 4,370,875, stays level, then sharp spike to 9,201,464, and 8,510,900 at end!
   // Bing USA (#7b38d8): starts around 3.8M, spikes to 7.8M, finishes ~6.5M
   // Google USA (#ab5e1a): low steady curve around 1.5M, minor bump to 3.8M at end
@@ -701,7 +701,7 @@ export function TrafficForecastChart({
             </g>
           ))}
 
-          {/* Exact Point Labels matching user screenshot:
+          {/* Point Labels:
               Start: 4,370,875
               Spike peak: 9,201,464
               End: 8,510,900

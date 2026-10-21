@@ -12,7 +12,7 @@ export async function GET() {
     });
 
     if (brands.length === 0) {
-      // Seed default workspace brands matching the screenshot & production data
+      // Seed default workspace brands matching the & production data
       const sampleBrands = [
         {
           name: 'Juice Tokyo',

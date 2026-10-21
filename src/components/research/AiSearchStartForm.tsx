@@ -91,7 +91,7 @@ export function AiSearchStartForm({
           Start with
         </h2>
 
-        {/* Toggle Pills: Google Search vs AI Search matching Screenshot 1 & 2 */}
+        {/* Toggle Pills: Google Search vs AI Search */}
         <div className="inline-flex p-1 bg-[#EEF2F6] border border-gray-200/80 rounded-lg shadow-2xs">
           <button
             type="button"
@@ -148,7 +148,7 @@ export function AiSearchStartForm({
           </button>
         </div>
 
-        {/* Subtitle text matching Screenshot 1 & 2 */}
+        {/* Subtitle text */}
         <p className="text-xs text-gray-500 max-w-[490px] mx-auto mt-3 leading-relaxed">
           {searchType === 'ai-search'
             ? 'Monitor domain citations and brand mentions in AI answers, and identify their sources. Use these insights to improve visibility and stay ahead of competitors.'

@@ -161,7 +161,7 @@ export function ReportBugModal({ isOpen, onClose }: ReportBugModalProps) {
         role="dialog"
         aria-modal="true"
       >
-        {/* Header matching Screenshot: "SE Ranking support request" with X close */}
+        {/* Header : "SE Ranking support request" with X close */}
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-[17px] font-semibold text-[#1E2532]">
             SE Ranking support request
@@ -176,12 +176,12 @@ export function ReportBugModal({ isOpen, onClose }: ReportBugModalProps) {
           </button>
         </div>
 
-        {/* Subtitle / Description matching Screenshot */}
+        {/* Subtitle / Description */}
         <p className="text-[12px] text-[#475569] leading-relaxed mb-3.5 font-normal">
           Noticed incorrect rankings, system or translation errors? Report them here. Your feedback will help us a lot!
         </p>
 
-        {/* Form Fields matching Screenshot */}
+        {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-[12px] font-normal text-[#232E3D] mb-1">
@@ -237,7 +237,7 @@ export function ReportBugModal({ isOpen, onClose }: ReportBugModalProps) {
             />
           </div>
 
-          {/* Dotted Blue File Upload Box matching Screenshot */}
+          {/* Dotted Blue File Upload Box */}
           <div
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
@@ -254,7 +254,7 @@ export function ReportBugModal({ isOpen, onClose }: ReportBugModalProps) {
               onChange={handleFileChange}
               className="hidden"
             />
-            {/* Blue Cloud Upload SVG matching Screenshot */}
+            {/* Blue Cloud Upload SVG */}
             <svg
               className="w-4 h-4 text-[#7C3AED] fill-[#7C3AED] shrink-0"
               viewBox="0 0 24 24"
@@ -292,7 +292,7 @@ export function ReportBugModal({ isOpen, onClose }: ReportBugModalProps) {
             </p>
           )}
 
-          {/* Action Buttons matching Screenshot: CANCEL and SEND */}
+          {/* Action Buttons : CANCEL and SEND */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"

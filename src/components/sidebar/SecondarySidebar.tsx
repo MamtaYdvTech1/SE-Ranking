@@ -348,7 +348,7 @@ function SecondarySidebarInner() {
     } catch {}
   };
 
-  // Groups state matching user screenshot
+  // Groups state
   const [projectGroups, setProjectGroups] = useState<Array<{ id: string; name: string; projectIds: string[] }>>([]);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
@@ -997,7 +997,7 @@ function SecondarySidebarInner() {
               : 'text-gray-800 hover:bg-gray-50'
           }`}
         >
-          {/* Active indicator bar matching screenshot */}
+          {/* Active indicator bar */}
           {isSelected && (
             <span className="absolute left-1 top-1.5 bottom-1.5 w-[3.5px] bg-[#7C3AED] rounded-full" />
           )}
@@ -1213,7 +1213,7 @@ function SecondarySidebarInner() {
     <>
       <aside className="w-[245px] bg-[#222D3B] text-[#E2E8F0] flex flex-col justify-between border-r border-[#2C3848] select-none shrink-0 text-[14px] z-30 relative overflow-visible">
         <div className="flex flex-col h-full">
-          {/* Header row matching screenshot */}
+          {/* Header row */}
           <div className="h-11 px-3.5 flex items-center justify-between border-b border-[#2C3848] text-white bg-[#222D3B]">
             <span className="text-[15px] font-bold text-white tracking-wide">
               {getSectionTitle()}
@@ -1237,10 +1237,10 @@ function SecondarySidebarInner() {
             </button>
           </div>
 
-          {/* Project Selector Card (Visible ONLY on Projects mode matching screenshot) */}
+          {/* Project Selector Card (Visible ONLY on Projects mode ) */}
           {effectiveSection === 'projects' && (
             <div className="p-2.5 border-b border-[#2C3848] space-y-2">
-              {/* White + CREATE PROJECT Button matching exact user screenshot */}
+              {/* White + CREATE PROJECT Button */}
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(true)}
@@ -1785,7 +1785,7 @@ function SecondarySidebarInner() {
                 </div>
               </div>
             ) : effectiveSection === 'backlinks' ? (
-              /* Backlinks Mode Menu - Exactly matching User Screenshot */
+              /* Backlinks Mode Menu - Exactly */
               <div className="space-y-1 py-1">
                 <Link
                   href="/backlinks"
@@ -2069,7 +2069,7 @@ function SecondarySidebarInner() {
                 </Link>
               </div>
             ) : effectiveSection === 'local-marketing' ? (
-              /* Local Marketing Mode Menu (Exact match to Screenshots 1, 2, 5, 6) */
+              /* Local Marketing Mode Menu */
               <>
                 <Link
                   href="/local-marketing?tab=all-locations"
@@ -2192,7 +2192,7 @@ function SecondarySidebarInner() {
                 </div>
               </>
             ) : effectiveSection === 'agency' ? (
-              /* Agency Pack Menu (Exact match to SE Ranking White Label screenshot) */
+              /* Agency Pack Menu (Exact match to SE Ranking White Label ) */
               (() => {
                 const isWhiteLabelHtml = pathname.includes('whitelabel');
                 const isPersonalDomainActive = currentTab === 'personal-domain-names' || currentHash.includes('personal-domain-names');
@@ -2345,9 +2345,9 @@ function SecondarySidebarInner() {
             );
           })()
         ) : effectiveSection === 'projects' ? (
-              /* Projects Mode Menu (Exact 1:1 match to uploaded SE Ranking screenshot) */
+              /* Projects Mode Menu (Exact 1:1 match to uploaded SE Ranking ) */
               <div className="space-y-0.5">
-                {/* 1. All Projects (Exact match to user screenshot) */}
+                {/* 1. All Projects (Exact match to user ) */}
                 <Link
                   href="/projects"
                   className={`group flex items-center justify-between px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 cursor-pointer ${
@@ -2881,7 +2881,7 @@ function SecondarySidebarInner() {
                 </div>
               </div>
             ) : effectiveSection === 'audit' ? (
-              /* Audit Submenu (Exact 1:1 match to screenshot) */
+              /* Audit Submenu (Exact 1:1 match to ) */
               <div className="space-y-0.5">
                 {/* 1. Website Audit Dropdown */}
                 <div>
@@ -3384,7 +3384,7 @@ function SecondarySidebarInner() {
                 </div>
               </div>
             ) : effectiveSection === 'ai-search' ? (
-              /* AI Search Secondary Sidebar matching user screenshot media_1791177820948.png 1:1 */
+              /* AI Search Secondary Sidebar media_1791177820948.png 1:1 */
               <div className="space-y-4">
                 {/* Section 1: Projects */}
                 <div>
@@ -3464,9 +3464,9 @@ function SecondarySidebarInner() {
                 </div>
               </div>
             ) : effectiveSection === 'research' ? (
-              /* Research Mode Menu (Exact 1:1 match to uploaded Research screenshot) */
+              /* Research Mode Menu (Exact 1:1 match to uploaded Research ) */
               <div className="space-y-0.5">
-                {/* 1. Competitive Research (Dropdown matching Screenshot 1, 2 & 3) */}
+                {/* 1. Competitive Research (Dropdown , 2 & 3) */}
                 <div>
                   <div
                     onClick={(e) => toggleSection('competitive_research', e)}
@@ -3495,14 +3495,14 @@ function SecondarySidebarInner() {
                   </div>
                   {expandedSections.competitive_research && (
                     <div className="space-y-0.5 mt-0.5 py-0.5 text-[13px] animate-in fade-in duration-150">
-                      {/* Google Search subitem matching Screenshot 1 */}
+                      {/* Google Search subitem */}
                       <SubItem
                         href="/research/competitive-research"
                         label="Google Search"
                         isActive={pathname === '/research' || pathname === '/research/competitive-research'}
                       />
 
-                      {/* AI Search subitem matching Screenshot 2 */}
+                      {/* AI Search subitem */}
                       <SubItem
                         href="/research/ai-search"
                         label="AI Search"
@@ -3514,7 +3514,7 @@ function SecondarySidebarInner() {
                         }
                       />
 
-                      {/* Database Expansion subitem matching Screenshot 3 */}
+                      {/* Database Expansion subitem */}
                       <SubItem
                         href="/research/database-expansion"
                         label="Database Expansion"
@@ -3701,7 +3701,7 @@ function SecondarySidebarInner() {
                   )}
                 </div>
 
-                {/* 7. Index Status Checker (Dropdown - Active highlight matching screenshot) */}
+                {/* 7. Index Status Checker (Dropdown - Active highlight ) */}
                 <div>
                   <div
                     onClick={(e) => toggleSection('index_status', e)}

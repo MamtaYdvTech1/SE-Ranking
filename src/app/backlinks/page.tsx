@@ -97,7 +97,7 @@ interface IpItem {
 }
 
 // ==========================================
-// DATASETS MATCHING EXACT SCREENSHOTS
+// DATASETS
 // ==========================================
 
 // OVERVIEW TAB: Overall History Chart Data (12 Jul - 06 Oct)
@@ -601,7 +601,7 @@ function BacklinkCheckerContent() {
   return (
     <div className="flex-1 overflow-y-auto bg-[#F4F6F9] min-h-[calc(100vh-60px)] text-gray-900 select-none pb-16 flex flex-col justify-between relative">
       <div>
-        {/* Top Dismissible Blue Notice Banner matching Screenshots */}
+        {/* Top Dismissible Blue Notice Banner */}
         {showNoticeBanner && (
           <div className="bg-[#EBF3FF] border-b border-[#CBE0FF] px-4 sm:px-6 py-2 flex items-center justify-between text-xs text-[#1E3A8A]">
             <div className="flex items-center gap-2">
@@ -623,7 +623,7 @@ function BacklinkCheckerContent() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4">
-          {/* Breadcrumbs & Limits Row matching Screenshots */}
+          {/* Breadcrumbs & Limits Row */}
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center gap-1.5">
               <ProjectFavicon
@@ -659,7 +659,7 @@ function BacklinkCheckerContent() {
             </div>
           </div>
 
-          {/* Page Title & Actions Row matching Screenshot */}
+          {/* Page Title & Actions Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2.5">
@@ -696,7 +696,7 @@ function BacklinkCheckerContent() {
             </div>
           </div>
 
-          {/* Subtabs Bar matching Screenshots */}
+          {/* Subtabs Bar */}
           <div className="flex items-center gap-1 border-b border-gray-200 bg-white px-2 pt-1 rounded-t-xl overflow-x-auto text-xs font-semibold">
             {[
               { id: 'overview', label: 'Overview' },
@@ -722,7 +722,7 @@ function BacklinkCheckerContent() {
             ))}
           </div>
 
-          {/* Dismissible Info Box matching Screenshots (shown on non-overview tabs or as needed) */}
+          {/* Dismissible Info Box (shown on non-overview tabs or as needed) */}
           {activeSubTab !== 'overview' && showInfoBanner && (
             <div className="p-3.5 bg-white border border-[#7C3AED]/20 rounded-xl relative text-xs text-gray-700 flex items-start gap-3 shadow-2xs">
               <div className="w-5 h-5 rounded-full bg-[#7C3AED]/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -747,7 +747,7 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 1: OVERVIEW (MATCHING REAL SCREENSHOTS & HIGHCHARTS DUMP) */}
+          {/* TAB 1: OVERVIEW (MATCHING REAL & HIGHCHARTS DUMP) */}
           {/* ======================================================== */}
           {activeSubTab === 'overview' && (
             <div className="space-y-4 animate-in fade-in duration-200">
@@ -1082,11 +1082,11 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 2: BACKLINKS (MATCHING SCREENSHOT 2) */}
+          {/* TAB 2: BACKLINKS */}
           {/* ======================================================== */}
           {activeSubTab === 'backlinks' && (
             <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden animate-in fade-in duration-200">
-              {/* Header Filter Row matching Screenshot 2 */}
+              {/* Header Filter Row */}
               <div className="p-3.5 border-b border-gray-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-bold text-gray-900">
@@ -1104,7 +1104,7 @@ function BacklinkCheckerContent() {
                   </div>
                 </div>
 
-                {/* Filter row matching Screenshot 2 */}
+                {/* Filter row */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <div className="flex items-center gap-1">
@@ -1191,7 +1191,7 @@ function BacklinkCheckerContent() {
                 </div>
               </div>
 
-              {/* Table matching Screenshot 2 */}
+              {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs divide-y divide-gray-200">
                   <thead className="bg-[#FAFBFD] font-bold text-gray-600 uppercase text-[10px] tracking-wider">
@@ -1295,11 +1295,11 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 3: REFERRING DOMAINS (MATCHING SCREENSHOT 3) */}
+          {/* TAB 3: REFERRING DOMAINS */}
           {/* ======================================================== */}
           {activeSubTab === 'referring-domains' && (
             <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden animate-in fade-in duration-200">
-              {/* Header Filter Row matching Screenshot 3 */}
+              {/* Header Filter Row */}
               <div className="p-3.5 border-b border-gray-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-bold text-gray-900">
@@ -1317,7 +1317,7 @@ function BacklinkCheckerContent() {
                   </div>
                 </div>
 
-                {/* Filter row matching Screenshot 3 */}
+                {/* Filter row */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <div className="flex items-center gap-1">
@@ -1372,7 +1372,7 @@ function BacklinkCheckerContent() {
                 </div>
               </div>
 
-              {/* Table matching Screenshot 3 */}
+              {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs divide-y divide-gray-200">
                   <thead className="bg-[#FAFBFD] font-bold text-gray-600 uppercase text-[10px] tracking-wider">
@@ -1436,7 +1436,7 @@ function BacklinkCheckerContent() {
                 </table>
               </div>
 
-              {/* Pagination matching Screenshot 3 */}
+              {/* Pagination */}
               <div className="p-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <button className="px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer">
@@ -1468,7 +1468,7 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 4: ANCHOR TEXTS (MATCHING SCREENSHOT 1) */}
+          {/* TAB 4: ANCHOR TEXTS */}
           {/* ======================================================== */}
           {activeSubTab === 'anchor-texts' && (
             <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden animate-in fade-in duration-200">
@@ -1624,7 +1624,7 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 5: PAGES (MATCHING SCREENSHOT 4) */}
+          {/* TAB 5: PAGES */}
           {/* ======================================================== */}
           {activeSubTab === 'pages' && (
             <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden animate-in fade-in duration-200">
@@ -1740,7 +1740,7 @@ function BacklinkCheckerContent() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 6: IPs (MATCHING SCREENSHOT 3) */}
+          {/* TAB 6: IPs */}
           {/* ======================================================== */}
           {activeSubTab === 'ips' && (
             <div className="bg-white border border-gray-200 rounded-xl shadow-2xs overflow-hidden animate-in fade-in duration-200">

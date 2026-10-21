@@ -237,7 +237,7 @@ export function ExportDataModal({
       }}
     >
       <div className="bg-white rounded-lg max-w-[500px] w-full p-6 shadow-2xl relative space-y-5 animate-in zoom-in-95 duration-150 border border-gray-100">
-        {/* Modal Header matching Screenshot 2 */}
+        {/* Modal Header */}
         <div className="flex items-center justify-between pb-1">
           <h2 className="text-[17px] font-bold text-[#1E293B]">Export data</h2>
           <button
@@ -250,7 +250,7 @@ export function ExportDataModal({
           </button>
         </div>
 
-        {/* Format Selection Section matching Screenshot 2 */}
+        {/* Format Selection Section */}
         <div className="space-y-2.5">
           <div className="text-xs font-semibold text-[#1E293B]">Format:</div>
 
@@ -305,7 +305,7 @@ export function ExportDataModal({
                   : 'bg-white text-[#1E293B] border-[#CBD5E1] hover:border-gray-400'
               }`}
             >
-              {/* Excel Green Icon matching Screenshot 2 */}
+              {/* Excel Green Icon */}
               <div className="mb-2">
                 <div
                   className={`w-7 h-7 rounded flex items-center justify-center font-bold text-xs shadow-2xs ${
@@ -334,7 +334,7 @@ export function ExportDataModal({
                   : 'bg-white text-[#1E293B] border-[#CBD5E1] hover:border-gray-400'
               }`}
             >
-              {/* CSV Blue Icon matching Screenshot 2 */}
+              {/* CSV Blue Icon */}
               <div className="mb-2">
                 <div
                   className={`w-7 h-7 rounded flex items-center justify-center font-bold text-[9px] shadow-2xs tracking-tighter ${
@@ -356,7 +356,7 @@ export function ExportDataModal({
           </div>
         </div>
 
-        {/* Modal Footer matching Screenshot 2 */}
+        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-2.5 pt-3">
           <button
             type="button"

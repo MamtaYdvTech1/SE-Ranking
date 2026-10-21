@@ -9,6 +9,7 @@ const ClientSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   notes: z.string().optional(),
+  projectIds: z.array(z.string()).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -36,6 +37,16 @@ export async function GET(req: NextRequest) {
   const clients = await prisma.client.findMany({
     where: whereClause,
     include: {
+      projects: {
+        where: { deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          domain: true,
+          status: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
       _count: {
         select: {
           projects: {
@@ -56,6 +67,12 @@ export async function GET(req: NextRequest) {
     status: c.status,
     notes: c.notes || "",
     projectsCount: c._count.projects,
+    projects: c.projects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      domain: p.domain,
+      status: p.status,
+    })),
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   }));
@@ -82,7 +99,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, company, email, phone, notes } = parsed.data;
+    const { name, company, email, phone, notes, projectIds } = parsed.data;
 
     const client = await prisma.client.create({
       data: {
@@ -95,13 +112,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (projectIds && projectIds.length > 0) {
+      await prisma.project.updateMany({
+        where: { id: { in: projectIds } },
+        data: { clientId: client.id },
+      });
+    }
+
     await createAuditLog({
       actorId: adminCheck.auth.user.id,
       actorEmail: adminCheck.auth.user.email,
       action: "CLIENT_CREATE",
       entity: "Client",
       entityId: client.id,
-      afterJson: { name, company, email },
+      afterJson: { name, company, email, projectIds },
       req,
     });
 

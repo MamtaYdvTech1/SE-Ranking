@@ -212,7 +212,7 @@ export default function AcademyPage() {
         </div>
       </header>
 
-      {/* 3. HERO SECTION - Exact Match to Screenshot */}
+      {/* 3. HERO SECTION */}
       <section className="pt-16 pb-12 bg-gradient-to-b from-blue-50/50 via-white to-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#0f172a] tracking-tight leading-[1.12]">
@@ -232,7 +232,7 @@ export default function AcademyPage() {
             </a>
           </div>
 
-          {/* 3 Stat/Benefit Cards matching screenshot */}
+          {/* 3 Stat/Benefit Cards */}
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
             {/* Card 1: Free */}
             <div className="p-6 rounded-2xl bg-[#E0F2FE] border border-blue-200">
@@ -262,7 +262,7 @@ export default function AcademyPage() {
             </div>
           </div>
 
-          {/* Student Photo Banner matching screenshot */}
+          {/* Student Photo Banner */}
           <div className="mt-10 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/60 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
             <div className="flex items-center gap-3">
               <span className="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-black uppercase">

@@ -148,7 +148,7 @@ function CompetitorsPageContent() {
     }
   }, [addedCompetitors, domain, hasLoadedCompetitorsStorage]);
 
-  // Dynamic Competitor Discovery Selection State (matching user screenshots)
+  // Dynamic Competitor Discovery Selection State ()
   const [isSelectionViewOpen, setIsSelectionViewOpen] = useState(false);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [candidateList, setCandidateList] = useState<CandidateCompetitor[]>(DEFAULT_CANDIDATES);
@@ -156,7 +156,7 @@ function CompetitorsPageContent() {
   const [manualDomain, setManualDomain] = useState('');
 
 
-  // SERP Competitors Specific States matching Screenshot
+  // SERP Competitors Specific States
   const [serpGroup, setSerpGroup] = useState('All groups');
   const [isSerpGroupOpen, setIsSerpGroupOpen] = useState(false);
   const [serpKeyword, setSerpKeyword] = useState('');
@@ -171,7 +171,7 @@ function CompetitorsPageContent() {
   const [isAdvancedSerpOpen, setIsAdvancedSerpOpen] = useState(false);
   const [hasSerpData, setHasSerpData] = useState(false);
 
-  // Share of Voice Specific States matching User Screenshot
+  // Share of Voice Specific States
   const [sovSearchEngine, setSovSearchEngine] = useState('All search engines');
   const [isSovEngineOpen, setIsSovEngineOpen] = useState(false);
   const [sovKeywordSelection, setSovKeywordSelection] = useState('ALL KEYWORDS');
@@ -179,7 +179,7 @@ function CompetitorsPageContent() {
   const [sovDomainSearch, setSovDomainSearch] = useState('');
   const [hasSovData, setHasSovData] = useState(false);
 
-  // Visibility Rating Specific States matching User Screenshots 1 & 2
+  // Visibility Rating Specific States
   const [visSearchEngine, setVisSearchEngine] = useState('All search engines');
   const [isVisEngineOpen, setIsVisEngineOpen] = useState(false);
   const [activeVisMetric, setActiveVisMetric] = useState<'visibility' | 'forecast' | 'top10' | 'distribution'>('visibility');
@@ -574,7 +574,7 @@ function CompetitorsPageContent() {
           <div>
             {isSelectionViewOpen ? (
               /* =================================================================== */
-              /* DYNAMIC CANDIDATE SELECTION VIEW (1:1 Matching Screenshot 4) */
+              /* DYNAMIC CANDIDATE SELECTION VIEW */
               /* =================================================================== */
               <div className="max-w-[700px] mx-auto px-4 pt-10 pb-20 space-y-3 animate-in fade-in zoom-in-98 duration-200">
                 {/* Header row with Selected count and column titles */}
@@ -595,7 +595,7 @@ function CompetitorsPageContent() {
                   </div>
                 </div>
 
-                {/* Candidate list cards matching Screenshot 4 */}
+                {/* Candidate list cards */}
                 <div className="space-y-2">
                   {candidateList.length === 0 && (
                     <div className="p-6 text-center text-xs text-gray-500 bg-white border border-dashed border-gray-200 rounded-md">
@@ -717,7 +717,7 @@ function CompetitorsPageContent() {
               </div>
             ) : addedCompetitors.length === 0 ? (
               /* =================================================================== */
-              /* EMPTY HERO STATE (1:1 Matching Screenshot 3) */
+              /* EMPTY HERO STATE */
               /* =================================================================== */
               <div className="max-w-4xl mx-auto px-6 pt-12 pb-16 space-y-10 animate-in fade-in duration-200">
                 <div className="text-center space-y-5">
@@ -943,7 +943,7 @@ function CompetitorsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: SERP COMPETITORS (1:1 Matching User Screenshot) */}
+        {/* TAB 2: SERP COMPETITORS */}
         {/* ========================================================================= */}
         {tabParam === 'serp' && (
           <SeRankingSerpCompetitors
@@ -960,7 +960,7 @@ function CompetitorsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 3: SHARE OF VOICE (1:1 Matching User Screenshot) */}
+        {/* TAB 3: SHARE OF VOICE */}
         {/* ========================================================================= */}
         {tabParam === 'sov' && (
           <SeRankingShareOfVoice
@@ -976,7 +976,7 @@ function CompetitorsPageContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: VISIBILITY RATING (1:1 Matching User Screenshots & Highcharts Spline) */}
+        {/* TAB 4: VISIBILITY RATING */}
         {/* ========================================================================= */}
         {tabParam === 'visibility' && (
           <SeRankingVisibilityRating

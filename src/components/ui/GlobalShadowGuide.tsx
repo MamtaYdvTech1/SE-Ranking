@@ -71,7 +71,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         className="fixed inset-0 bg-[#0B132B]/55 backdrop-blur-[1px] transition-opacity duration-200"
       />
 
-      {/* ================= STEP 1 OF 6: GRAPHS (Screenshot 1) ================= */}
+      {/* STEP 1 OF 6: GRAPHS */}
       {currentStep === 0 && (
         <div className="fixed inset-0 flex flex-col items-center justify-center p-4">
           <div className="relative z-10 w-[490px] max-w-[95vw] bg-[#27324B] rounded-xl shadow-2xl p-6 text-white border border-white/10 animate-in fade-in zoom-in-95 duration-150">
@@ -110,7 +110,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         </div>
       )}
 
-      {/* ================= STEP 2 OF 6: ADDITIONAL FEATURES (Screenshot 2) ================= */}
+      {/* STEP 2 OF 6: ADDITIONAL FEATURES */}
       {currentStep === 1 && (
         <div className="fixed inset-0 flex flex-col items-center justify-center p-4">
           {/* Tour Card */}
@@ -154,7 +154,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
             </div>
           </div>
 
-          {/* Spotlight Highlighted Project Row matching Screenshot 2 */}
+          {/* Spotlight Highlighted Project Row */}
           <div className="relative z-10 w-full max-w-[1280px] bg-white rounded-lg shadow-[0_0_0_3px_#7C3AED,0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
             <div className="flex items-center text-xs divide-x divide-gray-100 py-2.5 px-3">
               <div className="flex items-center gap-2 pr-4 min-w-[280px]">
@@ -166,7 +166,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
                 </div>
                 <span className="font-semibold text-gray-900">workcomposer.com</span>
                 <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                {/* Spotlight action buttons visible on hover matching Screenshot 2 */}
+                {/* Spotlight action buttons visible on hover */}
                 <div className="flex items-center gap-1 ml-auto">
                   <div className="w-[22px] h-[22px] rounded-[3px] bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
                     <BarChart2 className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         </div>
       )}
 
-      {/* ================= STEP 3 OF 6: BRIEF STATISTICS (Screenshot 3) ================= */}
+      {/* STEP 3 OF 6: BRIEF STATISTICS */}
       {currentStep === 2 && (
         <div className="fixed inset-0 flex flex-col items-center justify-center p-4">
           {/* Tour Card */}
@@ -231,7 +231,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
             </div>
           </div>
 
-          {/* Spotlight Highlighted Expanded Project Row matching Screenshot 3 */}
+          {/* Spotlight Highlighted Expanded Project Row */}
           <div className="relative z-10 w-full max-w-[1280px] bg-white rounded-lg shadow-[0_0_0_3px_#7C3AED,0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden divide-y divide-gray-100 text-xs">
             {/* Main row */}
             <div className="flex items-center divide-x divide-gray-100 py-2.5 px-3 bg-white">
@@ -293,7 +293,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         </div>
       )}
 
-      {/* ================= STEP 4 OF 6: COLUMNS (Screenshot 4) ================= */}
+      {/* STEP 4 OF 6: COLUMNS */}
       {currentStep === 3 && (
         <div className="fixed inset-0 flex items-center justify-end pr-12 lg:pr-24">
           <div className="flex items-center gap-4">
@@ -341,7 +341,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
               </div>
             </div>
 
-            {/* Spotlight Highlighted Columns Buttons matching Screenshot 4 */}
+            {/* Spotlight Highlighted Columns Buttons */}
             <div className="relative z-10 flex items-center gap-2 bg-white p-2.5 rounded-lg shadow-[0_0_0_4px_white,0_20px_45px_rgba(0,0,0,0.6)]">
               <button className="px-2.5 py-1.5 border border-gray-300 rounded text-gray-700 bg-white flex items-center gap-1.5 text-xs font-bold shadow-2xs">
                 <Copy className="w-3.5 h-3.5 text-gray-600" />
@@ -356,11 +356,11 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         </div>
       )}
 
-      {/* ================= STEP 5 OF 6: MANAGING PROJECTS (Screenshot 5) ================= */}
+      {/* STEP 5 OF 6: MANAGING PROJECTS */}
       {currentStep === 4 && (
         <div className="fixed inset-0 flex items-center justify-start pl-12 lg:pl-28">
           <div className="flex items-center gap-4">
-            {/* Spotlight Highlighted Batch Actions Bar matching Screenshot 5 */}
+            {/* Spotlight Highlighted Batch Actions Bar */}
             <div className="relative z-10 flex items-center gap-3 bg-white p-3 rounded-lg shadow-[0_0_0_4px_white,0_20px_45px_rgba(0,0,0,0.6)]">
               <button className="px-2.5 py-1.5 border border-gray-300 rounded bg-[#4A5568] text-white flex items-center gap-1 shadow-2xs">
                 <Folder className="w-3.5 h-3.5 text-white" />
@@ -427,7 +427,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
         </div>
       )}
 
-      {/* ================= STEP 6 OF 6: USERS (Screenshot 6) ================= */}
+      {/* STEP 6 OF 6: USERS */}
       {currentStep === 5 && (
         <div className="fixed inset-0 flex items-start justify-end pt-12 pr-6 lg:pr-14">
           <div className="flex items-start gap-4">
@@ -471,7 +471,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
               </div>
             </div>
 
-            {/* Spotlight Highlighted User Profile Dropdown matching Screenshot 6 */}
+            {/* Spotlight Highlighted User Profile Dropdown */}
             <div className="relative z-10 w-64 bg-white rounded-lg shadow-[0_0_0_4px_white,0_25px_50px_rgba(0,0,0,0.5)] border border-gray-200 py-3 text-xs text-gray-800 select-none">
               <div className="px-4 pb-2.5 mb-1.5 border-b border-gray-100">
                 <div className="font-semibold text-gray-900 text-sm">bitti ydv</div>
@@ -483,7 +483,7 @@ export function GlobalShadowGuide({ isOpen, onClose }: GlobalShadowGuideProps) {
                   <span>Settings</span>
                 </div>
 
-                {/* Highlighted Users item matching Screenshot 6 */}
+                {/* Highlighted Users item */}
                 <div className="flex items-center gap-3 px-3 py-2 bg-[#F5F3FF] text-[#7C3AED] font-bold rounded-lg border-2 border-[#7C3AED] shadow-xs">
                   <Users className="w-4 h-4 text-[#7C3AED]" />
                   <span>Users</span>

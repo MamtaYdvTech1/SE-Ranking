@@ -361,7 +361,7 @@ export default function WebsiteRankTrackerPage() {
           </button>
         </div>
 
-        {/* Live Mini Rank Trend Preview Widget from Screenshot */}
+        {/* Live Mini Rank Trend Preview Widget from */}
         <div className="max-w-xl mx-auto mb-10 bg-white rounded-2xl p-4 shadow-xl border border-gray-200">
           <div className="flex items-center justify-between text-xs font-bold text-gray-700 mb-2">
             <span className="flex items-center gap-1.5">
@@ -380,7 +380,7 @@ export default function WebsiteRankTrackerPage() {
           </div>
         </div>
 
-        {/* Quick Check Form matching reference screenshot */}
+        {/* Quick Check Form matching reference */}
         <div className="bg-[#F8FAFC] rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xl max-w-4xl mx-auto mb-16 text-left">
           <div className="flex items-center gap-4 mb-4">
             <button

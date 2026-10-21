@@ -103,7 +103,7 @@ function KeywordResearchContent() {
     return (
       <div className="flex-1 overflow-y-auto bg-white min-h-[calc(100vh-80px)] text-gray-900 select-none flex flex-col justify-between">
         <div className="p-4 sm:p-6 w-full space-y-3.5 max-w-[1400px] mx-auto">
-          {/* Dismissible Notice Banner matching Screenshot 6 */}
+          {/* Dismissible Notice Banner */}
           <div className="p-3.5 sm:p-4 bg-[#F0F6FD] border border-[#D5E6F7] rounded-lg relative text-[12px] text-gray-700 leading-relaxed">
             <div className="font-semibold text-gray-900 mb-1 flex items-center gap-1.5">
               <span className="w-3.5 h-3.5 rounded-full bg-[#7C3AED] text-white text-[9px] flex items-center justify-center font-bold">i</span>
@@ -125,7 +125,7 @@ function KeywordResearchContent() {
             </p>
           </div>
 
-          {/* Header matching Screenshot 6 */}
+          {/* Header */}
           <div className="flex items-center justify-between text-xs pt-1">
             <div className="text-[13px] text-[#8C98A9] font-normal flex items-center gap-1.5">
               <Link href="/research/keyword-research" className="hover:text-[#7C3AED]">
@@ -154,7 +154,7 @@ function KeywordResearchContent() {
             </div>
           </div>
 
-          {/* Controls matching Screenshot 6 */}
+          {/* Controls */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white max-w-sm flex-1 min-w-[260px] focus-within:border-[#7C3AED]">
               <input
@@ -192,7 +192,7 @@ function KeywordResearchContent() {
             </Link>
           </div>
 
-          {/* Diagonal Striped Background Area matching Screenshot 6 */}
+          {/* Diagonal Striped Background Area */}
           <div
             className="relative rounded-lg border border-gray-200 overflow-hidden min-h-[500px] flex items-center justify-center p-6 text-center"
             style={{
@@ -275,7 +275,7 @@ function KeywordResearchContent() {
 
 
 
-      {/* Subheader questions & feedback row matching screenshot */}
+      {/* Subheader questions & feedback row */}
       <div className="max-w-[1100px] mx-auto px-4 pt-3 flex items-center justify-end gap-6 text-xs text-[#7C3AED]">
         <button type="button" className="flex items-center gap-1 hover:underline cursor-pointer font-medium text-[#7C3AED]">
           <span>Have any questions?</span>
@@ -288,7 +288,7 @@ function KeywordResearchContent() {
 
       <div className="max-w-[1100px] mx-auto px-4 py-6 space-y-12">
         {/* ========================================================================= */}
-        {/* 1. TOP INTERACTIVE SEARCH BLOCK matching user screenshot */}
+        {/* 1. TOP INTERACTIVE SEARCH BLOCK */}
         {/* ========================================================================= */}
         <div className="text-center pt-2">
           <div className="mb-6">
@@ -413,7 +413,7 @@ function KeywordResearchContent() {
               Investigate keyword parameters down to the core
             </h2>
 
-            {/* Carousel Navigation: 1-2 of 4 matching user screenshot */}
+            {/* Carousel Navigation: 1-2 of 4 */}
             <div className="flex items-center gap-2.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">
                 {carousel1Page === 0 ? '1-2 of 4' : '3-4 of 4'}
@@ -441,11 +441,11 @@ function KeywordResearchContent() {
             </div>
           </div>
 
-          {/* Carousel 1 Cards: Exactly 2 visible per slide matching user screenshot */}
+          {/* Carousel 1 Cards: Exactly 2 visible per slide */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
             {carousel1Page === 0 ? (
               <>
-                {/* Card 1: Difficulty score (Exact visual diagram from screenshot) */}
+                {/* Card 1: Difficulty score (Exact visual diagram from ) */}
                 <div className="bg-white rounded-2xl border border-gray-200/90 p-6 hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="mb-5">
                     {/* Visual Diagram: Circular Difficulty Gauge */}
@@ -490,7 +490,7 @@ function KeywordResearchContent() {
                   </div>
                 </div>
 
-                {/* Card 2: Search volume (Exact visual diagram from screenshot) */}
+                {/* Card 2: Search volume (Exact visual diagram from ) */}
                 <div className="bg-white rounded-2xl border border-gray-200/90 p-6 hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="mb-5">
                     {/* Visual Diagram: Monthly Search Volume Bars */}
@@ -615,7 +615,7 @@ function KeywordResearchContent() {
               Get the most out of keywords with our platform
             </h2>
 
-            {/* Carousel 2 Navigation: 1-2 of 4 matching user screenshot */}
+            {/* Carousel 2 Navigation: 1-2 of 4 */}
             <div className="flex items-center gap-2.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">
                 {carousel2Page === 0 ? '1-2 of 4' : '3-4 of 4'}
@@ -643,11 +643,11 @@ function KeywordResearchContent() {
             </div>
           </div>
 
-          {/* Carousel 2 Cards: Exactly 2 visible per slide matching user screenshot */}
+          {/* Carousel 2 Cards: Exactly 2 visible per slide */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
             {carousel2Page === 0 ? (
               <>
-                {/* Card 1: Bulk keyword analysis (Exact visual diagram from screenshot) */}
+                {/* Card 1: Bulk keyword analysis (Exact visual diagram from ) */}
                 <div className="bg-white rounded-2xl border border-gray-200/90 p-6 hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="mb-5">
                     {/* Visual Diagram: Table with colored difficulty circles */}
@@ -688,7 +688,7 @@ function KeywordResearchContent() {
                   </div>
                 </div>
 
-                {/* Card 2: Keyword Manager (Exact visual diagram from screenshot) */}
+                {/* Card 2: Keyword Manager (Exact visual diagram from ) */}
                 <div className="bg-white rounded-2xl border border-gray-200/90 p-6 hover:shadow-md transition-all flex flex-col justify-between">
                   <div className="mb-5">
                     {/* Visual Diagram: Add keywords dialog modal */}
@@ -776,7 +776,7 @@ function KeywordResearchContent() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: 3 Interactive Feature Items matching user screenshot */}
+            {/* Left Column: 3 Interactive Feature Items */}
             <div className="lg:col-span-5 space-y-4">
               <div
                 onClick={() => setActiveImageTab(0)}
@@ -818,9 +818,9 @@ function KeywordResearchContent() {
               </div>
             </div>
 
-            {/* Right Column: Real Interactive Data Table Diagram matching user screenshot */}
+            {/* Right Column: Real Interactive Data Table Diagram */}
             <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-2xs overflow-hidden">
-              {/* Header Tabs matching user screenshot */}
+              {/* Header Tabs */}
               <div className="flex items-center gap-4 px-5 pt-3 border-b border-gray-100 text-xs font-bold uppercase tracking-wider">
                 <button
                   type="button"

@@ -228,7 +228,7 @@ export default function PodcastPage() {
         )}
       </header>
 
-      {/* 3. HERO SECTION - Exact Match to Screenshot */}
+      {/* 3. HERO SECTION */}
       <section className="pt-20 pb-16 px-4 text-center relative overflow-hidden">
         {/* Glow backdrop */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -253,7 +253,7 @@ export default function PodcastPage() {
             Listen on your favorite platform
           </p>
 
-          {/* Platform listen buttons matching screenshot */}
+          {/* Platform listen buttons */}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <a
               href="https://podcasts.apple.com"
@@ -296,7 +296,7 @@ export default function PodcastPage() {
         </div>
       </section>
 
-      {/* 4. EPISODES LIST - Exact Match to Screenshot */}
+      {/* 4. EPISODES LIST */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <div className="space-y-6">
           {episodes.map((ep) => {
@@ -366,7 +366,7 @@ export default function PodcastPage() {
           })}
         </div>
 
-        {/* Pagination matching screenshot */}
+        {/* Pagination */}
         <div className="mt-12 flex items-center justify-center gap-2 text-sm font-bold text-gray-400">
           <button
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}

@@ -138,7 +138,7 @@ export default function WhatsNewPage() {
         <ArrowRight className="w-3.5 h-3.5" />
       </div>
 
-      {/* 2. Top Header matching screenshot */}
+      {/* 2. Top Header */}
       <header className="border-b border-gray-100 bg-white py-4 px-6 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -186,7 +186,7 @@ export default function WhatsNewPage() {
         </div>
       </header>
 
-      {/* 3. Hero Blue Section matching screenshot */}
+      {/* 3. Hero Blue Section */}
       <section className="bg-[#4D7CFF] text-white py-20 px-6 text-center">
         <div className="max-w-4xl mx-auto space-y-4">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
@@ -198,7 +198,7 @@ export default function WhatsNewPage() {
         </div>
       </section>
 
-      {/* 4. Release Timeline Section matching screenshots */}
+      {/* 4. Release Timeline Section */}
       <main className="max-w-7xl mx-auto px-6 py-14 w-full flex-1">
         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-12">
           Release timeline
@@ -241,7 +241,7 @@ export default function WhatsNewPage() {
             </div>
           </div>
 
-          {/* Right Column: Timeline Detailed Entries matching screenshot */}
+          {/* Right Column: Timeline Detailed Entries */}
           <div className="lg:col-span-8 space-y-16 relative pl-6 border-l-2 border-blue-400">
             {RELEASES_2026.map((rel) => (
               <article key={rel.id} id={rel.id} className="relative space-y-5">
@@ -298,7 +298,7 @@ export default function WhatsNewPage() {
         </div>
       </main>
 
-      {/* 5. Royal Blue CTA Section matching exact screenshot */}
+      {/* 5. Royal Blue CTA Section */}
       <section className="bg-[#1B66FF] text-white py-16 px-6 text-center">
         <div className="max-w-2xl mx-auto space-y-6">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">

@@ -272,7 +272,7 @@ function SearchVolumeCheckerContent() {
       />
 
       <div className="max-w-[1240px] mx-auto p-4 sm:p-6 space-y-4">
-        {/* Notice Info Banner matching Screenshot 10 & 11 */}
+        {/* Notice Info Banner */}
         {showInfoBanner && (
           <div className="p-3.5 sm:p-4 bg-[#EDF3FC] border border-[#D5E3F7] rounded-lg text-xs text-gray-700 relative flex items-start gap-3 leading-relaxed">
             <Info className="w-4 h-4 text-[#0B69FF] shrink-0 mt-0.5" />
@@ -291,7 +291,7 @@ function SearchVolumeCheckerContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* 1. RESULTS TAB: Search volume check history matching Screenshot 11 */}
+        {/* 1. RESULTS TAB: Search volume check history */}
         {/* ========================================================================= */}
         {tab === 'results' ? (
           selectedHistory ? (
@@ -371,7 +371,7 @@ function SearchVolumeCheckerContent() {
               </div>
             </div>
           ) : (
-            /* Search volume check history table matching Screenshot 11 */
+            /* Search volume check history table */
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs pt-1">
                 <div className="text-[14px] font-semibold text-gray-800">
@@ -450,7 +450,7 @@ function SearchVolumeCheckerContent() {
                         </tr>
                       ))
                     ) : (
-                      /* Empty State matching Screenshot 11 with Magnifying Glass and "No data" */
+                      /* Empty State with Magnifying Glass and "No data" */
                       <tr>
                         <td colSpan={7} className="py-24 text-center">
                           <div className="flex flex-col items-center justify-center space-y-2">
@@ -467,10 +467,10 @@ function SearchVolumeCheckerContent() {
           )
         ) : (
           /* ========================================================================= */
-          /* 2. CHECKER FORM: Two-Column Interface matching Screenshot 10 */
+          /* 2. CHECKER FORM: Two-Column Interface */
           /* ========================================================================= */
           <>
-            {/* Title row matching Screenshot 10 */}
+            {/* Title row */}
             <div className="flex items-center justify-between text-xs pt-1">
               <div className="text-[13px] font-semibold text-gray-800">
                 Search Volume Checker
@@ -484,7 +484,7 @@ function SearchVolumeCheckerContent() {
               </button>
             </div>
 
-            {/* Two-Column Interface matching Screenshot 10 */}
+            {/* Two-Column Interface */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Payment for checking */}
               <div className="lg:col-span-5 bg-white border border-gray-200/90 rounded-xl p-6 shadow-2xs space-y-5 text-center">
@@ -526,7 +526,7 @@ function SearchVolumeCheckerContent() {
                 </div>
               </div>
 
-              {/* Right Column: Form Controls matching Screenshot 10 */}
+              {/* Right Column: Form Controls */}
               <div className="lg:col-span-7 bg-white border border-gray-200/90 rounded-xl p-6 shadow-2xs space-y-4">
                 <form onSubmit={handleStartCheck} className="space-y-4 text-xs">
                   {/* Select a source */}
@@ -590,7 +590,7 @@ function SearchVolumeCheckerContent() {
                     </div>
                   </div>
 
-                  {/* Select country and region matching Screenshot 10 */}
+                  {/* Select country and region */}
                   <div>
                     <label className="block text-xs text-gray-700 font-medium mb-1.5 flex items-center gap-1">
                       <span>Select country and region:</span>

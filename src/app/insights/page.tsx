@@ -829,7 +829,7 @@ function InsightsContent() {
 
       <div>
         {/* ========================================================================= */}
-        {/* TOP BREADCRUMB & METADATA BAR (1:1 Matching Screenshot)                  */}
+        {/* TOP BREADCRUMB & METADATA BAR */}
         {/* ========================================================================= */}
         <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-gray-500 gap-2">
           <div className="flex items-center gap-1.5 font-normal text-xs text-gray-500">

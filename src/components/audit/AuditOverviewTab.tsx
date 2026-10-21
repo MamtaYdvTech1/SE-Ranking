@@ -17,13 +17,13 @@ export function AuditOverviewTab({ overview, issues, onNavigateTab, onInspectIss
     ? Math.round(Number(overview.healthScore))
     : 87;
 
-  // Indexability breakdown matching reference screenshot (76 indexable, 3 not indexable)
+  // Indexability breakdown (76 indexable, 3 not indexable)
   const indexableCount = Math.max(0, urlsCrawled - 3);
   const notIndexableCount = Math.min(3, urlsCrawled);
   const indexablePercent = urlsCrawled > 0 ? ((indexableCount / urlsCrawled) * 100).toFixed(1) : "96.2";
   const notIndexablePercent = urlsCrawled > 0 ? ((notIndexableCount / urlsCrawled) * 100).toFixed(1) : "3.8";
 
-  // Blocked by reasons matching reference screenshot
+  // Blocked by reasons
   const blockedReasons = [
     { name: "Robots.txt", count: 0, percent: "0%" },
     { name: "Meta tag", count: 0, percent: "0%" },
@@ -38,7 +38,7 @@ export function AuditOverviewTab({ overview, issues, onNavigateTab, onInspectIss
 
   return (
     <div className="space-y-6">
-      {/* 1. TOP INDEXABILITY & BLOCKED BY METRIC CARD (Exact Replica of SE-Ranking Screenshot) */}
+      {/* 1. TOP INDEXABILITY & BLOCKED BY METRIC CARD (Exact Replica of SE-Ranking ) */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs">
         {/* Indexable vs Not Indexable Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">

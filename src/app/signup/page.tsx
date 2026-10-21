@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Eye, EyeOff, ChevronDown, Loader2, Check, AlertCircle } from 'lucide-react';
+import { CreditCard, Eye, EyeOff, ChevronDown, Loader2, Check, AlertCircle, Clock } from 'lucide-react';
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { CountryFlag } from '@/components/ui/CountryFlag';
 import { validateRealEmail } from '@/lib/validation/email-validator';
@@ -40,6 +40,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -119,7 +120,7 @@ export default function SignUpPage() {
       });
 
       if (data?.requiresApproval || data?.status === 'pending') {
-        setSuccessMessage('Registration received! Your account is currently pending manual administrator review and approval. Once approved, you will be able to log in to access your assigned SEO tools.');
+        setIsPendingApproval(true);
         setIsLoading(false);
         return;
       }
@@ -213,8 +214,34 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          {/* Pending Approval Confirmation View */}
+          {isPendingApproval ? (
+            <div className="p-8 sm:p-10 rounded-2xl bg-white border border-gray-200/90 shadow-xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-500 flex items-center justify-center mx-auto shadow-xs">
+                <Clock className="w-8 h-8 animate-pulse" />
+              </div>
+              <div className="space-y-2.5">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                  Registration Received
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed max-w-md mx-auto">
+                  Your account has been created with <strong>pending administrator approval</strong>.
+                </p>
+                <div className="p-4 rounded-xl bg-purple-50/80 border border-purple-100 text-xs text-[#7C3AED] font-medium leading-relaxed max-w-md mx-auto">
+                  Direct dashboard access is strictly prevented. A Platform Administrator must review and activate your account, and assign the appropriate SEO projects to your email before you can sign in.
+                </div>
+              </div>
+              <div className="pt-2">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-bold shadow-md shadow-purple-200 transition-all cursor-pointer"
+                >
+                  Return to Sign In
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
               <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -415,6 +442,7 @@ export default function SignUpPage() {
               </div>
             </div>
           </form>
+          )}
         </div>
       </main>
 

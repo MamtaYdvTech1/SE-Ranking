@@ -63,7 +63,7 @@ import {
 import { SeRankingLogo } from '@/components/ui/SeRankingLogo';
 import { AgencyPartnerLogos } from '@/components/landing/AgencyPartnerLogos';
 
-// Multi-line wave chart data matching reference screenshot
+// Multi-line wave chart data
 const mockEnterpriseTrend = [
   { month: 'Jan', pink: 72, green: 80, blue: 65, purple: 45 },
   { month: 'Feb', pink: 85, green: 88, blue: 72, purple: 52 },
@@ -444,7 +444,7 @@ export default function EnterprisePage() {
                 </div>
               </div>
 
-              {/* Multi-wave line chart matching screenshot */}
+              {/* Multi-wave line chart */}
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={mockEnterpriseTrend}>
@@ -842,7 +842,7 @@ export default function EnterprisePage() {
             </div>
           </div>
 
-          {/* Add-on Row matching screenshot */}
+          {/* Add-on Row */}
           <div className="bg-white rounded-2xl p-6 border border-gray-200 max-w-4xl mx-auto">
             <div className="text-center font-bold text-sm text-gray-900 mb-6">
               Need More Limits? Upgrade with Add-Ons

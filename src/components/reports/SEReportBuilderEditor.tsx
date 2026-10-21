@@ -830,7 +830,7 @@ export function SEReportBuilderEditor({
             </div>
           )}
 
-          {/* TAB 3: SECTIONS matching Screenshot 1 & 2 */}
+          {/* TAB 3: SECTIONS */}
           {sidebarTab === 'Sections' && (
             <div className="p-3 space-y-3 text-xs">
               {/* Search input with live filter */}
@@ -854,7 +854,7 @@ export function SEReportBuilderEditor({
                 )}
               </div>
 
-              {/* Accordion Categories List matching Screenshot 1 & 2 */}
+              {/* Accordion Categories List */}
               <div className="space-y-1">
                 {(() => {
                   const query = sectionSearch.toLowerCase().trim();
@@ -997,7 +997,7 @@ export function SEReportBuilderEditor({
                 })()}
               </div>
 
-              {/* Bottom Suggest Box matching Screenshot 1 & 2 */}
+              {/* Bottom Suggest Box */}
               <div className="pt-3 border-t border-[#E6E8EE] space-y-2">
                 <div className="text-[10px] text-[#8C9BA5] leading-tight">
                   What data and integrations would you like to see in the new sections?
@@ -1346,7 +1346,7 @@ export function SEReportBuilderEditor({
                             <tr>
                               <td>
                                 <div className="c-section rb-cc space-y-3">
-                                  {/* Header with Title and Domain matching Screenshot 1 */}
+                                  {/* Header with Title and Domain */}
                                   <div className="c-section__header flex items-center justify-between border-b border-[#F1F3F5] pb-2">
                                     <span className="rb-a-text rb-a-text_st-header text-[15px] font-bold text-[#171B24]">Search visibility trend</span>
                                     <div className="flex items-center gap-1.5 text-xs text-[#171B24] font-medium">
@@ -1441,7 +1441,7 @@ export function SEReportBuilderEditor({
                             <tr>
                               <td>
                                 <div className="c-section rb-cc space-y-3">
-                                  {/* Header with Title and Domain matching Screenshot 1 */}
+                                  {/* Header with Title and Domain */}
                                   <div className="c-section__header flex items-center justify-between border-b border-[#F1F3F5] pb-2">
                                     <span className="rb-a-text rb-a-text_st-header text-[15px] font-bold text-[#171B24]">Average position trend</span>
                                     <div className="flex items-center gap-1.5 text-xs text-[#171B24] font-medium">
@@ -1536,7 +1536,7 @@ export function SEReportBuilderEditor({
                             <tr>
                               <td>
                                 <div className="c-section rb-cc space-y-3">
-                                  {/* Header with Title and Domain matching Screenshot 1 */}
+                                  {/* Header with Title and Domain */}
                                   <div className="c-section__header flex items-center justify-between border-b border-[#F1F3F5] pb-2">
                                     <span className="rb-a-text rb-a-text_st-header text-[15px] font-bold text-[#171B24]">Traffic forecast trend</span>
                                     <div className="flex items-center gap-1.5 text-xs text-[#171B24] font-medium">
@@ -2253,7 +2253,7 @@ export function SEReportBuilderEditor({
                       </div>
                     </div>
 
-                    {/* Core Web Vitals Bars matching Screenshot 8 */}
+                    {/* Core Web Vitals Bars */}
                     <div className="space-y-3 pt-2 border-t border-[#F1F3F5]">
                       <div className="text-[11px] font-bold text-[#5D5F65] uppercase tracking-wider">
                         CORE WEB VITALS
@@ -2385,7 +2385,7 @@ export function SEReportBuilderEditor({
                   />
 
                   <div className="border border-[#E6E8EE] rounded p-5 bg-white space-y-5">
-                    {/* 3 Metric Headers matching Screenshot 8 */}
+                    {/* 3 Metric Headers */}
                     <div className="grid grid-cols-3 gap-2 text-center items-center py-2">
                       <div>
                         <div className="text-3xl font-bold text-[#171B24]">65</div>
@@ -2416,7 +2416,7 @@ export function SEReportBuilderEditor({
                       </div>
                     </div>
 
-                    {/* Step Breakdown matching Screenshot 8 */}
+                    {/* Step Breakdown */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-[11px] pt-2 border-t border-[#F1F3F5]">
                       <div className="flex items-center justify-between py-1 border-b border-[#F8FAFC]">
                         <span className="text-[#171B24]">Step 1: Introduction & Setup</span>

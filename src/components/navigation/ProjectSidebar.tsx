@@ -738,7 +738,7 @@ export function ProjectSidebar({ project, isCollapsed, onToggleCollapse }: Proje
                   </button>
                 </div>
 
-                {/* Website Audit 6 Sub-tabs matching reference screenshot */}
+                {/* Website Audit 6 Sub-tabs matching reference */}
                 {isAuditExpanded && (
                   <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-slate-700/60 ml-4">
                     {[

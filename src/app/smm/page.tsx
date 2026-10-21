@@ -1015,7 +1015,7 @@ export default function SmmPage() {
 
 
 
-      {/* Planable Welcome Modal matching Screenshot 7 */}
+      {/* Planable Welcome Modal */}
       <PlanableWelcomeModal
         isOpen={isPlanableWelcomeOpen}
         onClose={() => setIsPlanableWelcomeOpen(false)}

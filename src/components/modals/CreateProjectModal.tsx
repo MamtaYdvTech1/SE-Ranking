@@ -582,7 +582,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
           }));
           setSuggestedKeywords(mapped);
 
-          // If textarea is currently empty, prefill top 5 seeds matching SE Ranking screenshot
+          // If textarea is currently empty, prefill top 5 seeds matching SE Ranking
           setKeywordsText((prev) => {
             if (!prev.trim() && mapped.length >= 3) {
               return mapped.slice(0, 5).map((m: { keyword: string }) => m.keyword).join('\n');
@@ -1180,7 +1180,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                   </div>
                 )}
 
-                {/* Step 3: Keywords limit meter matching Screenshot 3 & HTML */}
+                {/* Step 3: Keywords limit meter & HTML */}
                 {currentStep === 3 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF9E6] border border-[#FFE8A3] text-xs font-semibold text-[#B45309]">
                     <div className="relative w-16 h-1.5 bg-[#FDE68A] rounded-full overflow-hidden">
@@ -1195,7 +1195,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                   </div>
                 )}
 
-                {/* Step 4: Prompts limit meter matching Screenshot 5 & HTML */}
+                {/* Step 4: Prompts limit meter & HTML */}
                 {currentStep === 4 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF9E6] border border-[#FFE8A3] text-xs font-semibold text-[#B45309]">
                     <div className="relative w-16 h-1.5 bg-[#FDE68A] rounded-full overflow-hidden">
@@ -1601,7 +1601,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                 </div>
               )}
 
-              {/* STEP 2: Search engines (Authentic SE Ranking 2-card layout matching Screenshot 1) */}
+              {/* STEP 2: Search engines (Authentic SE Ranking 2-card layout ) */}
               {currentStep === 2 && (
                 <div className="space-y-6 animate-in fade-in duration-150">
                   {/* Card 1: Set up search engines */}
@@ -1630,7 +1630,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                       )}
                     </div>
 
-                    {/* 4 Engine selection pills matching Screenshot 1 */}
+                    {/* 4 Engine selection pills */}
                     <div className="flex flex-wrap items-center gap-2">
                       {[
                         { id: 'google', label: 'Google', icon: GoogleIcon, activeClass: 'border-[#4285F4] bg-[#EEF4FE] text-[#1A73E8] ring-1 ring-[#4285F4]/30', hoverIcon: 'group-hover:scale-110' },
@@ -1699,7 +1699,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                       </div>
                     </div>
 
-                    {/* 2-Column Form Layout Matching Screenshot 1 */}
+                    {/* 2-Column Form Layout */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                       {/* Column 1: Country & Language */}
                       <div className="space-y-4">
@@ -2494,7 +2494,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {/* Folder Group Header Row (Matching Screenshot 3) */}
+                          {/* Folder Group Header Row */}
                           <tr className="bg-gray-50/70 select-none">
                             <td className="py-2.5 px-3">
                               <div className="flex items-center gap-1.5 text-gray-400">
@@ -2616,14 +2616,14 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                 </div>
               )}
 
-              {/* STEP 4: Prompts (Dynamic AI Check Matching Exact User HTML & Screenshot 4) */}
+              {/* STEP 4: Prompts (Dynamic AI Check Matching Exact User HTML & ) */}
               {currentStep === 4 && (
                 <div className="space-y-6 animate-in fade-in duration-150">
                   {/* Check if project has an AI engine configured */}
                   {!addedEngines.some((e) =>
                     ['ai-overviews', 'ai-mode', 'chatgpt', 'gemini', 'perplexity'].includes(e.engine)
                   ) ? (
-                    /* Exact User HTML Empty State Card matching Screenshot 4 */
+                    /* Exact User HTML Empty State Card */
                     <div
                       data-testid="prompts-no-data"
                       className="ui-status-message wizard-prompts__no-data p-12 sm:p-16 border border-gray-200 rounded-2xl bg-white flex flex-col items-center justify-center text-center shadow-xs"
@@ -2908,7 +2908,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                 </div>
               )}
 
-              {/* STEP 6: Connect statistics and analytics services (Exact User HTML & Screenshot Match) */}
+              {/* STEP 6: Connect statistics and analytics services (Exact User HTML & Match) */}
               {currentStep === 6 && (
                 <div className="space-y-6 animate-in fade-in duration-150">
                   <div className="text-description-block wizard-step__description">
@@ -3051,7 +3051,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
               )}
             </div>
 
-            {/* Bottom Navigation Controls (Matching Exact User Screenshot 6 / 6 FINISH) */}
+            {/* Bottom Navigation Controls ( 6 / 6 FINISH) */}
             <div className="h-16 sm:h-18 border-t border-gray-100 px-4 sm:px-8 md:px-10 flex items-center justify-between bg-white select-none shrink-0">
               <div className="w-24">
                 {currentStep > 1 && (
@@ -3125,7 +3125,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                   </div>
                 </div>
 
-                {/* Tooltip matching Screenshot 2 */}
+                {/* Tooltip */}
                 <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-72 p-3 bg-[#42464D] text-white text-[11px] leading-relaxed rounded-lg shadow-2xl z-50 pointer-events-none">
                   You can enable advanced settings in the Project Wizard. They will allow you to customize the project more precisely according to your needs. The system will save the state of this switch and apply it by default when you create a project next time. NOTE: upon enabling/disabling advanced settings, all the data you previously entered in the form will be reset.
                 </div>
@@ -3255,7 +3255,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                     <Info className="w-3 h-3 text-gray-400" />
                   </div>
 
-                  {/* Search Engine Pills matching Screenshot 1 */}
+                  {/* Search Engine Pills */}
                   <div className="flex flex-wrap items-center gap-2.5">
                     {/* Google */}
                     <button
@@ -3524,7 +3524,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                 </div>
               </div>
 
-              {/* SECTION 3: Keywords (Matching Screenshot 1) */}
+              {/* SECTION 3: Keywords */}
               <div className="space-y-4 pt-4 border-t border-gray-100">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900">Keywords</h3>
@@ -3647,7 +3647,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
                   </div>
                 </div>
 
-                {/* Keyword limits summary footer matching Screenshot 1 */}
+                {/* Keyword limits summary footer */}
                 <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500 pt-2 select-none">
                   <div>
                     <span>{keywordCount} of 739 remaining keywords limits will be used</span>
@@ -3663,7 +3663,7 @@ export function CreateProjectModal({ isOpen, onClose, onCreated }: CreateProject
             </div>
           </div>
 
-          {/* Bottom Action Bar (Matching Screenshot 2 & SE Ranking specifications) */}
+          {/* Bottom Action Bar */}
           <div className="border-t border-gray-100 px-8 sm:px-12 py-4 flex items-center justify-between bg-white shrink-0">
             <button
               type="button"

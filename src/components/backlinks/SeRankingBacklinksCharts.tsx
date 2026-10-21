@@ -355,7 +355,7 @@ export function SeRankingBacklinksOverallChart({ data }: SeRankingBacklinksOvera
             )}
           </svg>
 
-          {/* Interactive Tooltip matching SE Ranking Screenshot 2 */}
+          {/* Interactive Tooltip matching SE Ranking */}
           {hoverIndex !== null && activePoint && (
             <div
               className="absolute z-30 pointer-events-none transition-all duration-75"
@@ -721,7 +721,7 @@ export function SeRankingNewLostBarChart({
           )}
         </svg>
 
-        {/* Hover Tooltip Popup matching Screenshot 3 */}
+        {/* Hover Tooltip Popup */}
         {hoverIdx !== null && active && (
           <div
             className="absolute z-30 pointer-events-none transition-all duration-75"

@@ -108,7 +108,7 @@ export function ProjectSettingsModal({
       }}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[92vh] max-h-[820px] flex overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-150">
-        {/* ===================== LEFT BLUE SIDEBAR (Screenshot 4) ===================== */}
+        {/* LEFT BLUE SIDEBAR */}
         <div className="w-64 sm:w-72 bg-[#1976D2] text-white flex flex-col justify-between p-6 shrink-0 select-none">
           <div>
             {/* White SE Ranking Logo */}
@@ -398,7 +398,7 @@ export function ProjectSettingsModal({
             )}
           </div>
 
-          {/* Footer Bar (Screenshot 4) */}
+          {/* Footer Bar */}
           <div className="px-8 py-4 border-t border-gray-200 flex items-center justify-between bg-white">
             <button
               type="button"

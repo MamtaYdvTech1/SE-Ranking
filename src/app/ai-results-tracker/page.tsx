@@ -338,7 +338,7 @@ function AiResultsTrackerContent() {
 
       <div>
         {/* ========================================================================= */}
-        {/* TOP BLUE NOTICE BANNER (Sources tab 1:1 matching user screenshot)         */}
+        {/* TOP BLUE NOTICE BANNER (Sources tab 1:1 ) */}
         {/* ========================================================================= */}
         {tabParam === 'sources' && showSourcesNotice && (
           <div className="bg-[#EBF5FF] border-b border-[#D0E2FF] px-6 py-2.5 flex items-center justify-between text-xs text-[#7C3AED] leading-relaxed animate-in fade-in duration-150">
@@ -362,7 +362,7 @@ function AiResultsTrackerContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* TOP BREADCRUMB & METADATA BAR (1:1 Matching Screenshot) */}
+        {/* TOP BREADCRUMB & METADATA BAR */}
         {/* ========================================================================= */}
         <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-gray-500 gap-2">
           <div className="flex items-center gap-1.5 font-normal text-xs text-gray-500">
@@ -396,7 +396,7 @@ function AiResultsTrackerContent() {
         </div>
 
         {/* ========================================================================= */}
-        {/* PAGE HEADER: TITLE + METADATA + ACTION BUTTONS (1:1 Matching Screenshot) */}
+        {/* PAGE HEADER: TITLE + METADATA + ACTION BUTTONS */}
         {/* ========================================================================= */}
         <div className="px-6 pt-5 pb-4 max-w-[1440px] mx-auto space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -537,10 +537,10 @@ function AiResultsTrackerContent() {
                 </button>
               )}
 
-              {/* Region & Search Engine Popover (1:1 Matching Screenshot) */}
+              {/* Region & Search Engine Popover */}
               {isEngineOpen && (
                 tabParam === 'sources' ? (
-                  /* 1:1 Matching Sources Screenshot */
+                  /* 1:1 Matching Sources */
                   <div className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2.5 z-40 text-xs animate-in fade-in duration-100 space-y-2.5">
                     {/* Search Input with focus border */}
                     <div className="relative">
@@ -597,7 +597,7 @@ function AiResultsTrackerContent() {
                   </div>
                 ) : (
                   <div className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-40 text-xs animate-in fade-in duration-100">
-                    {/* Search Input matching Screenshot */}
+                    {/* Search Input */}
                     <div className="p-2 border-b border-gray-100">
                       <div className="relative">
                         <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -652,7 +652,7 @@ function AiResultsTrackerContent() {
                         })}
                     </div>
 
-                    {/* + Add search engine matching screenshot */}
+                    {/* + Add search engine */}
                     <div
                       onClick={() => {
                         setWizardTab('search-engines');
@@ -691,10 +691,10 @@ function AiResultsTrackerContent() {
         <div className="px-6 pb-12 max-w-[1440px] mx-auto">
           {!hasPrompts ? (
             /* ===================================================================== */
-            /* 1:1 HERO EMPTY STATE (Exact Match to User Screenshot)                 */
+            /* 1:1 HERO EMPTY STATE (Exact Match to User ) */
             /* ===================================================================== */
             <div className="bg-white border border-gray-200/90 rounded-2xl shadow-2xs py-16 px-6 text-center min-h-[500px] flex flex-col items-center justify-center space-y-6 animate-in fade-in duration-200">
-              {/* Detailed Vector Illustration matching user screenshot */}
+              {/* Detailed Vector Illustration */}
               <div className="relative w-80 h-56 flex items-center justify-center">
                 <svg
                   className="w-full h-full"
@@ -852,7 +852,7 @@ function AiResultsTrackerContent() {
                 </svg>
               </div>
 
-              {/* Text content matching screenshot */}
+              {/* Text content */}
               <div className="space-y-2 max-w-md mx-auto">
                 <h2 className="text-xl font-bold text-gray-900 tracking-tight">Add prompts</h2>
                 <p className="text-xs text-gray-500 leading-relaxed">
@@ -1218,7 +1218,7 @@ function AiResultsTrackerContent() {
       {/* ALL MODALS                                                                */}
       {/* ========================================================================= */}
 
-      {/* 1. Project Search Engines Wizard (1:1 with SE Ranking Wizard Screenshot) */}
+      {/* 1. Project Search Engines Wizard (1:1 with SE Ranking Wizard ) */}
       <ProjectSearchEnginesWizard
         isOpen={isAddPromptOpen}
         onClose={() => setIsAddPromptOpen(false)}

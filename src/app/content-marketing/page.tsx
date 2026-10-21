@@ -108,7 +108,7 @@ function ContentMarketingSuiteInner() {
   const [isBriefModalOpen, setIsBriefModalOpen] = useState(false);
   const [isOptimizeModalOpen, setIsOptimizeModalOpen] = useState(false);
   
-  // Real SE Ranking Article Creator / Optimizer Modal (Screenshot 2)
+  // Real SE Ranking Article Creator / Optimizer Modal
   const [isCreateArticleModalOpen, setIsCreateArticleModalOpen] = useState(false);
   const [createModalTab, setCreateModalTab] = useState<'write' | 'optimize'>('optimize');
   const [modalPrimaryKeyword, setModalPrimaryKeyword] = useState('');
@@ -232,7 +232,7 @@ function ContentMarketingSuiteInner() {
     <div className="flex-1 flex flex-col bg-[#F4F6F9] text-gray-900 min-h-screen">
 
 
-      {/* Top Notification Alert Banner for Content Idea Finder matching exact Screenshot */}
+      {/* Top Notification Alert Banner for Content Idea Finder */}
       {activeTab === 'idea-finder' && !isTopBannerDismissed && (
         <div className="bg-[#EBF3FC] border-b border-[#CCE0F8] px-4 py-2 text-xs text-[#1E40AF] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -253,7 +253,7 @@ function ContentMarketingSuiteInner() {
         </div>
       )}
 
-      {/* Top Control Panel with Breadcrumbs, Feedback, and Speed Limit Meter matching exact Screenshot */}
+      {/* Top Control Panel with Breadcrumbs, Feedback, and Speed Limit Meter */}
       <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1.5">
           <Link
@@ -297,7 +297,7 @@ function ContentMarketingSuiteInner() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. CONTENT EDITOR VIEW (Screenshots 1 & 2 - matching exact DOM classes)   */}
+      {/* 1. CONTENT EDITOR VIEW */}
       {/* ========================================================================= */}
       {activeTab === 'editor' && (
         <div className="max-w-[760px] mx-auto w-full px-4 py-8 space-y-6">
@@ -688,7 +688,7 @@ function ContentMarketingSuiteInner() {
             </div>
           </div>
 
-          {/* Card 6: Bottom Action Card matching Screenshot 2 */}
+          {/* Card 6: Bottom Action Card */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-xs">
             <h3 className="font-bold text-gray-900 text-sm mb-4">
               Create your first brief &amp; article or improve existing content
@@ -720,11 +720,11 @@ function ContentMarketingSuiteInner() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. CONTENT IDEA FINDER VIEW (Screenshots 3 & 4 - matching exact DOM classes) */}
+      {/* 2. CONTENT IDEA FINDER VIEW */}
       {/* ========================================================================= */}
       {activeTab === 'idea-finder' && (
         <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 pt-12 pb-16 space-y-8">
-          {/* Header Title & Subtitle matching exact Screenshot */}
+          {/* Header Title & Subtitle */}
           <div className="text-center mb-2">
             <h1 className="text-2xl sm:text-[26px] font-bold text-gray-900 tracking-tight mb-1.5">
               Content Idea Finder
@@ -734,7 +734,7 @@ function ContentMarketingSuiteInner() {
             </p>
           </div>
 
-          {/* Form Layout matching exact Screenshot */}
+          {/* Form Layout */}
           <form onSubmit={handleFindIdeasSubmit} className="space-y-1.5 max-w-2xl mx-auto w-full">
             <div>
               <label className="flex items-center gap-1 text-xs text-gray-700 mb-1.5 font-normal">
@@ -759,7 +759,7 @@ function ContentMarketingSuiteInner() {
                   />
                 </div>
 
-                {/* Country Trigger Button matching exact Screenshot */}
+                {/* Country Trigger Button */}
                 <div className="relative">
                   <button
                     type="button"
@@ -856,7 +856,7 @@ function ContentMarketingSuiteInner() {
               </div>
             </div>
 
-            {/* Keyword limits indicator matching Screenshot */}
+            {/* Keyword limits indicator */}
             <div className="text-[11px] text-gray-500 pt-1">
               Keyword limits:&nbsp;&nbsp;
               <span className="font-semibold text-gray-900">0/2</span>
@@ -1169,12 +1169,12 @@ function ContentMarketingSuiteInner() {
       )}
 
       {/* ======================================================== */}
-      {/* SE RANKING ARTICLE CREATOR & OPTIMIZER MODAL (Screenshot 2) */}
+      {/* SE RANKING ARTICLE CREATOR & OPTIMIZER MODAL */}
       {/* ======================================================== */}
       {(isCreateArticleModalOpen || isOptimizeModalOpen) && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200 max-w-[620px] w-full overflow-hidden animate-in fade-in zoom-in-95">
-            {/* Header Tabs matching Screenshot 2 */}
+            {/* Header Tabs */}
             <div className="flex items-center justify-between border-b border-gray-200 px-6 pt-5">
               <div className="flex items-center gap-6">
                 <button
@@ -1221,7 +1221,7 @@ function ContentMarketingSuiteInner() {
               </p>
             </div>
 
-            {/* Main Form matching Screenshot 2 */}
+            {/* Main Form */}
             <form onSubmit={handleCreateArticle} className="px-6 py-4 space-y-4">
               {/* Row 1: Primary keyword | Article URL (or Article title) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -1370,7 +1370,7 @@ function ContentMarketingSuiteInner() {
                 </div>
               </div>
 
-              {/* Row 3: Additional settings toggle matching Screenshot 2 */}
+              {/* Row 3: Additional settings toggle */}
               <div className="pt-1">
                 <button
                   type="button"
@@ -1428,7 +1428,7 @@ function ContentMarketingSuiteInner() {
                 )}
               </div>
 
-              {/* Footer matching Screenshot 2: Articles 0 / 2 badge & CANCEL / CREATE buttons */}
+              {/* Footer : Articles 0 / 2 badge & CANCEL / CREATE buttons */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-3">
                 {/* Left: Articles count badge with rounded border and icon */}
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-amber-300 bg-amber-50/70 text-amber-900 text-xs font-medium">

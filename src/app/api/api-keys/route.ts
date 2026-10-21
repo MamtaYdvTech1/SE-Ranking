@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Default Data API key matching screenshot: 12856b00-b1c7-f25b-68b9-294c542738ac
+// Default Data API key : 12856b00-b1c7-f25b-68b9-294c542738ac
 let memoryKeys = [
   {
     id: 'key-default-1',

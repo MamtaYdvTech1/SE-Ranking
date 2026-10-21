@@ -69,7 +69,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         role="dialog"
         aria-modal="true"
       >
-        {/* Header matching Screenshot: "Tell us what you think" with X button */}
+        {/* Header : "Tell us what you think" with X button */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[17px] font-semibold text-[#1E2532]">
             Tell us what you think
@@ -84,7 +84,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           </button>
         </div>
 
-        {/* Content Form matching Screenshot */}
+        {/* Content Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[13px] font-normal text-[#232E3D] mb-2.5">
@@ -101,7 +101,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             />
           </div>
 
-          {/* Action Buttons matching Screenshot: CANCEL and SEND */}
+          {/* Action Buttons : CANCEL and SEND */}
           <div className="flex items-center justify-end gap-3 pt-1">
             <button
               type="button"

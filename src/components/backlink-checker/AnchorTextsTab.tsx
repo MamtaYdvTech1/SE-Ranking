@@ -51,12 +51,12 @@ export function AnchorTextsTab({
   const [firstSeenQuery, setFirstSeenQuery] = useState("");
   const [lastSeenQuery, setLastSeenQuery] = useState("");
 
-  // Filter dropdown (Screenshot 1: 6 checkboxes under + FILTER)
+  // Filter dropdown
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const [activeFilterFields, setActiveFilterFields] = useState<string[]>([]);
 
-  // Presets (Screenshot 2: PRESETS dropdown with + Save filter preset flyout to the left)
+  // Presets
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
   const presetsRef = useRef<HTMLDivElement>(null);
   const [activePreset, setActivePreset] = useState<string>("ALL");
@@ -474,7 +474,7 @@ export function AnchorTextsTab({
     <div className="relative font-sans text-slate-800 dark:text-slate-100 space-y-4">
 
 
-      {/* 2. OUTDATED BACKLINKS NOTICE (Exact as screenshot) */}
+      {/* 2. OUTDATED BACKLINKS NOTICE (Exact as ) */}
       {showNoticeBanner && (
         <div className="bg-[#eff6ff] dark:bg-sky-950/40 border border-[#bfdbfe] dark:border-sky-800 text-sky-900 dark:text-sky-200 px-4 py-2.5 rounded-lg flex items-center justify-between gap-3 text-xs shadow-xs transition">
           <div className="flex items-center gap-2.5">
@@ -703,7 +703,7 @@ export function AnchorTextsTab({
         </div>
       )}
 
-      {/* 6. BLUE GUIDE BANNER (Exact text as screenshot) */}
+      {/* 6. BLUE GUIDE BANNER (Exact text as ) */}
       {showGuideBanner && (
         <div className="bg-[#eff6ff] dark:bg-sky-950/30 border border-[#bfdbfe] dark:border-sky-900/60 rounded-lg p-3.5 relative shadow-xs">
           <div className="flex items-start gap-2.5 pr-6">
@@ -852,7 +852,7 @@ export function AnchorTextsTab({
           })}
         </div>
 
-        {/* PRESETS dropdown (Screenshot 2: PRESETS ▾ with + Save filter preset flyout to the left) */}
+        {/* PRESETS dropdown */}
         <div className="relative" ref={presetsRef}>
           <button
             type="button"
@@ -970,7 +970,7 @@ export function AnchorTextsTab({
         </div>
       </div>
 
-      {/* 9. FILTER & SEARCH ROW (Screenshot 1: + FILTER button with 6 checkboxes dropdown) */}
+      {/* 9. FILTER & SEARCH ROW */}
       <div className="flex items-center justify-between gap-4 pt-0.5">
         <div className="relative" ref={filterMenuRef}>
           <button
@@ -994,7 +994,7 @@ export function AnchorTextsTab({
             )}
           </button>
 
-          {/* Screenshot 1: Checkbox dropdown menu directly below + FILTER */}
+          {/* : Checkbox dropdown menu directly below + FILTER */}
           {isFilterMenuOpen && (
             <div className="absolute left-0 top-full mt-1.5 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl py-2 z-40 text-xs animate-in fade-in zoom-in-95 duration-100">
               {[
@@ -1253,7 +1253,7 @@ export function AnchorTextsTab({
         </div>
       )}
 
-      {/* 9. DATA TABLE (Exact Columns & Data from screenshot) */}
+      {/* 9. DATA TABLE (Exact Columns & Data from ) */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
@@ -1657,7 +1657,7 @@ export function AnchorTextsTab({
               </button>
             </div>
 
-            {/* Page Size Dropdown (e.g. 20 v as in screenshot) */}
+            {/* Page Size Dropdown (e.g. 20 v as in ) */}
             <div className="relative">
               <button
                 type="button"

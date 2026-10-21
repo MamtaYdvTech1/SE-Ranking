@@ -441,7 +441,7 @@ export default function BacklinkCheckerPage() {
         )}
       </header>
 
-      {/* 3. HERO SECTION - Exact Match to Screenshot */}
+      {/* 3. HERO SECTION */}
       <section className="pt-16 pb-14 bg-gradient-to-b from-blue-50/40 via-white to-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#0f172a] tracking-tight leading-[1.12]">

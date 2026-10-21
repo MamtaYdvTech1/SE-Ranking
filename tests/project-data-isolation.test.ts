@@ -422,7 +422,7 @@ describe('End-to-End Multi-Project Data Isolation & Integrity Suite', () => {
       expect(res.summary.averagePosition).toBe(4.5);
     });
 
-    it('returns authentic empty summary for empty project without fake seeding', async () => {
+    it('returns authentic empty summary for empty project without synthetic seeding', async () => {
       const res = await getRankingSummary(MOCK_PROJECTS.empty.id, 'month');
 
       expect(res.projectId).toBe(MOCK_PROJECTS.empty.id);

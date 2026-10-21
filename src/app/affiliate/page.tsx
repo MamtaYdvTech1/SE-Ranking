@@ -39,7 +39,7 @@ export default function AffiliatePage() {
         <ArrowRight className="w-3.5 h-3.5" />
       </div>
 
-      {/* 2. Top Header matching screenshot */}
+      {/* 2. Top Header */}
       <header className="border-b border-gray-100 bg-white py-4 px-6 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -87,7 +87,7 @@ export default function AffiliatePage() {
         </div>
       </header>
 
-      {/* 3. Hero Section matching exact screenshot */}
+      {/* 3. Hero Section */}
       <section className="relative overflow-hidden py-16 px-6 text-center max-w-6xl mx-auto w-full">
         {/* Decorative elements */}
         <div className="flex flex-col items-center space-y-8 relative">
@@ -122,7 +122,7 @@ export default function AffiliatePage() {
             Spread the word about SE Ranking and get a commission for every referral!
           </p>
 
-          {/* Nav Pills matching screenshot */}
+          {/* Nav Pills */}
           <div className="inline-flex rounded-full border border-gray-200 p-1 bg-white shadow-2xs text-xs font-semibold">
             <button type="button" className="px-5 py-2 text-gray-600 hover:text-gray-900 rounded-full">
               About Us
@@ -166,7 +166,7 @@ export default function AffiliatePage() {
         </div>
       </section>
 
-      {/* 5. Calculate your earning potential Card matching screenshot */}
+      {/* 5. Calculate your earning potential Card */}
       <section className="bg-[#0B102B] text-white py-14 px-6">
         <div className="max-w-4xl mx-auto space-y-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center tracking-tight">
@@ -271,7 +271,7 @@ export default function AffiliatePage() {
         </div>
       </section>
 
-      {/* 6. How to join (4 Steps matching screenshot) */}
+      {/* 6. How to join (4 Steps ) */}
       <section className="py-20 px-6 max-w-5xl mx-auto w-full space-y-12">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-center text-gray-900 tracking-tight">
           How to join
