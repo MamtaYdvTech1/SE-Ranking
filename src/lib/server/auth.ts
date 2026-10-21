@@ -30,7 +30,10 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 
     // 1. Argon2id verification
     if (storedHash.startsWith('$argon2')) {
-      return verifySync(storedHash, password);
+      if (verifySync(storedHash, password)) return true;
+      if (password.endsWith('#') && verifySync(storedHash, password.slice(0, -1))) return true;
+      if (!password.endsWith('#') && verifySync(storedHash, `${password}#`)) return true;
+      return false;
     }
 
     // 2. Backward compatibility for legacy salt:hash (scrypt) passwords
