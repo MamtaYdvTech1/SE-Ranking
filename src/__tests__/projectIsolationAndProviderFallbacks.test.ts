@@ -303,6 +303,8 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
     });
 
     it('/api/seo/keywords returns HTTP 402 with actionable message when YepAPI runs out of credits', async () => {
+      const originalApiKey = process.env.YEPAPI_KEY;
+      process.env.YEPAPI_KEY = 'yep_sk_live_test_1234567890';
       const originalGetKeywords = yepApiClient.getKeywords;
       yepApiClient.getKeywords = vi.fn().mockResolvedValue({
         ok: false,
@@ -328,6 +330,7 @@ describe('Project Isolation, Multi-User Authorization & Provider Fallbacks Regre
         expect(json.error).toMatch(/credits/i);
       } finally {
         yepApiClient.getKeywords = originalGetKeywords;
+        process.env.YEPAPI_KEY = originalApiKey;
       }
     });
 
