@@ -125,6 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               isActive: u.status === "active",
               status: u.status,
               planTier: u.planTier,
+              canCreateProject: u.canCreateProject ?? true,
+              canCreateClient: u.canCreateClient ?? true,
               toolPermissions: u.toolPermissions,
               usageLimits: u.usageLimits,
               usageCurrent: u.usageCurrent,
@@ -219,8 +221,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastName: u.name?.split(" ").slice(1).join(" ") || "",
           fullName: u.name || u.email,
           role:
-            u.role === "OWNER" || u.role === "ADMIN" ? "SuperAdmin" : "SEOExecutive",
+            u.role === "OWNER" || u.role === "ADMIN" || u.role === "SUPERADMIN"
+              ? "SuperAdmin"
+              : u.role === "CLIENT"
+              ? "Viewer"
+              : "SEOExecutive",
           isActive: true,
+          status: u.status || "active",
+          planTier: u.planTier || "FREE_TRIAL",
+          canCreateProject: u.canCreateProject ?? true,
+          canCreateClient: u.canCreateClient ?? true,
           lastLoginAt: new Date().toISOString(),
           assignedProjectIds: [],
         };

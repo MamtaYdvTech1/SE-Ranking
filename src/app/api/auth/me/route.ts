@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
         toolPermissions: userObj.toolPermissions ? JSON.parse(userObj.toolPermissions) : null,
         usageLimits: userObj.usageLimits ? JSON.parse(userObj.usageLimits) : null,
         usageCurrent: userObj.usageCurrent ? JSON.parse(userObj.usageCurrent) : null,
+        canCreateProject: userObj.canCreateProject ?? true,
+        canCreateClient: userObj.canCreateClient ?? true,
         createdAt: userObj.createdAt,
         updatedAt: userObj.updatedAt,
         lastLoginAt: userObj.lastLoginAt,
