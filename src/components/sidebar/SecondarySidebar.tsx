@@ -1756,32 +1756,6 @@ function SecondarySidebarInner() {
                       </div>
                     )}
                   </div>
-
-                  {/* 7. Interactive Tour & Partner CTA */}
-                  <div className="pt-3 border-t border-[#2C384A]/60 space-y-2">
-                    <a
-                      href="https://demo.arcade.software/DgmqxJ4bIWR1m3dm9jDf?embed&embed_mobile=inline&embed_desktop=inline&show_copy_link=true"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-all text-[#C4C9D3] hover:text-white hover:bg-[#2C384A]"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Play className="w-4 h-4 text-[#8C98A9] group-hover:text-white transition-colors" />
-                        <span>Interactive Demo Tour</span>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
-                    </a>
-
-                    <a
-                      href="https://app.planable.io/onboarding/details"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer uppercase tracking-wider"
-                    >
-                      <span>Start Planning (-20%)</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
                 </div>
               </div>
             ) : effectiveSection === 'backlinks' ? (

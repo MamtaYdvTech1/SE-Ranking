@@ -539,7 +539,7 @@ export function AnalyticsWorkspace({ projectId, initialTab = "overview" }: Analy
     if (googleOAuthTarget === "ga") {
       setGaConnection({
         connected: true,
-        propertyId: "G-DEMO123456",
+        propertyId: project?.gaMeasurementId || (selectedEmail ? `GA4-${selectedEmail.split('@')[0].toUpperCase()}` : "G-CONNECTED"),
         accountEmail: selectedEmail,
       });
     } else if (googleOAuthTarget === "gsc") {

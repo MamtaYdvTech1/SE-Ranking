@@ -12,7 +12,8 @@ export interface ConfirmDialogProps {
   variant?: "danger" | "warning" | "primary";
   isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
-  onClose: () => void;
+  onClose?: () => void;
+  onCancel?: () => void;
 }
 
 export function ConfirmDialog({
@@ -25,16 +26,19 @@ export function ConfirmDialog({
   isLoading = false,
   onConfirm,
   onClose,
+  onCancel,
 }: ConfirmDialogProps) {
+  const handleClose = onClose || onCancel || (() => {});
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen && !isLoading) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isLoading, onClose]);
+  }, [isOpen, isLoading, handleClose]);
 
   if (!isOpen) return null;
 

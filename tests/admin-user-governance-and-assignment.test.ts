@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma } from '../src/lib/db/prisma';
 import { verifyProjectAccess } from '../src/lib/server/projectAuth';
 import { NextRequest } from 'next/server';
@@ -207,5 +207,18 @@ describe('Admin User Governance & Strict Project Assignment Isolation Suite', ()
     expect(pendingUser.status).toBe('pending');
     const isAllowed = pendingUser.status === 'active' || pendingUser.status === 'approved';
     expect(isAllowed).toBe(false);
+  });
+
+  afterAll(async () => {
+    // Clean up created test entities to prevent leaving dummy projects in DB
+    await prisma.projectMember.deleteMany({
+      where: { project: { domain: { in: ['project-alpha-assigned.org', 'project-beta-unassigned.org'] } } },
+    });
+    await prisma.project.deleteMany({
+      where: { domain: { in: ['project-alpha-assigned.org', 'project-beta-unassigned.org'] } },
+    });
+    await prisma.user.deleteMany({
+      where: { email: { in: ['pending-test-user@example.com', 'assigned-seouser@example.com', 'unassigned-seouser@example.com'] } },
+    });
   });
 });

@@ -738,7 +738,7 @@ export function ProjectSettingsWizard({ projectId, initialTab }: ProjectSettings
     if (googleOAuthTarget === "ga") {
       setGaConnection({
         connected: true,
-        propertyId: gaMeasurementIdInput || "G-DEMO123456",
+        propertyId: gaMeasurementIdInput || (selectedEmail ? `GA4-${selectedEmail.split('@')[0].toUpperCase()}` : "G-CONNECTED"),
         accountEmail: selectedEmail,
       });
     } else if (googleOAuthTarget === "gsc") {

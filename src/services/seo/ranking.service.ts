@@ -519,7 +519,6 @@ export async function getRankingSummary(
         },
         jumpedCount: 0,
         droppedCount: 0,
-        unchangedCount: 0,
         jumpedList: [] as Array<{ keywordId: string; keywordText: string; from: number; to: number }>,
         droppedList: [] as Array<{ keywordId: string; keywordText: string; from: number; to: number }>,
         unchangedList: [] as Array<{ keywordId: string; keywordText: string; position: number }>,

@@ -5,10 +5,12 @@ import React from 'react';
 interface SkeletonLoaderProps {
   type?: 'card' | 'table' | 'stat';
   rows?: number;
+  count?: number;
   className?: string;
 }
 
-export function SkeletonLoader({ type = 'card', rows = 5, className = '' }: SkeletonLoaderProps) {
+export function SkeletonLoader({ type = 'card', rows, count, className = '' }: SkeletonLoaderProps) {
+  const effectiveRows = rows ?? count ?? 5;
   if (type === 'stat') {
     return (
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
@@ -31,7 +33,7 @@ export function SkeletonLoader({ type = 'card', rows = 5, className = '' }: Skel
           <div className="h-8 w-48 bg-slate-800 rounded" />
         </div>
         <div className="space-y-3">
-          {Array.from({ length: rows }).map((_, i) => (
+          {Array.from({ length: effectiveRows }).map((_, i) => (
             <div key={i} className="flex gap-4 items-center">
               <div className="h-4 w-1/4 bg-slate-800/80 rounded" />
               <div className="h-4 w-1/4 bg-slate-800/60 rounded" />

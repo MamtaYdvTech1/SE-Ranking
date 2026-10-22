@@ -193,6 +193,8 @@ export interface ProjectDetailDto extends ProjectDto {
   creatorEmail?: string;
   members?: ProjectMemberDto[];
   role?: string;
+  gaMeasurementId?: string;
+  gscSiteUrl?: string;
 }
 
 export interface PaginatedList<T> {

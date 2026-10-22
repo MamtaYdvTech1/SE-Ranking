@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -202,38 +202,46 @@ export function AllLocationsView({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const [locations, setLocations] = useState<LocationRecord[]>([
-    {
-      id: 'loc-1',
-      name: 'Folk Osteria',
-      country: 'USA',
-      flag: 'US',
-      address: 'Highland Dr., Holladay, NY, 84117 USA',
-      serviceArea: '-',
-      phone: '1 801-843-9517',
-      score: 85,
-      listings: '57/66',
-      rating: 3.8,
-      reviews: 60,
-      updated: 'Sep-30 2026',
-      isDemo: true,
-    },
-    {
-      id: 'loc-2',
-      name: 'Salón Nova',
-      country: 'Spain',
-      flag: 'ES',
-      address: "Carrer de San Mateo, 83, L'Eixample, Valencia, Valencia, 46004 Spain",
-      serviceArea: '-',
-      phone: '963 39 14 07',
-      score: 90,
-      listings: '38/41',
-      rating: 4.3,
-      reviews: 30,
-      updated: 'Sep-30 2026',
-      isDemo: true,
-    },
-  ]);
+  const [locations, setLocations] = useState<LocationRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    setIsLoading(true);
+    fetch('/api/local-marketing')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!isSubscribed) return;
+        if (json.data?.locations && Array.isArray(json.data.locations)) {
+          const mapped: LocationRecord[] = json.data.locations.map((loc: any) => ({
+            id: loc.id,
+            name: loc.name || 'Unnamed Location',
+            country: loc.country || 'Global',
+            flag: (loc.countryCode || 'US').toUpperCase(),
+            address: loc.address || '—',
+            serviceArea: loc.serviceArea || '—',
+            phone: loc.phone || '—',
+            score: typeof loc.score === 'number' ? loc.score : 0,
+            listings: loc.listings || '0/0',
+            rating: typeof loc.rating === 'number' ? loc.rating : 0,
+            reviews: typeof loc.reviews === 'number' ? loc.reviews : 0,
+            updated: loc.updatedAt ? new Date(loc.updatedAt).toLocaleDateString() : '—',
+            isDemo: false,
+          }));
+          setLocations(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load real locations:', err);
+      })
+      .finally(() => {
+        if (isSubscribed) setIsLoading(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, []);
 
   const filteredLocations = locations.filter(
     (l) =>

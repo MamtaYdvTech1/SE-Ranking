@@ -4,8 +4,8 @@ import { hashPassword } from '../src/lib/server/auth';
 async function main() {
   console.log('🌱 Starting Enterprise Admin Seed...');
 
-  const adminEmail = (process.env.DEMO_WORK_EMAIL || 'admin@seranking.com').toLowerCase().trim();
-  const rawPassword = process.env.DEMO_PASSWORD || 'AdminPassword123#';
+  const adminEmail = (process.env.ADMIN_EMAIL || process.env.DEMO_WORK_EMAIL || 'admin@seranking.com').toLowerCase().trim();
+  const rawPassword = process.env.ADMIN_PASSWORD || process.env.DEMO_PASSWORD || 'AdminPassword123#';
   const hashedPassword = hashPassword(rawPassword);
 
   // 1. Seed System Roles
