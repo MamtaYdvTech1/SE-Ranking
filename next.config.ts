@@ -62,12 +62,8 @@ const nextConfig: NextConfig = {
         destination: '/admin/api-usage',
       },
       {
-        source: '/admin/settings',
-        destination: '/settings',
-      },
-      {
         source: '/admin/integrations',
-        destination: '/integrations',
+        destination: '/admin/providers',
       },
     ];
   },

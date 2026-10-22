@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configured credentials and upstream availability</p>
                 </div>
                 <Link
-                  href="/admin/integrations"
+                  href="/admin/providers"
                   className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition"
                 >
                   <span>Manage</span>
@@ -388,7 +388,7 @@ export default function AdminDashboardPage() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Actor, action, target entity, and timestamp</p>
               </div>
               <Link
-                href="/admin/audit-logs"
+                href="/admin/activity-logs"
                 className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition"
               >
                 <span>Full Audit Trail</span>

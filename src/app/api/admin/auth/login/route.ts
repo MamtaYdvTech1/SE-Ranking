@@ -72,15 +72,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Role validation - strictly Super Admin / Admin only
+    // 4. Role validation - strictly Super Admin / Admin / Owner only
     const userRole = (user.role || "").toUpperCase();
     const isSuperAdmin =
       userRole === "ADMIN" ||
       userRole === "SUPERADMIN" ||
+      userRole === "OWNER" ||
       user.userRoles?.some(
         (ur) =>
           ur.role?.name === "ADMIN" ||
-          ur.role?.name === "SUPERADMIN"
+          ur.role?.name === "SUPERADMIN" ||
+          ur.role?.name === "OWNER"
       );
 
     if (!isSuperAdmin) {

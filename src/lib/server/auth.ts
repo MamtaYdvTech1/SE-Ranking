@@ -381,7 +381,7 @@ export type AdminAuthResult =
 
 /**
  * Enforces admin authorization. Returns 401 if unauthenticated, 403 if user lacks admin role.
- * Permitted roles: ADMIN, SUPERADMIN
+ * Permitted roles: ADMIN, SUPERADMIN, OWNER
  */
 export async function requireAdminAuth(req: Request | NextRequest): Promise<AdminAuthResult> {
   const auth = await getAuthSession(req);
@@ -394,7 +394,7 @@ export async function requireAdminAuth(req: Request | NextRequest): Promise<Admi
   }
 
   const role = (auth.user.role || '').toUpperCase();
-  if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
+  if (role !== 'ADMIN' && role !== 'SUPERADMIN' && role !== 'OWNER') {
     return {
       error: 'Forbidden. Administrative privileges required.',
       status: 403,
