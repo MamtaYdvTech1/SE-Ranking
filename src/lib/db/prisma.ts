@@ -8,7 +8,16 @@ function resolveDatabaseUrl(): string {
   const isPostgresUrl = rawUrl.startsWith('postgres://') || rawUrl.startsWith('postgresql://');
 
   if (rawUrl && isPostgresUrl) {
-    return rawUrl;
+    let tunedUrl = rawUrl;
+    if (!tunedUrl.includes('connection_limit=')) {
+      const sep = tunedUrl.includes('?') ? '&' : '?';
+      tunedUrl = `${tunedUrl}${sep}connection_limit=15`;
+    }
+    if (!tunedUrl.includes('pool_timeout=')) {
+      const sep = tunedUrl.includes('?') ? '&' : '?';
+      tunedUrl = `${tunedUrl}${sep}pool_timeout=30`;
+    }
+    return tunedUrl;
   }
 
   const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);

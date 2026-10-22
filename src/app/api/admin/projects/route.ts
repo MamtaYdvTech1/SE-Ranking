@@ -23,8 +23,20 @@ export async function GET(req: NextRequest) {
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "25", 10)));
     const skip = (page - 1) * pageSize;
 
+    const fakeProjectFilter = [
+      { domain: { in: ["alpha-marketing.com", "beta-tech.com", "fresh-domain.com", "project-alpha-assigned.org", "project-beta-unassigned.org"] } },
+      { name: { in: ["Alpha Project", "Beta Project", "Fresh New Project"] } },
+      { domain: { contains: "example.com" } },
+      { domain: { contains: "example.org" } },
+      { user: { email: { contains: "user.alpha" } } },
+      { user: { email: { contains: "user.beta" } } },
+      { user: { email: { contains: "sec-user" } } },
+      { user: { email: { contains: "sec.test" } } },
+    ];
+
     const where: any = {
       deletedAt: null,
+      NOT: fakeProjectFilter,
     };
 
     if (search.trim()) {

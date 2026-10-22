@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Building2,
+  Trash2,
 } from "lucide-react";
 import { DataTable, Column } from "@/components/admin/ui/DataTable";
 import { StatusBadge } from "@/components/admin/ui/StatusBadge";
@@ -56,6 +57,27 @@ export default function AdminDomainsPage() {
   const [domainInput, setDomainInput] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
+
+  const handlePurgeTestData = async () => {
+    if (!window.confirm("Are you sure you want to permanently purge all synthetic test domains, fake projects, and sample entries from the database?")) {
+      return;
+    }
+    setIsPurging(true);
+    try {
+      const res = await fetch("/api/admin/maintenance/purge-fake-data", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to purge fake data");
+      }
+      success(json.message || "All synthetic domains and test data permanently purged.");
+      fetchDomains();
+    } catch (err: any) {
+      error("Purge failed: " + err.message);
+    } finally {
+      setIsPurging(false);
+    }
+  };
 
   const fetchDomains = async () => {
     setIsLoading(true);
@@ -216,6 +238,14 @@ export default function AdminDomainsPage() {
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Refresh</span>
+          </button>
+          <button
+            onClick={handlePurgeTestData}
+            disabled={isPurging}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition shadow-xs disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+            <span>{isPurging ? "Purging..." : "Purge Test Data"}</span>
           </button>
           <button
             onClick={() => setIsModalOpen(true)}

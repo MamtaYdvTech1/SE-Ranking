@@ -76,7 +76,6 @@ export default function AdminUsersPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [generatedInviteLink, setGeneratedInviteLink] = useState<string | null>(null);
 
-  // Confirm dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -88,6 +87,28 @@ export default function AdminUsersPage() {
     description: "",
     action: async () => {},
   });
+
+  const [isPurging, setIsPurging] = useState(false);
+
+  const handlePurgeTestUsers = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete all synthetic test users and demo accounts from the database?")) {
+      return;
+    }
+    setIsPurging(true);
+    try {
+      const res = await fetch("/api/admin/maintenance/purge-fake-data", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to purge fake users");
+      }
+      success(json.message || "All synthetic users and test accounts permanently purged.");
+      fetchUsers();
+    } catch (err: any) {
+      error("Purge failed: " + err.message);
+    } finally {
+      setIsPurging(false);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -456,6 +477,23 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={fetchUsers}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-all cursor-pointer shadow-xs"
+            title="Refresh Users"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={handlePurgeTestUsers}
+            disabled={isPurging}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+            title="Purge Test Users"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+            <span>{isPurging ? "Purging..." : "Purge Test Users"}</span>
+          </button>
           <button
             onClick={() => setIsInviteModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-950/20 cursor-pointer"

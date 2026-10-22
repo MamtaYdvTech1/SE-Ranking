@@ -21,10 +21,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search")?.toLowerCase().trim() || "";
 
+  const fakeProjectFilter = [
+    { domain: { in: ["alpha-marketing.com", "beta-tech.com", "fresh-domain.com", "project-alpha-assigned.org", "project-beta-unassigned.org"] } },
+    { name: { in: ["Alpha Project", "Beta Project", "Fresh New Project"] } },
+    { domain: { contains: "example.com" } },
+    { domain: { contains: "example.org" } },
+    { user: { email: { contains: "user.alpha" } } },
+    { user: { email: { contains: "user.beta" } } },
+    { user: { email: { contains: "sec-user" } } },
+    { user: { email: { contains: "sec.test" } } },
+  ];
+
   // Query primary project domains + secondary project_domains from PostgreSQL
   const projects = await prisma.project.findMany({
     where: {
       deletedAt: null,
+      NOT: fakeProjectFilter,
       ...(search
         ? {
             OR: [

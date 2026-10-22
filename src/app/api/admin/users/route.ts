@@ -49,8 +49,20 @@ export async function GET(req: NextRequest) {
   const sortBy = searchParams.get("sortBy") || "createdAt";
   const sortDir = searchParams.get("sortDir") === "asc" ? "asc" : "desc";
 
+  const fakeUserFilter = [
+    { email: { contains: "user.alpha" } },
+    { email: { contains: "user.beta" } },
+    { email: { contains: "sec-user" } },
+    { email: { contains: "sec.test" } },
+    { email: { contains: "ranking-test" } },
+    { email: { endsWith: "@example.com" } },
+    { email: { endsWith: "@example.org" } },
+    { name: { in: ["User Alpha", "User Beta", "Security Test User", "Regular SEO User", "Ranking Test Worker"] } },
+  ];
+
   const whereClause: any = {
     deletedAt: null,
+    NOT: fakeUserFilter,
   };
 
   if (search) {
